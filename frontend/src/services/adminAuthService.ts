@@ -3,6 +3,14 @@
  * Provides secure admin login functionality independent of wallet connections
  */
 
+// ⚠️ SECURITY WARNING: Admin credentials are hardcoded in frontend code
+// This is INSECURE and should be moved to backend authentication
+// Anyone can view this code and see the password hashes
+// 
+// TODO: Move admin authentication to backend API endpoint
+// TODO: Use proper password hashing (bcrypt, argon2) with salt
+// TODO: Store credentials in secure backend storage (database, env vars)
+//
 // Admin credentials (in production, these should be stored securely on the backend)
 // For now, we'll use a simple hash-based approach with localStorage
 const ADMIN_CREDENTIALS = [

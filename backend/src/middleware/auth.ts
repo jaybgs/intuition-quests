@@ -29,7 +29,10 @@ export async function authenticateWallet(
     const token = authHeader.substring(7);
     
     // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as {
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as {
       address: string;
       userId?: string;
     };
@@ -61,7 +64,11 @@ export async function optionalAuth(
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as {
+      if (!process.env.JWT_SECRET) {
+        // Continue without authentication if JWT_SECRET is not configured
+        return next();
+      }
+      const decoded = jwt.verify(token, process.env.JWT_SECRET) as {
         address: string;
       };
 

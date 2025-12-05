@@ -1,0 +1,362 @@
+.community-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: calc(100vh - 200px);
+  padding: 40px 24px;
+  gap: 40px;
+}
+
+.community-banner {
+  width: 85%;
+  max-width: 1000px;
+  height: 150px;
+  background: rgba(26, 31, 53, 0.2); /* 80% transparency (20% opacity) - same as statistics boxes */
+  backdrop-filter: blur(36px); /* Increased blur - same as statistics boxes */
+  -webkit-backdrop-filter: blur(36px); /* Safari support */
+  border: none; /* No borderlines */
+  border-radius: 24px;
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4), /* Outer shadow for depth */
+              0 4px 14px rgba(0, 0, 0, 0.3), /* Inner shadow for subtle depth */
+              inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Subtle inner highlight */
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.community-banner:hover {
+  background: rgba(37, 43, 61, 0.25); /* Slightly more visible on hover, maintaining 80% transparency */
+  backdrop-filter: blur(45px); /* Even more blur on hover */
+  -webkit-backdrop-filter: blur(45px);
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5), /* Deeper shadow on hover */
+              0 7px 22px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15); /* Slightly brighter highlight */
+  transform: translateY(-3px); /* Increased lift effect on hover */
+}
+
+.community-banner-text {
+  color: var(--text-primary);
+  font-size: 32px;
+  font-weight: 700;
+  text-align: left;
+  margin: 0;
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-right: 24px;
+  z-index: 1;
+}
+
+.community-banner-logo {
+  height: 100%;
+  max-height: 150px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+  transform: scale(4);
+  transform-origin: right center;
+  position: absolute;
+  right: -60px;
+  top: 50%;
+  transform: translateY(-50%) scale(4);
+  z-index: 0;
+}
+
+.community-quests-title {
+  width: 85%;
+  max-width: 1400px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 60px 0 -20px 0;
+  padding: 0 24px;
+  text-align: left;
+}
+
+.community-quests-grid-container {
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  opacity: 1;
+  transform: translateY(0);
+  margin-top: 0;
+}
+
+.community-quests-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 20px;
+  width: 100%;
+}
+
+.quest-card-wrapper {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Cards that should animate start hidden */
+.quest-card-wrapper:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)):not(:nth-child(5)):not(:nth-child(6)) {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+/* First 6 cards appear immediately without animation - already visible */
+.quest-card-wrapper:first-child,
+.quest-card-wrapper:nth-child(2),
+.quest-card-wrapper:nth-child(3),
+.quest-card-wrapper:nth-child(4),
+.quest-card-wrapper:nth-child(5),
+.quest-card-wrapper:nth-child(6) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.quest-card-wrapper.animate-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Fallback: ensure quests are visible after animation delay */
+.community-quests-grid-container:has(.quest-card-wrapper:not(.animate-in)) .quest-card-wrapper {
+  animation: fadeInFallback 0.8s ease-out 2s forwards;
+}
+
+@keyframes fadeInFallback {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.community-see-more-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.community-see-more-button:hover {
+  background: rgba(37, 43, 61, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.community-see-more-button:active {
+  transform: translateY(0);
+}
+
+.community-see-more-button svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+
+.community-see-more-button:hover svg {
+  transform: translateX(4px);
+}
+
+.community-quests-slideshow {
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.community-quests-scroll {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  flex: 1;
+  padding: 20px 0;
+}
+
+.community-quests-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.community-quest-card-wrapper {
+  flex: 0 0 auto;
+  width: 400px;
+  height: 250px;
+  scroll-snap-align: center;
+  transition: transform 0.3s ease;
+}
+
+.community-quest-card-wrapper.active {
+  transform: scale(1.05);
+}
+
+/* Community quest card wrapper styles are now handled by CommunityQuestCard component */
+
+.community-nav {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.community-nav:hover {
+  background: rgba(37, 43, 61, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.community-nav:active {
+  transform: scale(0.95);
+}
+
+.community-nav svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.5;
+}
+
+.community-quests-indicators {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  z-index: 5;
+}
+
+.community-indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0;
+}
+
+.community-indicator-dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.community-indicator-dot.active {
+  background: var(--text-primary);
+  width: 24px;
+  border-radius: 5px;
+}
+
+.community-quests-loading {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  max-width: 1400px;
+  overflow-x: auto;
+}
+
+.community-quests-loading .quest-card-skeleton {
+  flex: 0 0 auto;
+  width: 400px;
+  height: 200px;
+}
+
+@media (max-width: 768px) {
+  .community-container {
+    padding: 28px 16px;
+    gap: 32px;
+  }
+
+  .community-banner {
+    width: 90%;
+    height: auto;
+    min-height: 150px;
+    padding: 32px 24px;
+  }
+
+  .community-banner-text {
+    font-size: 22px;
+  }
+
+  .community-quest-card-wrapper {
+    width: 320px;
+  }
+
+  .community-nav {
+    width: 40px;
+    height: 40px;
+  }
+
+  .community-nav svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .community-quests-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .community-quests-title {
+    width: 90%;
+    font-size: 24px;
+    margin: 40px 0 -20px 0;
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .community-quests-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "network": "intuition",
+  "contractAddress": "0x431204BFfADDE8d4Ac80d66FF8B9700A84fB1237",
+  "multiVaultAddress": "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e",
+  "revenueWallet": "0xec48e65C2AD6d242F173467EC3edc7AAD78CFA07",
+  "deployedAt": "2025-12-05T09:06:03.640Z",
+  "deployer": "0x80D291e82C6f8a11cEC9A9BA699285AFe14d7F4D"
+}

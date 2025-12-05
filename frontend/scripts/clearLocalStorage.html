@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear LocalStorage</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1f35;
+      color: #fff;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    button.danger {
+      background: #ef4444;
+    }
+    button.danger:hover {
+      background: #dc2626;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success { color: #10b981; }
+    .error { color: #ef4444; }
+    .warning { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <h1>Clear LocalStorage Data</h1>
+  <p>This will clear all spaces, quest drafts, and builder-related data from localStorage.</p>
+  
+  <button onclick="clearAll()">Clear All LocalStorage Data</button>
+  <button class="danger" onclick="clearSpaces()">Clear Spaces Only</button>
+  <button class="danger" onclick="clearQuests()">Clear Quests Only</button>
+  
+  <div id="output"></div>
+
+  <script>
+    const output = document.getElementById('output');
+    
+    function log(message, type = 'info') {
+      const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : '';
+      output.innerHTML += `<span class="${className}">${message}</span>\n`;
+      output.scrollTop = output.scrollHeight;
+    }
+    
+    function clearAll() {
+      output.innerHTML = '';
+      log('Starting localStorage cleanup...\n', 'info');
+      
+      let deletedCount = 0;
+      const keysToDelete = [
+        'spaces',
+        'spaces_by_slug',
+        'quests',
+        'quest_drafts',
+        'spaceBuilderSource',
+      ];
+      
+      // Delete specific keys
+      keysToDelete.forEach(key => {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+          deletedCount++;
+          log(`✅ Deleted: ${key}`, 'success');
+        }
+      });
+      
+      // Delete all keys matching patterns
+      const allKeys = Object.keys(localStorage);
+      
+      allKeys.forEach(key => {
+        let shouldDelete = false;
+        
+        // Quest drafts
+        if (key.startsWith('quest_draft_')) {
+          shouldDelete = true;
+        }
+        // Published quests
+        else if (key.startsWith('published_quests_')) {
+          shouldDelete = true;
+        }
+        // Space-related
+        else if (key.startsWith('space_followers_') || 
+                 key.startsWith('space_quests_') || 
+                 key.startsWith('space_token_status_') || 
+                 key.startsWith('space_token_symbol_') || 
+                 key.startsWith('space_twitter_url_') || 
+                 key.startsWith('user_spaces_') || 
+                 key.startsWith('space_xp_')) {
+          shouldDelete = true;
+        }
+        // Raid-related (if any remain)
+        else if (key.startsWith('raids_')) {
+          shouldDelete = true;
+        }
+        
+        if (shouldDelete) {
+          localStorage.removeItem(key);
+          deletedCount++;
+          log(`✅ Deleted: ${key}`, 'success');
+        }
+      });
+      
+      log(`\n🎉 Cleaned up ${deletedCount} localStorage items`, 'success');
+      log('✅ localStorage cleanup completed!', 'success');
+    }
+    
+    function clearSpaces() {
+      output.innerHTML = '';
+      log('Clearing spaces only...\n', 'info');
+      
+      let deletedCount = 0;
+      const spaceKeys = ['spaces', 'spaces_by_slug'];
+      
+      spaceKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+          deletedCount++;
+          log(`✅ Deleted: ${key}`, 'success');
+        }
+      });
+      
+      const allKeys = Object.keys(localStorage);
+      allKeys.forEach(key => {
+        if (key.startsWith('space_followers_') || 
+            key.startsWith('space_quests_') || 
+            key.startsWith('space_token_status_') || 
+            key.startsWith('space_token_symbol_') || 
+            key.startsWith('space_twitter_url_') || 
+            key.startsWith('user_spaces_') || 
+            key.startsWith('space_xp_')) {
+          localStorage.removeItem(key);
+          deletedCount++;
+          log(`✅ Deleted: ${key}`, 'success');
+        }
+      });
+      
+      log(`\n✅ Cleared ${deletedCount} space-related items`, 'success');
+    }
+    
+    function clearQuests() {
+      output.innerHTML = '';
+      log('Clearing quests only...\n', 'info');
+      
+      let deletedCount = 0;
+      const questKeys = ['quests', 'quest_drafts'];
+      
+      questKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+          deletedCount++;
+          log(`✅ Deleted: ${key}`, 'success');
+        }
+      });
+      
+      const allKeys = Object.keys(localStorage);
+      allKeys.forEach(key => {
+        if (key.startsWith('quest_draft_') || 
+            key.startsWith('published_quests_') || 
+            key.startsWith('raids_')) {
+          localStorage.removeItem(key);
+          deletedCount++;
+          log(`✅ Deleted: ${key}`, 'success');
+        }
+      });
+      
+      log(`\n✅ Cleared ${deletedCount} quest-related items`, 'success');
+    }
+  </script>
+</body>
+</html>
+

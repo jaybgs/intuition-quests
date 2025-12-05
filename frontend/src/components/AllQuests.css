@@ -1,0 +1,132 @@
+.all-quests-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  gap: 32px;
+}
+
+.all-quests-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.all-quests-back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.all-quests-back-button:hover {
+  background: rgba(37, 43, 61, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.all-quests-back-button:active {
+  transform: translateY(0);
+}
+
+.all-quests-back-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.all-quests-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.all-quests-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.all-quests-filter-button {
+  padding: 10px 20px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.all-quests-filter-button:hover {
+  background: rgba(37, 43, 61, 0.5);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.all-quests-filter-button.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.all-quests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.all-quests-loading {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .all-quests-container {
+    padding: 16px;
+    gap: 24px;
+  }
+
+  .all-quests-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .all-quests-title {
+    font-size: 24px;
+  }
+
+  .all-quests-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .all-quests-loading {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+

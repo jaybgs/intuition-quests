@@ -1,0 +1,298 @@
+.builder-quests-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.builder-quests-back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.builder-quests-back-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.builder-quests-back-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.builder-quests-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Sub-navigation Tabs */
+.builder-quests-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0;
+}
+
+.builder-quests-tab {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  bottom: -1px;
+}
+
+.builder-quests-tab:hover {
+  color: var(--text-primary);
+}
+
+.builder-quests-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-blue);
+}
+
+/* Empty State */
+.builder-quests-empty-state {
+  background: rgba(26, 31, 53, 0.2);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 80px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 400px;
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+              0 4px 14px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.builder-quests-empty-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+.builder-quests-empty-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.builder-quests-empty-description {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 0 0 32px 0;
+  max-width: 400px;
+}
+
+.builder-quests-create-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.builder-quests-create-button:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.5);
+  transform: translateY(-2px);
+}
+
+.builder-quests-create-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Drafts Grid */
+.builder-quests-drafts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.builder-quests-draft-card {
+  background: rgba(26, 31, 53, 0.2);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+              0 4px 14px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.builder-quests-draft-card:hover {
+  background: rgba(26, 31, 53, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 72px rgba(0, 0, 0, 0.5),
+              0 7px 22px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.builder-quests-draft-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.builder-quests-draft-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-blue);
+}
+
+.builder-quests-draft-status {
+  display: flex;
+  align-items: center;
+}
+
+.builder-quests-draft-status-badge {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.builder-quests-draft-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.builder-quests-draft-meta {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+}
+
+.builder-quests-draft-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.builder-quests-draft-card-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  border-style: dashed;
+  border-width: 2px;
+  background: rgba(26, 31, 53, 0.1);
+}
+
+.builder-quests-draft-card-new:hover {
+  background: rgba(26, 31, 53, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.builder-quests-draft-new-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+
+.builder-quests-draft-card-new:hover .builder-quests-draft-new-content {
+  color: var(--accent-blue);
+}
+
+.builder-quests-draft-new-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .builder-quests-container {
+    gap: 16px;
+  }
+
+  .builder-quests-title {
+    font-size: 24px;
+  }
+
+  .builder-quests-tabs {
+    overflow-x: auto;
+  }
+
+  .builder-quests-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .builder-quests-empty-state {
+    padding: 60px 24px;
+    min-height: 300px;
+  }
+
+  .builder-quests-empty-title {
+    font-size: 20px;
+  }
+
+  .builder-quests-empty-description {
+    font-size: 14px;
+  }
+
+  .builder-quests-drafts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+

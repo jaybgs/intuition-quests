@@ -28,6 +28,8 @@ build/
 **/.env
 **/.env.local
 **/.env.*.local
+_env
+**/_env
 
 # Frontend specific
 frontend/dist/

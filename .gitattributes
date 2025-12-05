@@ -1,0 +1,6 @@
+# Exclude intuition-repos from Git LFS tracking
+intuition-repos/** -filter -diff -merge linguist-generated
+
+# If you have other large files that need LFS, add them here
+# *.sql.gz filter=lfs diff=lfs merge=lfs -text
+# *.zip filter=lfs diff=lfs merge=lfs -text

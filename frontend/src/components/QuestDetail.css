@@ -1,0 +1,920 @@
+/* Quest Detail - Exact Galxe Match with Glass Morphism */
+.quest-detail-container.galxe-exact {
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  background: transparent;
+  color: var(--text-primary);
+  position: relative;
+  z-index: 1;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Top Header - Glass Morphism */
+.quest-detail-top-header {
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 100;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.quest-detail-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quest-detail-creator-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.quest-detail-creator-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.quest-detail-creator-logo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.quest-detail-creator-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.quest-detail-creator-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quest-detail-creator-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.quest-detail-verified-badge {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.quest-detail-follow-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.quest-detail-follow-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.quest-detail-follow-btn span {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.quest-detail-follower-count {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.quest-detail-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 101;
+}
+
+.quest-detail-header-icon-wrapper {
+  position: relative;
+  z-index: 101;
+}
+
+.quest-detail-header-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  z-index: 102;
+}
+
+.quest-detail-header-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.quest-detail-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.quest-detail-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.quest-detail-dropdown-wrapper {
+  position: relative;
+  z-index: 101;
+}
+
+.quest-detail-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 150px;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.quest-detail-dropdown-item {
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quest-detail-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Quest Title Section - Glass Morphism */
+.quest-detail-title-section {
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 24px 24px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow-x: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.quest-detail-page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  line-height: 1.2;
+}
+
+.quest-detail-metadata-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quest-detail-participants-avatars {
+  display: flex;
+  align-items: center;
+  gap: -8px;
+}
+
+.quest-detail-participant-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  margin-left: -8px;
+}
+
+.quest-detail-participant-avatar:first-child {
+  margin-left: 0;
+}
+
+.quest-detail-participant-count {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.quest-detail-date {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Reward Section - Glass Morphism */
+.quest-detail-reward-section {
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 0 24px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  overflow-x: hidden;
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.quest-detail-reward-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Tasks Container */
+.quest-detail-tasks-container {
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 0 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Task Item - Exact Match with Glass Morphism */
+.quest-detail-task-item-exact {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 17px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s;
+  cursor: default;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.quest-detail-task-item-exact.clickable {
+  cursor: pointer;
+}
+
+.quest-detail-task-item-exact.clickable:hover {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.quest-detail-task-item-exact.completed {
+  background: rgba(16, 185, 129, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Play Icon (Triangle) */
+.quest-detail-task-play-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.quest-detail-task-item-exact.completed .quest-detail-task-play-icon {
+  color: #10b981;
+}
+
+/* Task Content (Platform Icon + Text) */
+.quest-detail-task-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.quest-detail-task-platform-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.quest-detail-task-platform-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.quest-detail-task-item-exact.completed .quest-detail-task-platform-icon {
+  color: #10b981;
+}
+
+.quest-detail-task-text-exact {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.quest-detail-task-link {
+  color: #3b82f6;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.quest-detail-task-link:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.quest-detail-task-item-exact.completed .quest-detail-task-link {
+  color: #10b981;
+}
+
+.quest-detail-task-item-exact.completed .quest-detail-task-link:hover {
+  color: #34d399;
+}
+
+.quest-detail-task-item-exact.completed .quest-detail-task-text-exact {
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Refresh Icon */
+.quest-detail-task-refresh-exact {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.quest-detail-task-refresh-exact:hover:not(.disabled):not(.verified) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.quest-detail-task-refresh-exact.verifying {
+  animation: rotate 1s linear infinite;
+  cursor: wait;
+  color: #3b82f6;
+}
+
+.quest-detail-task-refresh-exact.verified {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  cursor: default;
+}
+
+.quest-detail-task-refresh-exact.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quest-detail-task-refresh-exact .cooldown-timer {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 24px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Claim Button Container - Below Tasks, Right Aligned */
+.quest-detail-claim-button-container {
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+  display: flex;
+  justify-content: flex-end;
+  overflow-x: hidden;
+}
+
+.quest-detail-claim-button-inline {
+  padding: 12px 32px;
+  background: #1a1f35;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.quest-detail-claim-button-inline:hover:not(.disabled) {
+  background: #252b3d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.quest-detail-claim-button-inline.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(26, 31, 53, 0.5);
+  box-shadow: none;
+}
+
+.quest-detail-claim-button-inline.disabled:hover {
+  transform: none;
+  background: rgba(26, 31, 53, 0.5);
+}
+
+.claim-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Social Popup (keep existing styles) */
+.social-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.social-popup-container {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+              0 4px 14px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.social-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.social-popup-header h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.social-popup-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.social-popup-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.social-popup-content {
+  margin-bottom: 24px;
+}
+
+.social-popup-content p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.social-popup-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.social-popup-button {
+  flex: 1;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.social-popup-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.social-popup-button.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.social-popup-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  transform: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .quest-detail-container.galxe-exact {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    padding: 0;
+  }
+
+  .quest-detail-main-content {
+    max-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .quest-detail-top-header {
+    padding: 12px 16px;
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quest-detail-header-left {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quest-detail-header-right {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .quest-detail-creator-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .quest-detail-creator-name {
+    font-size: 14px;
+  }
+
+  .quest-detail-follow-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .quest-detail-header-icon-btn {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+
+  .quest-detail-title-section {
+    padding: 16px;
+  }
+
+  .quest-detail-page-title {
+    font-size: 20px;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .quest-detail-reward-section {
+    padding: 0 16px 16px;
+  }
+
+  .quest-detail-reward-text {
+    font-size: 16px;
+  }
+
+  .quest-detail-tasks-container {
+    padding: 0 16px 80px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .quest-detail-task-item {
+    padding: 16px;
+    margin-bottom: 12px;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .quest-detail-task-title {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .quest-detail-task-description {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  .quest-detail-task-link {
+    word-break: break-all;
+    overflow-wrap: break-word;
+    max-width: 100%;
+  }
+
+  .quest-detail-task-text-exact {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-overflow: clip;
+  }
+
+  .quest-detail-task-item-exact {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .quest-detail-task-content {
+    flex: 1 1 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .quest-detail-claim-button-container {
+    padding: 16px;
+    max-width: 100%;
+    justify-content: center;
+  }
+
+  .quest-detail-task-platform-icon {
+    flex-shrink: 0;
+  }
+
+  .quest-detail-task-play-icon {
+    flex-shrink: 0;
+  }
+
+  .quest-detail-claim-button-inline {
+    width: 100%;
+    max-width: 100%;
+    margin: 16px 0 0 0;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  .quest-detail-claim-section-fixed {
+    padding: 12px 16px;
+  }
+
+  .quest-detail-dropdown-menu {
+    right: 0;
+    left: auto;
+    min-width: 150px;
+  }
+
+  .quest-detail-tooltip {
+    right: 0;
+    left: auto;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .quest-detail-top-header {
+    padding: 10px 12px;
+  }
+
+  .quest-detail-page-title {
+    font-size: 18px;
+  }
+
+  .quest-detail-task-item,
+  .quest-detail-task-item-exact {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .quest-detail-creator-name {
+    font-size: 13px;
+  }
+
+  .quest-detail-follow-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .quest-detail-task-text-exact {
+    font-size: 13px;
+  }
+
+  .quest-detail-title-section {
+    padding: 12px;
+  }
+
+  .quest-detail-reward-section {
+    padding: 0 12px 12px;
+  }
+
+  .quest-detail-tasks-container {
+    padding: 0 12px 60px;
+  }
+
+  .quest-detail-claim-button-container {
+    padding: 12px;
+  }
+}

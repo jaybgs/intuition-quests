@@ -1,0 +1,9 @@
+{
+  "contractAddress": "0x85e07bfB784A069e19AE552Dd5209a463528165d",
+  "trustTokenAddress": "0x6cd905df2ed214b22e0d48ff17cd4200c1c6d8a3",
+  "revenueWallet": "0xec48e65C2AD6d242F173467EC3edc7AAD78CFA07",
+  "stakingRelayer": "0xB90A9fbBCBa1A59c5Ba376649E7C1460BB9353B2",
+  "deployedAt": "2025-12-04T13:49:40.279Z",
+  "network": "intuition",
+  "chainId": 1155
+}

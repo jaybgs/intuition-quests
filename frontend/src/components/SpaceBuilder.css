@@ -1,0 +1,421 @@
+/* Space Builder Container */
+.space-builder-container {
+  width: 100%;
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.space-builder-card {
+  width: 100%;
+  max-width: 700px;
+  background: rgba(26, 31, 53, 0.2);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+              0 4px 14px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.space-builder-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 32px 0;
+}
+
+.space-builder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.space-builder-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.space-builder-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required-asterisk {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.space-builder-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Role Selection Buttons */
+.space-builder-role-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.role-button {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 20px;
+  background: rgba(26, 31, 53, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.role-button:hover {
+  background: rgba(37, 43, 61, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.role-button.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.role-description {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 8px 0 0 0;
+  line-height: 1.5;
+}
+
+/* Input Fields */
+.space-builder-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 400;
+  transition: all 0.3s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.space-builder-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.space-builder-input:focus {
+  background: rgba(37, 43, 61, 0.4);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Textarea */
+.textarea-wrapper {
+  position: relative;
+}
+
+.space-builder-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  padding-bottom: 32px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 400;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+  transition: all 0.3s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.space-builder-textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.space-builder-textarea:focus {
+  background: rgba(37, 43, 61, 0.4);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.character-count {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Logo Upload Area */
+.logo-upload-area {
+  width: 100%;
+  min-height: 200px;
+  padding: 40px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.logo-upload-area:hover {
+  background: rgba(37, 43, 61, 0.4);
+  border-color: rgba(59, 130, 246, 0.5);
+  border-style: solid;
+}
+
+.upload-icon {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.upload-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.upload-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.upload-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.logo-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.logo-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 32px;
+  height: 32px;
+  background: rgba(239, 68, 68, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.logo-remove:hover {
+  background: rgba(239, 68, 68, 1);
+  transform: scale(1.1);
+}
+
+.logo-remove svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Action Buttons */
+.space-builder-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.space-builder-cancel,
+.space-builder-submit {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  min-width: 120px;
+}
+
+.space-builder-cancel {
+  background: rgba(26, 31, 53, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.space-builder-cancel:hover:not(:disabled) {
+  background: rgba(37, 43, 61, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.space-builder-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.space-builder-submit {
+  background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+  color: white;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.space-builder-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.5);
+  transform: translateY(-2px);
+}
+
+.space-builder-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.space-builder-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(26, 31, 53, 0.3);
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .space-builder-container {
+    padding: 20px 16px;
+  }
+
+  .space-builder-card {
+    padding: 24px 20px;
+  }
+
+  .space-builder-title {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  .space-builder-form {
+    gap: 24px;
+  }
+
+  .space-builder-role-buttons {
+    flex-direction: column;
+  }
+
+  .role-button {
+    min-width: 100%;
+  }
+
+  .logo-upload-area {
+    min-height: 150px;
+    padding: 24px;
+  }
+
+  .space-builder-actions {
+    flex-direction: column-reverse;
+  }
+
+  .space-builder-cancel,
+  .space-builder-submit {
+    width: 100%;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .space-builder-container {
+    padding: 20px 16px;
+  }
+
+  .space-builder-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .space-builder-title {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  .space-builder-form {
+    gap: 24px;
+  }
+
+  .space-builder-section {
+    gap: 10px;
+  }
+
+  .space-builder-input,
+  .space-builder-textarea {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  .space-builder-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .space-builder-submit-button,
+  .space-builder-back-button {
+    width: 100%;
+    padding: 12px 20px;
+  }
+
+  .space-builder-logo-preview {
+    width: 80px;
+    height: 80px;
+  }
+}
+

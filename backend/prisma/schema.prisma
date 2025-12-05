@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  address       String    @unique
+  username      String?   @unique
+  profilePic    String?
+  twitterHandle String?
+  discordId     String?
+  email         String?
+  githubHandle  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  xp            UserXP?
+  questCompletions QuestCompletion[]
+  createdQuests    Quest[]            @relation("QuestCreator")
+  socialConnections SocialConnection[]
+
+  @@index([address])
+  @@index([username])
+  @@map("users")
+}
+
+model UserXP {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalXP         Int      @default(0)
+  questsCompleted Int      @default(0)
+  claimsStaked    Int      @default(0)
+  tradeVolume     Decimal  @default(0) @db.Decimal(18, 2)
+  level           Int      @default(1)
+  updatedAt       DateTime @updatedAt
+
+  @@map("user_xp")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  owner       String
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quests      Quest[]
+
+  @@index([owner])
+  @@map("projects")
+}
+
+model Quest {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creatorId       String
+  creator         User     @relation("QuestCreator", fields: [creatorId], references: [id])
+  xpReward        Int
+  trustReward     Decimal? @db.Decimal(18, 2)
+  status          QuestStatus @default(ACTIVE)
+  maxCompletions  Int?
+  completedCount  Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  expiresAt       DateTime?
+
+  // Relations
+  requirements    QuestRequirement[]
+  completions     QuestCompletion[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("quests")
+}
+
+enum QuestStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  EXPIRED
+}
+
+model QuestRequirement {
+  id          String   @id @default(cuid())
+  questId     String
+  quest       Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  type        RequirementType
+  description String
+  verificationData Json // Stores type-specific verification data
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([questId])
+  @@map("quest_requirements")
+}
+
+enum RequirementType {
+  FOLLOW
+  RETWEET
+  LIKE
+  COMMENT
+  MENTION
+  VISIT
+  VERIFY_WALLET
+  TRANSACTION
+  NFT_HOLD
+  TOKEN_BALANCE
+  CONTRACT_INTERACTION
+  SIGNUP
+  CUSTOM
+  SEQUENCE
+  TIME_BASED
+}
+
+model QuestCompletion {
+  id            String   @id @default(cuid())
+  questId       String
+  quest         Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xpEarned      Int
+  trustEarned   Decimal? @db.Decimal(18, 2)
+  verified      Boolean  @default(false)
+  verificationData Json? // Stores proof of completion
+  completedAt   DateTime @default(now())
+  claimId       String?  @unique // On-chain claim ID if applicable
+
+  @@unique([questId, userId])
+  @@index([userId])
+  @@index([questId])
+  @@index([completedAt])
+  @@map("quest_completions")
+}
+
+model SocialConnection {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform  SocialPlatform
+  platformId String
+  username  String?
+  verified  Boolean  @default(false)
+  connectedAt DateTime @default(now())
+
+  @@unique([userId, platform])
+  @@index([userId])
+  @@map("social_connections")
+}
+
+enum SocialPlatform {
+  TWITTER
+  DISCORD
+  EMAIL
+  GITHUB
+}
+
+model Leaderboard {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  address   String
+  totalXP   Int
+  rank      Int
+  level     Int
+  updatedAt DateTime @updatedAt
+
+  @@index([rank])
+  @@index([totalXP])
+  @@map("leaderboard")
+}
+
+model TrustTokenTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  address   String
+  amount    Decimal  @db.Decimal(18, 2)
+  type      TransactionType
+  questId   String?
+  txHash    String?  @unique
+  status    TransactionStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([address])
+  @@index([txHash])
+  @@index([status])
+  @@map("trust_token_transactions")
+}
+
+enum TransactionType {
+  QUEST_REWARD
+  STAKING_REWARD
+  REFERRAL_BONUS
+  ADMIN_AWARD
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+

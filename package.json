@@ -1,0 +1,23 @@
+{
+  "name": "intuition-raffle-contracts",
+  "version": "1.0.0",
+  "description": "On-chain raffle system for Intuition Network",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network intuition",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network intuitionTestnet",
+    "deploy:wrapper": "hardhat run scripts/deploy-wrapper.js --network intuition",
+    "deploy:wrapper:testnet": "hardhat run scripts/deploy-wrapper.js --network intuitionTestnet",
+    "deploy:quest-claim": "hardhat run scripts/deploy-quest-claim-surcharge.js --network intuition",
+    "deploy:quest-claim:testnet": "hardhat run scripts/deploy-quest-claim-surcharge.js --network intuitionTestnet",
+    "deploy:escrow": "hardhat run scripts/deploy-quest-escrow.js --network intuition",
+    "deploy:escrow:testnet": "hardhat run scripts/deploy-quest-escrow.js --network intuitionTestnet",
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^16.3.1",
+    "hardhat": "^2.19.0"
+  }
+}

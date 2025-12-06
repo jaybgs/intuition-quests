@@ -863,9 +863,9 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 }}
               />
             )}
-            {activeTab === 'builder-dashboard' && selectedSpaceId && (
+            {activeTab === 'builder-dashboard' && (
               <BuilderDashboard 
-                spaceId={selectedSpaceId}
+                spaceId={selectedSpaceId || ''}
                 onBack={() => navigateToTab('discover')}
               />
             )}

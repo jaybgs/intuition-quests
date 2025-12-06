@@ -25,6 +25,28 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   const { isPro } = useSubscription();
 
   useEffect(() => {
+    if (!spaceId) {
+      // If no spaceId provided, try to get user's first space
+      if (address) {
+        spaceService.getSpacesByOwner(address).then(userSpaces => {
+          if (userSpaces.length > 0) {
+            // Use the first space
+            const firstSpace = userSpaces[0];
+            setSpace(firstSpace);
+            setIsAuthorized(true);
+          } else {
+            setIsAuthorized(false);
+          }
+        }).catch(error => {
+          console.error('Error loading user spaces:', error);
+          setIsAuthorized(false);
+        });
+      } else {
+        setIsAuthorized(false);
+      }
+      return;
+    }
+
     if (spaceId && address) {
       spaceService.getSpaceById(spaceId).then(loadedSpace => {
         if (loadedSpace) {
@@ -36,18 +58,47 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             setSpace(loadedSpace);
           } else {
             console.error('Unauthorized access: User is not the owner of this space');
-            // Redirect back if not authorized
-            if (onBack) {
-              onBack();
-            }
+            // Try to get user's first space instead
+            spaceService.getSpacesByOwner(address).then(userSpaces => {
+              if (userSpaces.length > 0) {
+                setSpace(userSpaces[0]);
+                setIsAuthorized(true);
+              } else if (onBack) {
+                onBack();
+              }
+            });
           }
         } else {
           console.error('Space not found:', spaceId);
-          setIsAuthorized(false);
+          // Try to get user's first space instead
+          if (address) {
+            spaceService.getSpacesByOwner(address).then(userSpaces => {
+              if (userSpaces.length > 0) {
+                setSpace(userSpaces[0]);
+                setIsAuthorized(true);
+              } else {
+                setIsAuthorized(false);
+              }
+            });
+          } else {
+            setIsAuthorized(false);
+          }
         }
       }).catch(error => {
         console.error('Error loading space:', error);
-        setIsAuthorized(false);
+        // Try to get user's first space instead
+        if (address) {
+          spaceService.getSpacesByOwner(address).then(userSpaces => {
+            if (userSpaces.length > 0) {
+              setSpace(userSpaces[0]);
+              setIsAuthorized(true);
+            } else {
+              setIsAuthorized(false);
+            }
+          });
+        } else {
+          setIsAuthorized(false);
+        }
       });
     } else if (spaceId && !address) {
       // No wallet connected

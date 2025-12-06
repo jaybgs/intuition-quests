@@ -37,14 +37,17 @@ export function Search({
 
   // Search for spaces as user types
   useEffect(() => {
-    if (query.trim().length > 0) {
-      const results = spaceService.searchSpaces(query);
-      setSearchResults(results);
-      setShowResults(true);
-    } else {
-      setSearchResults([]);
-      setShowResults(false);
-    }
+    const search = async () => {
+      if (query.trim().length > 0) {
+        const results = await spaceService.searchSpaces(query);
+        setSearchResults(results);
+        setShowResults(true);
+      } else {
+        setSearchResults([]);
+        setShowResults(false);
+      }
+    };
+    search();
   }, [query]);
 
   const handleSubmit = (e: React.FormEvent) => {

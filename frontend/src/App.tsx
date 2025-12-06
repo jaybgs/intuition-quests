@@ -124,7 +124,7 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
   const checkSpaces = useCallback(() => {
     if (address) {
       try {
-        const userSpaces = spaceService.getSpacesByOwner(address);
+        const userSpaces = await spaceService.getSpacesByOwner(address);
         setHasSpaces(userSpaces.length > 0);
       } catch (error) {
         console.error('Error checking user spaces:', error);
@@ -677,7 +677,7 @@ function AppContent() {
               onBuilderProfileClick={() => {
                 // Get user's first space and navigate to builder dashboard
                 if (address) {
-                  const userSpaces = spaceService.getSpacesByOwner(address);
+                  const userSpaces = await spaceService.getSpacesByOwner(address);
                   if (userSpaces.length > 0) {
                     setSelectedSpaceId(userSpaces[0].id);
                     setActiveTab('builder-dashboard');
@@ -739,10 +739,10 @@ function AppContent() {
                   setSelectedQuestId(questId);
                   setActiveTab('quest-detail');
                 }}
-                onCreateSpace={() => {
+                onCreateSpace={async () => {
                   // Check if user already has a space
                   if (address) {
-                    const existingSpaces = spaceService.getSpacesByOwner(address);
+                    const existingSpaces = await spaceService.getSpacesByOwner(address);
                     if (existingSpaces.length > 0) {
                       showToast('You can only create one space. Redirecting to your existing space...', 'warning');
                       setSelectedSpaceId(existingSpaces[0].id);
@@ -757,8 +757,8 @@ function AppContent() {
                   });
                   setShowSubscriptionModal(true);
                 }}
-                onSpaceClick={(spaceId) => {
-                  const space = spaceService.getSpaceById(spaceId);
+                onSpaceClick={async (spaceId) => {
+                  const space = await spaceService.getSpaceById(spaceId);
                   if (space) {
                     setSelectedSpace(space);
                     setActiveTab('space-detail');
@@ -778,10 +778,10 @@ function AppContent() {
                   setSelectedQuestId(questId);
                   setActiveTab('quest-detail');
                 }}
-                onCreateSpace={() => {
+                onCreateSpace={async () => {
                   // Check if user already has a space
                   if (address) {
-                    const existingSpaces = spaceService.getSpacesByOwner(address);
+                    const existingSpaces = await spaceService.getSpacesByOwner(address);
                     if (existingSpaces.length > 0) {
                       showToast('You can only create one space. Redirecting to your existing space...', 'warning');
                       setSelectedSpaceId(existingSpaces[0].id);
@@ -875,11 +875,11 @@ function AppContent() {
           setShowSubscriptionModal(false);
           setPendingSpaceCreation(null);
         }}
-        onProceed={(tier) => {
+        onProceed={async (tier) => {
           setShowSubscriptionModal(false);
           // Double-check that user doesn't already have a space before proceeding
           if (address) {
-            const existingSpaces = spaceService.getSpacesByOwner(address);
+            const existingSpaces = await spaceService.getSpacesByOwner(address);
             if (existingSpaces.length > 0) {
               showToast('You can only create one space. Redirecting to your existing space...', 'warning');
               setSelectedSpaceId(existingSpaces[0].id);

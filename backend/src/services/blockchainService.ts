@@ -116,12 +116,14 @@ export class BlockchainService {
   }> {
     try {
       const receipt = await this.publicClient.getTransactionReceipt({ hash: txHash });
+      // Get transaction to access value
+      const transaction = await this.publicClient.getTransaction({ hash: txHash });
 
       return {
         verified: receipt.status === 'success',
         from: receipt.from,
         to: receipt.to || undefined,
-        value: receipt.value,
+        value: transaction.value,
       };
     } catch (error) {
       return { verified: false };
@@ -138,6 +140,10 @@ export class BlockchainService {
   ): Promise<boolean> {
     try {
       // ERC721 ownerOf function
+      if (!tokenId) {
+        return false;
+      }
+
       const owner = await this.publicClient.readContract({
         address: contractAddress,
         abi: [
@@ -150,7 +156,7 @@ export class BlockchainService {
           },
         ],
         functionName: 'ownerOf',
-        args: tokenId ? [tokenId] : undefined,
+        args: [tokenId] as readonly [bigint],
       });
 
       return owner.toLowerCase() === ownerAddress.toLowerCase();

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { QuestService } from '../services/questService.js';
 import { CompletionService } from '../services/completionService.js';
 import { authenticateWallet, AuthRequest } from '../middleware/auth.js';
+import { RequirementType } from '../types/index.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -73,6 +74,10 @@ router.post('/', authenticateWallet, async (req: AuthRequest, res: Response) => 
     const quest = await questService.createQuest(req.user.address, {
       ...validated,
       expiresAt: validated.expiresAt ? new Date(validated.expiresAt) : undefined,
+      requirements: validated.requirements.map(req => ({
+        ...req,
+        type: req.type as RequirementType,
+      })),
     });
 
     res.status(201).json({ quest });

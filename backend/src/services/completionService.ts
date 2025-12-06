@@ -50,7 +50,7 @@ export class CompletionService {
 
     // Verify all requirements
     const verificationResults = await Promise.all(
-      (questData.requirements || []).map(async (requirement) => {
+      (questData.requirements || []).map(async (requirement: { id: string; type: string; verificationData: Record<string, any> }) => {
         const reqVerificationData = verificationData?.[requirement.id] || verificationData;
         return this.verificationService.verifyRequirement(
           requirement.type as any,
@@ -100,7 +100,7 @@ export class CompletionService {
     if (questData.trustReward && questData.trustReward > 0) {
       try {
         const txHash = await this.blockchainService.distributeTrustToken(
-          user.address,
+          user.address as `0x${string}`,
           questData.trustReward.toString()
         );
 

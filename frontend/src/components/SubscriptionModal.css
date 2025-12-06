@@ -4,6 +4,8 @@
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -11,7 +13,10 @@
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  padding: 20px;
+  padding: clamp(1rem, 2vw, 1.25rem);
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .subscription-modal {
@@ -19,36 +24,64 @@
   backdrop-filter: blur(36px);
   -webkit-backdrop-filter: blur(36px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: 40px;
+  border-radius: clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+  margin: auto;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .subscription-modal-close {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: clamp(1rem, 2.5vw, 1.25rem);
+  right: clamp(1rem, 2.5vw, 1.25rem);
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
+  border-radius: clamp(0.375rem, 1vw, 0.5rem);
+  width: clamp(2rem, 4vw, 2.25rem);
+  height: clamp(2rem, 4vw, 2.25rem);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--text-primary);
   transition: all 0.2s ease;
+  z-index: 10001;
+  flex-shrink: 0;
 }
 
 .subscription-modal-close:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.subscription-modal-close:active {
+  transform: scale(0.95);
+}
+
+.subscription-modal-close svg {
+  width: 100%;
+  height: 100%;
+  max-width: 24px;
+  max-height: 24px;
 }
 
 .subscription-modal-header {
@@ -57,31 +90,36 @@
 }
 
 .subscription-modal-title {
-  font-size: 32px;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 12px 0;
+  margin: 0 0 clamp(0.5rem, 1.5vw, 0.75rem) 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .subscription-modal-subtitle {
-  font-size: 16px;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
   color: var(--text-secondary);
   margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .subscription-modal-plans {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(280px, 30vw, 300px), 1fr));
+  gap: clamp(1rem, 2.5vw, 1.5rem);
 }
 
 .subscription-plan-card {
   background: rgba(26, 31, 53, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 32px;
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(1.5rem, 3vw, 2rem);
   position: relative;
   transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
 .subscription-plan-card:hover {
@@ -120,16 +158,18 @@
 }
 
 .subscription-plan-name {
-  font-size: 24px;
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 12px 0;
+  margin: 0 0 clamp(0.5rem, 1.5vw, 0.75rem) 0;
+  word-wrap: break-word;
 }
 
 .subscription-plan-price {
-  font-size: 36px;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
   font-weight: 700;
   color: var(--text-primary);
+  word-wrap: break-word;
 }
 
 .subscription-plan-price span {
@@ -146,10 +186,12 @@
 }
 
 .subscription-plan-features li {
-  padding: 12px 0;
-  font-size: 15px;
+  padding: clamp(0.5rem, 1.5vw, 0.75rem) 0;
+  font-size: clamp(0.8125rem, 1.5vw, 0.9375rem);
   color: var(--text-secondary);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .subscription-plan-features li:last-child {
@@ -158,15 +200,17 @@
 
 .subscription-plan-button {
   width: 100%;
-  padding: 16px 24px;
+  padding: clamp(0.75rem, 2vw, 1rem) clamp(1rem, 3vw, 1.5rem);
   background: rgba(59, 130, 246, 0.2);
   border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 12px;
+  border-radius: clamp(0.5rem, 1.5vw, 0.75rem);
   color: var(--accent-blue);
-  font-size: 16px;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .subscription-plan-button:hover {
@@ -187,16 +231,27 @@
 }
 
 @media (max-width: 768px) {
+  .subscription-modal-overlay {
+    padding: clamp(0.5rem, 2vw, 1rem);
+  }
+
   .subscription-modal {
-    padding: 24px;
+    padding: clamp(1rem, 3vw, 1.5rem);
+    max-width: 100%;
+    margin: clamp(0.5rem, 2vw, 1rem);
   }
 
   .subscription-modal-plans {
     grid-template-columns: 1fr;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
   }
 
   .subscription-modal-title {
-    font-size: 24px;
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+  }
+
+  .subscription-plan-card {
+    padding: clamp(1.25rem, 3vw, 1.5rem);
   }
 }
 

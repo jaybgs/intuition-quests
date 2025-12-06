@@ -1,11 +1,12 @@
 /* Space Builder Container */
 .space-builder-container {
   width: 100%;
-  min-height: calc(100vh - 200px);
+  min-height: calc(100vh - clamp(150px, 20vh, 200px));
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 40px 20px;
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 1.25rem);
+  box-sizing: border-box;
 }
 
 .space-builder-card {
@@ -15,24 +16,39 @@
   backdrop-filter: blur(36px);
   -webkit-backdrop-filter: blur(36px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: 40px;
+  border-radius: clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
   box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
               0 4px 14px rgba(0, 0, 0, 0.3),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+  animation: cardFadeIn 0.4s ease-out;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .space-builder-title {
-  font-size: 32px;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 32px 0;
+  margin: 0 0 clamp(1.5rem, 3vw, 2rem) 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .space-builder-form {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: clamp(1.5rem, 3vw, 2rem);
 }
 
 .space-builder-section {
@@ -42,12 +58,13 @@
 }
 
 .space-builder-label {
-  font-size: 14px;
+  font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   font-weight: 600;
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: clamp(0.25rem, 0.5vw, 0.5rem);
+  word-wrap: break-word;
 }
 
 .required-asterisk {
@@ -56,9 +73,11 @@
 }
 
 .space-builder-hint {
-  font-size: 13px;
+  font-size: clamp(0.75rem, 1.5vw, 0.8125rem);
   color: var(--text-muted);
   margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Role Selection Buttons */
@@ -106,14 +125,14 @@
 /* Input Fields */
 .space-builder-input {
   width: 100%;
-  padding: 12px 16px;
+  padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.875rem, 2vw, 1rem);
   background: rgba(26, 31, 53, 0.3);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: clamp(0.5rem, 1.5vw, 0.75rem);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   font-weight: 400;
   transition: all 0.3s ease;
   outline: none;
@@ -138,19 +157,19 @@
 
 .space-builder-textarea {
   width: 100%;
-  padding: 12px 16px;
-  padding-bottom: 32px;
+  padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.875rem, 2vw, 1rem);
+  padding-bottom: clamp(1.5rem, 3vw, 2rem);
   background: rgba(26, 31, 53, 0.3);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: clamp(0.5rem, 1.5vw, 0.75rem);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   font-weight: 400;
   font-family: inherit;
   resize: vertical;
-  min-height: 100px;
+  min-height: clamp(80px, 15vh, 100px);
   transition: all 0.3s ease;
   outline: none;
   box-sizing: border-box;
@@ -279,14 +298,15 @@
 
 .space-builder-cancel,
 .space-builder-submit {
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 14px;
+  padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(1rem, 3vw, 1.5rem);
+  border-radius: clamp(0.5rem, 1.5vw, 0.75rem);
+  font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
-  min-width: 120px;
+  min-width: clamp(100px, 15vw, 120px);
+  box-sizing: border-box;
 }
 
 .space-builder-cancel {
@@ -333,20 +353,25 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .space-builder-container {
-    padding: 20px 16px;
+    padding: clamp(1rem, 2.5vw, 1.25rem) clamp(0.75rem, 2vw, 1rem);
   }
 
   .space-builder-card {
-    padding: 24px 20px;
+    padding: clamp(1rem, 3vw, 1.5rem) clamp(1rem, 2.5vw, 1.25rem);
+    border-radius: clamp(0.75rem, 2vw, 1rem);
   }
 
   .space-builder-title {
-    font-size: 24px;
-    margin-bottom: 24px;
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+    margin-bottom: clamp(1rem, 3vw, 1.5rem);
   }
 
   .space-builder-form {
-    gap: 24px;
+    gap: clamp(1rem, 3vw, 1.5rem);
+  }
+
+  .space-builder-section {
+    gap: clamp(0.5rem, 1.5vw, 0.625rem);
   }
 
   .space-builder-role-buttons {
@@ -357,65 +382,26 @@
     min-width: 100%;
   }
 
+  .space-builder-input,
+  .space-builder-textarea {
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
+    padding: clamp(0.5rem, 1.5vw, 0.625rem) clamp(0.75rem, 2vw, 0.875rem);
+  }
+
   .logo-upload-area {
-    min-height: 150px;
-    padding: 24px;
+    min-height: clamp(120px, 20vh, 150px);
+    padding: clamp(1rem, 3vw, 1.5rem);
   }
 
   .space-builder-actions {
     flex-direction: column-reverse;
+    gap: clamp(0.5rem, 1.5vw, 0.75rem);
   }
 
   .space-builder-cancel,
   .space-builder-submit {
     width: 100%;
-  }
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .space-builder-container {
-    padding: 20px 16px;
-  }
-
-  .space-builder-card {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .space-builder-title {
-    font-size: 24px;
-    margin-bottom: 24px;
-  }
-
-  .space-builder-form {
-    gap: 24px;
-  }
-
-  .space-builder-section {
-    gap: 10px;
-  }
-
-  .space-builder-input,
-  .space-builder-textarea {
-    font-size: 14px;
-    padding: 10px 14px;
-  }
-
-  .space-builder-actions {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .space-builder-submit-button,
-  .space-builder-back-button {
-    width: 100%;
-    padding: 12px 20px;
-  }
-
-  .space-builder-logo-preview {
-    width: 80px;
-    height: 80px;
+    min-width: 100%;
   }
 }
 

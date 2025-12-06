@@ -282,6 +282,19 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
   };
 
 
+  // Show loading state while checking for existing spaces
+  if (!address && status === 'connecting') {
+    return (
+      <div className="space-builder-container">
+        <div className="space-builder-card">
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <p style={{ color: 'var(--text-secondary)' }}>Connecting wallet...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-builder-container">
       <div className="space-builder-card">

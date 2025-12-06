@@ -2,21 +2,22 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: calc(100vh - 200px);
-  padding: 40px 24px;
-  gap: 40px;
+  min-height: calc(100vh - clamp(150px, 20vh, 200px));
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 1.5rem);
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+  box-sizing: border-box;
 }
 
 .community-banner {
-  width: 85%;
+  width: clamp(85%, 90vw, 1000px);
   max-width: 1000px;
-  height: 150px;
+  height: clamp(120px, 15vh, 150px);
   background: rgba(26, 31, 53, 0.2); /* 80% transparency (20% opacity) - same as statistics boxes */
   backdrop-filter: blur(36px); /* Increased blur - same as statistics boxes */
   -webkit-backdrop-filter: blur(36px); /* Safari support */
   border: none; /* No borderlines */
-  border-radius: 24px;
-  padding: 40px;
+  border-radius: clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -26,6 +27,7 @@
               inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Subtle inner highlight */
   transition: all 0.2s;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .community-banner:hover {
@@ -40,7 +42,7 @@
 
 .community-banner-text {
   color: var(--text-primary);
-  font-size: 32px;
+  font-size: clamp(1.25rem, 3.5vw, 2rem); /* Responsive: 20px to 32px */
   font-weight: 700;
   text-align: left;
   margin: 0;
@@ -51,8 +53,10 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  padding-right: 24px;
+  padding-right: clamp(1rem, 2.5vw, 1.5rem);
   z-index: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .community-banner-logo {
@@ -71,14 +75,16 @@
 }
 
 .community-quests-title {
-  width: 85%;
+  width: clamp(85%, 90vw, 1400px);
   max-width: 1400px;
-  font-size: 32px;
+  font-size: clamp(1.25rem, 3.5vw, 2rem); /* Responsive: 20px to 32px */
   font-weight: 700;
   color: var(--text-primary);
-  margin: 60px 0 -20px 0;
-  padding: 0 24px;
+  margin: clamp(2rem, 6vw, 3.75rem) 0 clamp(-1rem, -2vw, -1.25rem) 0;
+  padding: 0 clamp(1rem, 3vw, 1.5rem);
   text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .community-quests-grid-container {
@@ -97,7 +103,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, auto);
-  gap: 20px;
+  gap: clamp(1rem, 2.5vw, 1.25rem);
   width: 100%;
 }
 
@@ -144,15 +150,15 @@
 .community-see-more-button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
+  gap: clamp(0.375rem, 1vw, 0.5rem);
+  padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(1rem, 3vw, 1.5rem);
   background: rgba(26, 31, 53, 0.3);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: clamp(0.5rem, 1.5vw, 0.75rem);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -227,8 +233,8 @@
 
 .community-nav {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: clamp(2.5rem, 5vw, 3rem);
+  height: clamp(2.5rem, 5vw, 3rem);
   border: none;
   border-radius: 50%;
   background: rgba(26, 31, 53, 0.3);
@@ -260,8 +266,8 @@
 }
 
 .community-nav svg {
-  width: 24px;
-  height: 24px;
+  width: clamp(1.125rem, 2.5vw, 1.5rem);
+  height: clamp(1.125rem, 2.5vw, 1.5rem);
   stroke-width: 2.5;
 }
 
@@ -313,33 +319,33 @@
 
 @media (max-width: 768px) {
   .community-container {
-    padding: 28px 16px;
-    gap: 32px;
+    padding: clamp(1.25rem, 3vw, 1.75rem) clamp(0.75rem, 2vw, 1rem);
+    gap: clamp(1.5rem, 4vw, 2rem);
   }
 
   .community-banner {
     width: 90%;
     height: auto;
-    min-height: 150px;
-    padding: 32px 24px;
+    min-height: clamp(120px, 15vh, 150px);
+    padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.5rem);
   }
 
   .community-banner-text {
-    font-size: 22px;
+    font-size: clamp(1.125rem, 3vw, 1.375rem);
   }
 
   .community-quest-card-wrapper {
-    width: 320px;
+    width: clamp(280px, 85vw, 320px);
   }
 
   .community-nav {
-    width: 40px;
-    height: 40px;
+    width: clamp(2rem, 5vw, 2.5rem);
+    height: clamp(2rem, 5vw, 2.5rem);
   }
 
   .community-nav svg {
-    width: 20px;
-    height: 20px;
+    width: clamp(1rem, 2.5vw, 1.25rem);
+    height: clamp(1rem, 2.5vw, 1.25rem);
   }
 
   .community-quests-grid {
@@ -349,9 +355,9 @@
 
   .community-quests-title {
     width: 90%;
-    font-size: 24px;
-    margin: 40px 0 -20px 0;
-    padding: 0 16px;
+    font-size: clamp(1.125rem, 3vw, 1.5rem);
+    margin: clamp(1.5rem, 5vw, 2.5rem) 0 clamp(-1rem, -2vw, -1.25rem) 0;
+    padding: 0 clamp(0.75rem, 2vw, 1rem);
   }
 }
 

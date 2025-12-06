@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useSubscription } from '../hooks/useSubscription';
 import { showToast } from './Toast';
 import './SubscriptionModal.css';
@@ -10,6 +11,31 @@ interface SubscriptionModalProps {
 
 export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionModalProps) {
   const { upgradeToPro } = useSubscription();
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -27,8 +53,21 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
   return (
     <div className="subscription-modal-overlay" onClick={onClose}>
       <div className="subscription-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="subscription-modal-close" onClick={onClose}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <button 
+          className="subscription-modal-close" 
+          onClick={onClose}
+          aria-label="Close modal"
+          type="button"
+        >
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2"
+            style={{ width: '100%', height: '100%' }}
+          >
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>

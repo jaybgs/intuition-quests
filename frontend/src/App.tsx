@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
@@ -26,6 +27,9 @@ import { BuilderDashboard } from './components/BuilderDashboard';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { AdminLogin } from './components/AdminLogin';
 import { spaceService } from './services/spaceService';
+import { QuestServiceBackend } from './services/questServiceBackend';
+
+const questServiceBackend = new QuestServiceBackend();
 import type { Space } from './types';
 import { useTrustBalance } from './hooks/useTrustBalance';
 import { useAuth } from './hooks/useAuth';
@@ -98,218 +102,129 @@ const TRUST_TOKEN_ADDRESS = '0x6cd905df2ed214b22e0d48ff17cd4200c1c6d8a3' as cons
 // Profile Dropdown Component
 // Helper function to get profile picture from localStorage
 const getStoredProfilePic = (address: string | undefined): string | null => {
-  if (!address || typeof window === 'undefined' || !window.localStorage) {
-    return null;
-  }
+  if (!address) return null;
   try {
-    const stored = localStorage.getItem(`profilePic_${address.toLowerCase()}`);
-    return stored ? stored : null; // Profile pic is stored as data URL string
-  } catch {
-    return null;
+    const stored = localStorage.getItem(`user_profile_${address.toLowerCase()}`);
+    if (stored) {
+      const profile = JSON.parse(stored);
+      return profile.profilePic || null;
+    }
+  } catch (error) {
+    // Ignore errors
   }
+  return null;
 };
 
-function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfileClick }: { 
-  address: string | undefined; 
+// Helper function to get username from localStorage
+const getStoredUsername = (address: string | undefined): string | null => {
+  if (!address) return null;
+  try {
+    const stored = localStorage.getItem(`user_profile_${address.toLowerCase()}`);
+    if (stored) {
+      const profile = JSON.parse(stored);
+      return profile.username || null;
+    }
+  } catch (error) {
+    // Ignore errors
+  }
+  return null;
+};
+
+interface ProfileDropdownProps {
+  address: string;
   onDisconnect: () => void;
   onProfileClick: () => void;
   onBuilderProfileClick?: () => void;
-}) {
+}
+
+function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfileClick }: ProfileDropdownProps) {
+  const profilePic = getStoredProfilePic(address);
+  const username = getStoredUsername(address);
   const [isOpen, setIsOpen] = useState(false);
-  const { balance, isLoading, contractNotDeployed, isUsingNativeBalance } = useTrustBalance();
-  const profilePicture = getStoredProfilePic(address);
-  const [hasSpaces, setHasSpaces] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Check if user has created any spaces
-  const checkSpaces = useCallback(() => {
-    if (address) {
-      try {
-        const userSpaces = spaceService.getSpacesByOwner(address);
-        setHasSpaces(userSpaces.length > 0);
-      } catch (error) {
-        console.error('Error checking user spaces:', error);
-        setHasSpaces(false);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
       }
-    } else {
-      setHasSpaces(false);
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
     }
-  }, [address]);
 
-  useEffect(() => {
-    checkSpaces();
-  }, [checkSpaces]);
-
-  // Listen for space creation and deletion events
-  useEffect(() => {
-    const handleSpaceCreated = (event: CustomEvent) => {
-      // Only update if the created space belongs to the current user
-      if (address && event.detail?.ownerAddress?.toLowerCase() === address.toLowerCase()) {
-        checkSpaces();
-      }
-    };
-
-    const handleSpaceDeleted = (event: CustomEvent) => {
-      // Only update if the deleted space belongs to the current user
-      if (address && event.detail?.ownerAddress?.toLowerCase() === address.toLowerCase()) {
-        checkSpaces();
-      }
-    };
-
-    window.addEventListener('spaceCreated', handleSpaceCreated as EventListener);
-    window.addEventListener('spaceDeleted', handleSpaceDeleted as EventListener);
     return () => {
-      window.removeEventListener('spaceCreated', handleSpaceCreated as EventListener);
-      window.removeEventListener('spaceDeleted', handleSpaceDeleted as EventListener);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [address, checkSpaces]);
-
-  if (!address) return null;
-
-  const displayAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
+  }, [isOpen]);
 
   return (
-    <div className="profile-dropdown-container">
-      <div className="trust-balance-display">
-        {contractNotDeployed ? (
-          <div className="trust-balance" title="TRUST token contract not deployed yet. Showing native balance if available.">
-            {isUsingNativeBalance ? (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="trust-icon">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-                <span className="trust-balance-value">{balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                <span className="trust-balance-label">Trust</span>
-              </>
-            ) : (
-              <span className="trust-balance-value" style={{ opacity: 0.5 }}>N/A</span>
-            )}
-          </div>
-        ) : isLoading ? (
-          <span className="trust-balance-loading">...</span>
-        ) : (
-          <div className="trust-balance">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="trust-icon">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-            <span className="trust-balance-value">{balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span className="trust-balance-label">Trust</span>
-          </div>
-        )}
-      </div>
-      <button 
-        onClick={() => setIsOpen(!isOpen)} 
-        className="profile-icon-button"
-        aria-label="User Profile"
+    <div className="profile-dropdown" ref={dropdownRef}>
+      <button
+        className="profile-button"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Profile menu"
       >
-        {profilePicture ? (
-          <img 
-            src={profilePicture} 
-            alt="Profile" 
-            style={{ 
-              width: '24px', 
-              height: '24px', 
-              borderRadius: '50%', 
-              objectFit: 'cover' 
-            }} 
-          />
+        {profilePic ? (
+          <img src={profilePic} alt="Profile" className="profile-pic" />
         ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
+          <div className="profile-pic-placeholder">
+            {username ? username.charAt(0).toUpperCase() : address.slice(2, 4).toUpperCase()}
+          </div>
         )}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
       </button>
       {isOpen && (
-        <>
-          <div className="profile-dropdown-overlay" onClick={() => setIsOpen(false)}></div>
-          <div className="profile-dropdown">
-            <div className="profile-dropdown-address">
-              {displayAddress}
-            </div>
-            <button 
-              className="profile-dropdown-item"
-              onClick={() => {
-                setIsOpen(false);
-                onProfileClick();
-              }}
-            >
-              My Profile
-            </button>
-            {hasSpaces && onBuilderProfileClick && (
-              <button 
-                className="profile-dropdown-item"
-                onClick={() => {
-                  setIsOpen(false);
-                  onBuilderProfileClick();
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                  <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-                Builder's Profile
-              </button>
-            )}
-            <button 
-              className="profile-dropdown-item profile-dropdown-disconnect"
-              onClick={() => {
-                setIsOpen(false);
-                onDisconnect();
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
+        <div className="profile-dropdown-menu">
+          <button onClick={() => { onProfileClick(); setIsOpen(false); }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            My Profile
+          </button>
+          {onBuilderProfileClick && (
+            <button onClick={() => { onBuilderProfileClick(); setIsOpen(false); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
               </svg>
-              Disconnect
+              Builder Dashboard
             </button>
-          </div>
-        </>
+          )}
+          <button onClick={() => { onDisconnect(); setIsOpen(false); }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Disconnect
+          </button>
+        </div>
       )}
     </div>
   );
 }
 
-// Login/Connect Button Component
 function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick: () => void; onBuilderProfileClick?: () => void }) {
   const { address, isConnected, chainId } = useAccount();
-  const { connect, connectors, isPending, error: connectError } = useConnect();
+  const { connectors, connect, isPending, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
-  const { authenticate, isAuthenticating } = useAuth();
 
-  // Auto-authenticate when wallet is connected
-  useEffect(() => {
-    if (isConnected && address && !isAuthenticating) {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        authenticate().catch(console.error);
-      }
-    }
-  }, [isConnected, address, isAuthenticating, authenticate]);
-
-  // Auto-switch to Intuition network if connected to wrong chain
-  useEffect(() => {
-    if (isConnected && chainId && chainId !== 1155 && switchChain) {
-      // Show toast and attempt to switch
-      showToast('Please switch to Intuition Network', 'warning');
-      try {
-        switchChain({ chainId: 1155 });
-      } catch (error) {
-        console.error('Error switching network:', error);
-      }
-    }
-  }, [isConnected, chainId, switchChain]);
-
-  // Show connection errors
   useEffect(() => {
     if (connectError) {
-      console.error('Wallet connection error:', connectError);
-      if (connectError.message?.includes('User rejected')) {
-        showToast('Connection was rejected', 'warning');
-      } else {
-        showToast('Failed to connect wallet. Please try again.', 'error');
+      const message = connectError.message;
+      if (
+        !message.includes('User rejected') &&
+        !message.includes('user rejected') &&
+        !message.includes('User denied') &&
+        !message.includes('user denied')
+      ) {
+        showToast(`Connection error: ${message}`, 'error');
       }
     }
   }, [connectError]);
@@ -363,42 +278,36 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
     }
 
     try {
-      // Prefer MetaMask or injected, fallback to first available
-      const connector = connectors.find(c => 
-        c.id === 'io.metamask' || 
-        c.id === 'metaMask' ||
-        c.id === 'injected'
-      ) || connectors[0];
-      
-      if (connector) {
-        await connect({ connector });
-        showToast('Connecting wallet...', 'info');
-      } else {
-        showToast('No wallet found. Please install MetaMask or another wallet.', 'error');
-      }
+      await connect({ connector: connectors[0] });
     } catch (error: any) {
-      console.error('Connection error:', error);
-      if (error?.message?.includes('User rejected')) {
-        showToast('Connection was rejected', 'warning');
-      } else {
-        showToast('Failed to connect wallet: ' + (error?.message || 'Unknown error'), 'error');
+      // User rejection is handled silently
+      if (!error?.message?.includes('rejected') && !error?.message?.includes('denied')) {
+        console.error('Connection error:', error);
       }
     }
   };
 
   return (
     <button 
-      onClick={handleConnect} 
-      className="login-button"
+      className="login-button" 
+      onClick={handleConnect}
       disabled={isPending}
+      aria-label="Connect Wallet"
     >
       {isPending ? 'Connecting...' : 'Connect Wallet'}
     </button>
   );
 }
 
-function AppContent() {
-  const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests'>('discover');
+interface AppContentProps {
+  initialTab?: string;
+  questName?: string | null;
+  spaceName?: string | null;
+}
+
+function AppContent({ initialTab = 'discover', questName = null, spaceName = null }: AppContentProps) {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests'>(initialTab as any);
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null);
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
@@ -413,6 +322,131 @@ function AppContent() {
   const navRef = useRef<HTMLElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+
+  // Sync activeTab with initialTab prop (for routing)
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab as any);
+    }
+  }, [initialTab]);
+
+  // Handle quest name from URL
+  useEffect(() => {
+    if (questName && activeTab === 'quest-detail') {
+      // Find quest by name and set selectedQuestId
+      const findQuestByName = async () => {
+        try {
+          const quests = await questServiceBackend.getAllQuests();
+          const normalizedQuestName = questName.toLowerCase().replace(/-/g, ' ');
+          const quest = quests.find(q => {
+            const normalizedTitle = q.title.toLowerCase();
+            const slugifiedTitle = createSlug(q.title);
+            return (
+              normalizedTitle === normalizedQuestName ||
+              slugifiedTitle === questName.toLowerCase() ||
+              q.id === questName ||
+              q.id.toLowerCase() === questName.toLowerCase()
+            );
+          });
+          if (quest) {
+            setSelectedQuestId(quest.id);
+          } else {
+            console.warn('Quest not found:', questName);
+          }
+        } catch (error) {
+          console.error('Error finding quest:', error);
+        }
+      };
+      findQuestByName();
+    }
+  }, [questName, activeTab]);
+
+  // Handle space name from URL
+  useEffect(() => {
+    if (spaceName && activeTab === 'space-detail') {
+      // Find space by name and set selectedSpace
+      const findSpaceByName = async () => {
+        try {
+          const spaces = await spaceService.getAllSpaces();
+          const normalizedSpaceName = spaceName.toLowerCase().replace(/-/g, ' ');
+          const space = spaces.find((s: Space) => {
+            const normalizedName = s.name.toLowerCase();
+            const slugifiedName = createSlug(s.name);
+            return (
+              s.slug === spaceName.toLowerCase() ||
+              normalizedName === normalizedSpaceName ||
+              slugifiedName === spaceName.toLowerCase() ||
+              s.id === spaceName ||
+              s.id.toLowerCase() === spaceName.toLowerCase()
+            );
+          });
+          if (space) {
+            setSelectedSpace(space);
+          } else {
+            console.warn('Space not found:', spaceName);
+          }
+        } catch (error) {
+          console.error('Error finding space:', error);
+        }
+      };
+      findSpaceByName();
+    }
+  }, [spaceName, activeTab]);
+
+  // Helper function to create URL-friendly slug from name
+  const createSlug = (name: string): string => {
+    return name.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  // Navigation helper
+  const navigateToTab = (tab: string, params?: { questId?: string; questName?: string; spaceId?: string; spaceName?: string }) => {
+    const routeMap: Record<string, string> = {
+      'discover': '/home',
+      'community': '/community',
+      'rewards': '/rewards',
+      'bounties': '/bounties',
+      'raids': '/raids',
+      'dashboard': '/dashboard',
+      'builder-dashboard': '/builder-dashboard',
+      'space-builder': '/create-space',
+      'create': '/create-quest',
+    };
+
+    if (params?.questName) {
+      navigate(`/quest-${createSlug(params.questName)}`);
+    } else if (params?.questId) {
+      // Try to get quest name first
+      questServiceBackend.getQuestById(params.questId).then(quest => {
+        if (quest) {
+          navigate(`/quest-${createSlug(quest.title)}`);
+        } else {
+          navigate(`/quest-${params.questId}`);
+        }
+      }).catch(() => {
+        navigate(`/quest-${params.questId}`);
+      });
+    } else if (params?.spaceName) {
+      navigate(`/space-${createSlug(params.spaceName)}`);
+    } else if (params?.spaceId) {
+      // Try to get space name first
+      spaceService.getSpaceById(params.spaceId).then(space => {
+        if (space) {
+          navigate(`/space-${createSlug(space.name)}`);
+        } else {
+          navigate(`/space-${params.spaceId}`);
+        }
+      }).catch(() => {
+        navigate(`/space-${params.spaceId}`);
+      });
+      return;
+    } else if (routeMap[tab]) {
+      navigate(routeMap[tab]);
+    } else {
+      setActiveTab(tab as any);
+    }
+  };
 
   // Hidden admin login/logout via keyboard shortcut (Ctrl+Shift+A or Cmd+Shift+A on Mac)
   useEffect(() => {
@@ -510,6 +544,7 @@ function AppContent() {
     { 
       label: 'Discover & Earn',
       tab: 'discover',
+      path: '/home',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/>
@@ -520,6 +555,7 @@ function AppContent() {
     { 
       label: 'Community',
       tab: 'community',
+      path: '/community',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -532,6 +568,7 @@ function AppContent() {
     { 
       label: 'Rewards',
       tab: 'rewards',
+      path: '/rewards',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="8" r="7"/>
@@ -542,6 +579,7 @@ function AppContent() {
     { 
       label: 'Bounties',
       tab: 'bounties',
+      path: '/bounties',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -552,6 +590,7 @@ function AppContent() {
     { 
       label: 'Raids',
       tab: 'raids',
+      path: '/raids',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M7 16V4m0 0L3 8m4-4l4 4"/>
@@ -566,9 +605,9 @@ function AppContent() {
       <div className="app-content-wrapper">
       <header className="app-header">
         <div className="header-left">
-          <a href="/" className="logo">
+          <Link to="/home" className="logo">
             <img src="/logo.svg" alt="TrustQuests Logo" className="logo-icon" />
-          </a>
+          </Link>
           <nav 
             className="header-nav" 
             ref={navRef}
@@ -580,9 +619,9 @@ function AppContent() {
           >
             <div className="header-nav-slider" ref={sliderRef} />
             {menuItems.map((item, index) => (
-              <a
+              <Link
                 key={index}
-                href="#"
+                to={item.path}
                 className="header-nav-item"
                 ref={(el) => { itemRefs.current[index] = el; }}
                 onMouseEnter={() => {
@@ -598,18 +637,13 @@ function AppContent() {
                     slider.style.opacity = '1';
                   }
                 }}
-                onMouseLeave={() => {
-                  setHoveredIndex(null);
-                  // Return slider to active tab position
-                  updateSliderToActiveTab();
-                }}
                 onClick={(e) => {
                   e.preventDefault();
-                  setActiveTab(item.tab as any);
+                  navigateToTab(item.tab);
                 }}
               >
                 <span className="header-nav-text">{item.label}</span>
-              </a>
+              </Link>
             ))}
           </nav>
         </div>
@@ -618,12 +652,12 @@ function AppContent() {
             placeholder="Search quests, projects, spaces..." 
             onSpaceSelect={(space) => {
               setSelectedSpace(space);
-              setActiveTab('space-detail');
+              navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
             }}
             isAdmin={isAdminAuthenticated}
             onBuilderAccess={(space) => {
               setSelectedSpaceId(space.id);
-              setActiveTab('builder-dashboard');
+              navigateToTab('builder-dashboard');
             }}
           />
         </div>
@@ -637,66 +671,26 @@ function AppContent() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                marginRight: '12px',
-                padding: '6px 12px',
-                background: 'rgba(102, 126, 234, 0.15)',
-                border: '1px solid rgba(102, 126, 234, 0.4)',
-                borderRadius: '6px',
-                fontSize: '0.75rem',
-                color: '#818cf8',
-                cursor: 'pointer',
+                gap: '8px',
+                padding: '8px 16px',
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                borderRadius: '8px',
+                color: '#ef4444',
+                fontSize: '14px',
                 fontWeight: 600,
-                transition: 'all 0.2s ease'
+                cursor: 'pointer',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(102, 126, 234, 0.25)';
-                e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.6)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(102, 126, 234, 0.15)';
-                e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.4)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-              title={`Admin: ${adminRole} (Click to logout or press Ctrl+Shift+A)`}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                <path d="M9 12l2 2 4-4"/>
-              </svg>
-              <span>{adminRole?.toUpperCase()}</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
+              Admin Logout
             </button>
           )}
-          {isConnected && address ? (
-            <LoginButton 
-              onProfileClick={() => setActiveTab('dashboard')}
-              onBuilderProfileClick={() => {
-                // Get user's first space and navigate to builder dashboard
-                if (address) {
-                  const userSpaces = spaceService.getSpacesByOwner(address);
-                  if (userSpaces.length > 0) {
-                    setSelectedSpaceId(userSpaces[0].id);
-                    setActiveTab('builder-dashboard');
-                  }
-                }
-              }}
-            />
-          ) : (
-            <div 
-              style={{ display: 'flex', gap: '12px', alignItems: 'center' }}
-              data-testid="auth-buttons-container"
-            >
-              <button 
-                className="login-button" 
-                onClick={() => setShowSignupModal(true)}
-                data-testid="login-button"
-              >
-                Connect Wallet
-              </button>
+          <LoginButton 
+            onProfileClick={() => navigateToTab('dashboard')}
+            onBuilderProfileClick={() => navigateToTab('builder-dashboard')}
+          />
+          {!isConnected && (
+            <div className="header-right">
               <button 
                 className="signup-button" 
                 onClick={() => {
@@ -721,7 +715,7 @@ function AppContent() {
         ) : showOnboarding ? (
           <OnboardingSetup onComplete={() => {
             setShowOnboarding(false);
-            setActiveTab('discover');
+            navigateToTab('discover');
           }} />
         ) : (
           <>
@@ -729,7 +723,7 @@ function AppContent() {
               <QuestList 
                 onQuestClick={(questId) => {
                   setSelectedQuestId(questId);
-                  setActiveTab('quest-detail');
+                  navigateToTab('quest-detail', { questId });
                 }}
               />
             )}
@@ -737,31 +731,32 @@ function AppContent() {
               <ProjectSlideshow 
                 onQuestClick={(questId) => {
                   setSelectedQuestId(questId);
-                  setActiveTab('quest-detail');
+                  navigateToTab('quest-detail', { questId });
                 }}
                 onCreateSpace={() => {
                   // Check if user already has a space
                   if (address) {
-                    const existingSpaces = spaceService.getSpacesByOwner(address);
-                    if (existingSpaces.length > 0) {
-                      showToast('You can only create one space. Redirecting to your existing space...', 'warning');
-                      setSelectedSpaceId(existingSpaces[0].id);
-                      setActiveTab('builder-dashboard');
-                      return;
-                    }
+                    spaceService.getSpacesByOwner(address).then(existingSpaces => {
+                      if (existingSpaces.length > 0) {
+                        showToast('You can only create one space. Redirecting to your existing space...', 'warning');
+                        setSelectedSpaceId(existingSpaces[0].id);
+                        navigateToTab('builder-dashboard');
+                        return;
+                      }
+                    });
                   }
                   localStorage.setItem('spaceBuilderSource', 'discover');
                   localStorage.setItem('previousTab', 'discover');
                   setPendingSpaceCreation(() => () => {
-                  setActiveTab('space-builder');
+                    navigateToTab('space-builder');
                   });
                   setShowSubscriptionModal(true);
                 }}
-                onSpaceClick={(spaceId) => {
-                  const space = spaceService.getSpaceById(spaceId);
+                onSpaceClick={async (spaceId) => {
+                  const space = await spaceService.getSpaceById(spaceId);
                   if (space) {
                     setSelectedSpace(space);
-                    setActiveTab('space-detail');
+                    navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
                   }
                 }}
               />
@@ -770,105 +765,120 @@ function AppContent() {
             {activeTab === 'create' && <CreateQuest />}
             {activeTab === 'profile' && <UserProfile />}
             {activeTab === 'dashboard' && <UserDashboard onEditProfile={() => setActiveTab('edit-profile')} />}
-            {activeTab === 'edit-profile' && <EditProfile onBack={() => setActiveTab('dashboard')} />}
+            {activeTab === 'edit-profile' && <EditProfile onBack={() => navigateToTab('dashboard')} />}
             {activeTab === 'community' && (
               <Community 
                 onSeeMoreLeaderboard={() => setActiveTab('full-leaderboard')}
                 onQuestClick={(questId) => {
                   setSelectedQuestId(questId);
-                  setActiveTab('quest-detail');
+                  navigateToTab('quest-detail', { questId });
                 }}
                 onCreateSpace={() => {
                   // Check if user already has a space
                   if (address) {
-                    const existingSpaces = spaceService.getSpacesByOwner(address);
-                    if (existingSpaces.length > 0) {
-                      showToast('You can only create one space. Redirecting to your existing space...', 'warning');
-                      setSelectedSpaceId(existingSpaces[0].id);
-                      setActiveTab('builder-dashboard');
-                      return;
-                    }
+                    spaceService.getSpacesByOwner(address).then(existingSpaces => {
+                      if (existingSpaces.length > 0) {
+                        showToast('You can only create one space. Redirecting to your existing space...', 'warning');
+                        setSelectedSpaceId(existingSpaces[0].id);
+                        navigateToTab('builder-dashboard');
+                        return;
+                      }
+                    });
                   }
                   localStorage.setItem('spaceBuilderSource', 'community');
                   localStorage.setItem('previousTab', 'community');
                   setPendingSpaceCreation(() => () => {
-                  setActiveTab('space-builder');
+                    navigateToTab('space-builder');
                   });
                   setShowSubscriptionModal(true);
                 }}
                 onSeeMoreQuests={() => setActiveTab('all-quests')}
               />
             )}
+            {activeTab === 'rewards' && <Rewards />}
+            {activeTab === 'bounties' && <Bounties />}
+            {activeTab === 'raids' && <Raids />}
+            {activeTab === 'full-leaderboard' && <Leaderboard showFull={true} />}
             {activeTab === 'all-quests' && (
-              <AllQuests
-                onBack={() => setActiveTab('community')}
+              <AllQuests 
+                onBack={() => navigateToTab('community')}
                 onQuestClick={(questId) => {
                   setSelectedQuestId(questId);
-                  setActiveTab('quest-detail');
+                  navigateToTab('quest-detail', { questId });
+                }}
+              />
+            )}
+            {activeTab === 'quest-detail' && selectedQuestId && (
+              <QuestDetail 
+                questId={selectedQuestId}
+                onBack={() => {
+                  const previousTab = localStorage.getItem('previousTab') || 'community';
+                  navigateToTab(previousTab);
+                }}
+                onNavigateToProfile={(address) => {
+                  // Navigate to user profile if needed
+                  console.log('Navigate to profile:', address);
                 }}
               />
             )}
             {activeTab === 'space-builder' && (
               <SpaceBuilder 
+                onComplete={(space) => {
+                  setSelectedSpaceId(space.id);
+                  const source = localStorage.getItem('spaceBuilderSource') || 'discover';
+                  const previousTab = localStorage.getItem('previousTab') || source;
+                  navigateToTab('builder-dashboard');
+                }}
                 onBack={() => {
-                  // Go back to the previous tab (discover or community)
-                  const previousTab = localStorage.getItem('previousTab') || 'community';
-                  setActiveTab(previousTab as any);
+                  const previousTab = localStorage.getItem('previousTab') || 'discover';
+                  navigateToTab(previousTab);
                 }}
-                onSpaceCreated={(spaceId) => {
-                  setSelectedSpaceId(spaceId);
-                  setActiveTab('builder-dashboard');
-                }}
-                defaultUserType={localStorage.getItem('spaceBuilderSource') === 'community' ? 'user' : 'project'}
-              />
-            )}
-            {activeTab === 'builder-dashboard' && selectedSpaceId && (
-              <BuilderDashboard 
-                spaceId={selectedSpaceId}
-                onBack={() => setActiveTab('community')}
               />
             )}
             {activeTab === 'space-detail' && selectedSpace && (
               <SpaceDetailView 
                 space={selectedSpace}
                 onBack={() => {
-                  setActiveTab('community');
-                  setSelectedSpace(null);
+                  const previousTab = localStorage.getItem('previousTab') || 'discover';
+                  navigateToTab(previousTab);
+                }}
+                onQuestClick={(questId) => {
+                  setSelectedQuestId(questId);
+                  navigateToTab('quest-detail', { questId });
                 }}
               />
             )}
-            {activeTab === 'rewards' && <Rewards />}
-            {activeTab === 'bounties' && <Bounties />}
-            {activeTab === 'raids' && <Raids />}
-            {activeTab === 'quest-detail' && selectedQuestId && (
-              <QuestDetail 
-                questId={selectedQuestId} 
-                onBack={() => {
-                  setActiveTab('community');
-                  setSelectedQuestId(null);
-                }}
-                onNavigateToProfile={() => {
-                  setActiveTab('dashboard');
-                  setSelectedQuestId(null);
-                }}
+            {activeTab === 'builder-dashboard' && (
+              <BuilderDashboard 
+                spaceId={selectedSpaceId || undefined}
+                onBack={() => navigateToTab('discover')}
               />
             )}
           </>
         )}
       </main>
-      <SignupModal 
-        isOpen={showSignupModal}
-        onClose={() => {
-          // Only close if not connected (user might have connected)
-          if (!isConnected) {
+      {showSignupModal && (
+        <SignupModal 
+          onClose={() => setShowSignupModal(false)}
+          onSuccess={() => {
             setShowSignupModal(false);
-          }
-        }}
-        onSignupComplete={() => {
-          // Don't close modal immediately - let useEffect handle onboarding
-          // The modal will close when user becomes connected and onboarding shows
-        }}
-      />
+            if (isConnected && address) {
+              const isNewUser = localStorage.getItem('isNewUser') === 'true';
+              if (isNewUser) {
+                setShowOnboarding(true);
+              }
+            }
+          }}
+        />
+      )}
+      {showOnboarding && (
+        <OnboardingSetup 
+          onComplete={() => {
+            setShowOnboarding(false);
+            navigateToTab('discover');
+          }}
+        />
+      )}
       <SubscriptionModal
         isOpen={showSubscriptionModal}
         onClose={() => {
@@ -877,17 +887,6 @@ function AppContent() {
         }}
         onProceed={(tier) => {
           setShowSubscriptionModal(false);
-          // Double-check that user doesn't already have a space before proceeding
-          if (address) {
-            const existingSpaces = spaceService.getSpacesByOwner(address);
-            if (existingSpaces.length > 0) {
-              showToast('You can only create one space. Redirecting to your existing space...', 'warning');
-              setSelectedSpaceId(existingSpaces[0].id);
-              setActiveTab('builder-dashboard');
-              setPendingSpaceCreation(null);
-              return;
-            }
-          }
           if (pendingSpaceCreation) {
             pendingSpaceCreation();
             setPendingSpaceCreation(null);
@@ -896,15 +895,15 @@ function AppContent() {
       />
       {showAdminLogin && (
         <AdminLogin
+          onClose={() => setShowAdminLogin(false)}
           onSuccess={() => {
             setShowAdminLogin(false);
-            showToast('Admin access granted', 'success');
+            showToast('Admin login successful', 'success');
           }}
-          onCancel={() => setShowAdminLogin(false)}
         />
       )}
       <ToastContainer />
-      </div>
+    </div>
     </div>
   );
 }
@@ -919,5 +918,6 @@ function App() {
   );
 }
 
+// Export AppContent for use in AppWithRouter
+export { AppContent, TRUST_TOKEN_ADDRESS };
 export default App;
-export { TRUST_TOKEN_ADDRESS };

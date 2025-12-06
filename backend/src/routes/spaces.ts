@@ -77,8 +77,14 @@ router.post('/', authenticateWallet, async (req: AuthRequest, res: Response) => 
     const validated = createSpaceSchema.parse(req.body);
     
     const space = await spaceService.createSpace({
-      ...validated,
+      name: validated.name,
+      description: validated.description,
+      logo: validated.logo,
+      twitterUrl: validated.twitterUrl,
       ownerAddress: req.user.address,
+      userType: validated.userType,
+      atomId: validated.atomId,
+      atomTransactionHash: validated.atomTransactionHash,
     });
 
     res.status(201).json({ space });

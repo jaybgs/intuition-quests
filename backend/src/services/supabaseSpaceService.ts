@@ -8,7 +8,7 @@ export interface SpaceCreateInput {
   name: string;
   description: string;
   logo?: string;
-  twitterUrl: string;
+  twitterUrl?: string;
   ownerAddress: string;
   userType: 'project' | 'user';
   atomId?: string;
@@ -28,7 +28,7 @@ export interface Space {
   slug: string;
   description: string;
   logo?: string;
-  twitterUrl: string;
+  twitterUrl?: string;
   ownerAddress: string;
   userType: 'project' | 'user';
   createdAt: number;
@@ -152,7 +152,7 @@ export class SupabaseSpaceService {
         slug: uniqueSlug,
         description: input.description.trim(),
         logo: input.logo,
-        twitter_url: input.twitterUrl.trim(),
+        twitter_url: input.twitterUrl?.trim() || null,
         owner_address: input.ownerAddress.toLowerCase(),
         user_type: input.userType.toUpperCase(),
         atom_id: input.atomId,
@@ -271,7 +271,7 @@ export class SupabaseSpaceService {
       slug: row.slug,
       description: row.description,
       logo: row.logo || undefined,
-      twitterUrl: row.twitter_url,
+      twitterUrl: row.twitter_url || undefined,
       ownerAddress: row.owner_address,
       userType: row.user_type?.toLowerCase() as 'project' | 'user',
       createdAt: new Date(row.created_at).getTime(),

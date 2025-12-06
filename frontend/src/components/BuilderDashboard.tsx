@@ -20,6 +20,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   const { address } = useAccount();
   const [space, setSpace] = useState<Space | null>(null);
   const [activeNav, setActiveNav] = useState<'dashboard' | 'quests' | 'settings' | 'analytics'>('dashboard');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { quests } = useQuests();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const { isPro } = useSubscription();
@@ -171,11 +172,43 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
     );
   }
 
+  const handleNavClick = (nav: 'dashboard' | 'quests' | 'settings' | 'analytics') => {
+    setActiveNav(nav);
+    setIsMenuOpen(false); // Close menu on mobile when navigating
+  };
+
   return (
     <div ref={builderDashboardRef} className="builder-dashboard-page">
+      {/* Mobile Menu Button */}
+      <button 
+        className="builder-mobile-menu-button"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        aria-label="Toggle menu"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          {isMenuOpen ? (
+            <path d="M18 6L6 18M6 6l12 12"/>
+          ) : (
+            <>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </>
+          )}
+        </svg>
+      </button>
+
+      {/* Overlay for mobile menu */}
+      {isMenuOpen && (
+        <div 
+          className="builder-menu-overlay"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+
       <div className="builder-dashboard-layout">
         {/* Left Sidebar */}
-        <aside className="builder-sidebar">
+        <aside className={`builder-sidebar ${isMenuOpen ? 'open' : ''}`}>
           <div className="builder-sidebar-header">
             <img src="/logo.svg" alt="TrustQuests" className="builder-logo-icon" />
             <div className="builder-tag">Builder</div>
@@ -196,7 +229,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
           <nav className="builder-sidebar-nav">
             <button 
               className={`builder-nav-item ${activeNav === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveNav('dashboard')}
+              onClick={() => handleNavClick('dashboard')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="7" height="7"/>
@@ -208,7 +241,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             </button>
             <button 
               className={`builder-nav-item ${activeNav === 'quests' ? 'active' : ''}`}
-              onClick={() => setActiveNav('quests')}
+              onClick={() => handleNavClick('quests')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -218,7 +251,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             {isPro && (
               <button 
                 className={`builder-nav-item ${activeNav === 'analytics' ? 'active' : ''}`}
-                onClick={() => setActiveNav('analytics')}
+                onClick={() => handleNavClick('analytics')}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="20" x2="18" y2="10"/>
@@ -230,7 +263,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             )}
             <button 
               className={`builder-nav-item ${activeNav === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveNav('settings')}
+              onClick={() => handleNavClick('settings')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="3"/>

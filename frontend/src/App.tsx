@@ -420,11 +420,19 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         navigate(`/quest-${params.questId}`);
       });
     } else if (params?.spaceName) {
+      // Set the space and navigate to space detail
+      if (params.spaceId) {
+        setSelectedSpaceId(params.spaceId);
+      }
+      setActiveTab('space-detail');
       navigate(`/space-${createSlug(params.spaceName)}`);
     } else if (params?.spaceId) {
       // Try to get space name first (async for Supabase)
       spaceService.getSpaceById(params.spaceId).then(space => {
         if (space) {
+          setSelectedSpace(space);
+          setSelectedSpaceId(space.id);
+          setActiveTab('space-detail');
           navigate(`/space-${createSlug(space.name)}`);
         } else {
           navigate(`/space-${params.spaceId}`);

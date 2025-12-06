@@ -1,15 +1,12 @@
-import { useLocation, useParams } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider } from 'wagmi';
-import { AppContent } from './App';
-import { wagmiConfig } from './config/wagmi';
-
-const queryClient = new QueryClient();
+import { useEffect } from 'react';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import App from './App';
 
 // Wrapper component that handles routing
 export default function AppWithRouter() {
   const location = useLocation();
   const params = useParams();
+  const navigate = useNavigate();
 
   // Map routes to tabs
   const routeToTab: Record<string, string> = {
@@ -64,15 +61,11 @@ export default function AppWithRouter() {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={wagmiConfig}>
-        <AppContent
-          initialTab={getInitialTab()}
-          questName={getQuestName()}
-          spaceName={getSpaceName()}
-        />
-      </WagmiProvider>
-    </QueryClientProvider>
+    <App
+      initialTab={getInitialTab()}
+      questName={getQuestName()}
+      spaceName={getSpaceName()}
+    />
   );
 }
 

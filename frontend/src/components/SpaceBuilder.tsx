@@ -239,7 +239,7 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
 
       // Step 3: Create the space using the space service (ONLY after atom creation succeeds)
       // At this point, we know atomResult exists and the transaction succeeded
-      const space = spaceService.createSpace({
+      const space = await spaceService.createSpace({
         name: name.trim(),
         description: description.trim(),
         logo: logoBase64,
@@ -261,7 +261,7 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
       });
 
       // At this point, atomResult is guaranteed to exist since we return early on failure
-        showToast(`Space "${space.name}" created successfully with on-chain identity!`, 'success');
+      showToast(`Space "${space.name}" created successfully with on-chain identity!`, 'success');
       
       // Dispatch event for real-time updates
       window.dispatchEvent(new CustomEvent('spaceCreated', { detail: { space } }));
@@ -285,10 +285,10 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
   // Show loading state while checking for existing spaces
   if (!address && status === 'connecting') {
     return (
-      <div className="space-builder-container">
-        <div className="space-builder-card">
+      <div className="space-builder-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem', width: '100%', boxSizing: 'border-box' }}>
+        <div className="space-builder-card" style={{ maxWidth: '700px', width: '100%', background: 'rgba(26, 31, 53, 0.2)', padding: '2rem', borderRadius: '1rem', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', padding: '40px' }}>
-            <p style={{ color: 'var(--text-secondary)' }}>Connecting wallet...</p>
+            <p style={{ color: 'var(--text-secondary, #a0aec0)' }}>Connecting wallet...</p>
           </div>
         </div>
       </div>
@@ -296,9 +296,9 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
   }
 
   return (
-    <div className="space-builder-container">
-      <div className="space-builder-card">
-        <h1 className="space-builder-title">Create a Space</h1>
+    <div className="space-builder-container" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: '100%', minHeight: 'calc(100vh - 200px)', padding: '2rem 1.25rem', boxSizing: 'border-box' }}>
+      <div className="space-builder-card" style={{ width: '100%', maxWidth: '700px', background: 'rgba(26, 31, 53, 0.2)', padding: '2.5rem', borderRadius: '1.5rem', boxSizing: 'border-box', position: 'relative' }}>
+        <h1 className="space-builder-title" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary, #ffffff)', margin: '0 0 2rem 0' }}>Create a Space</h1>
 
         <form onSubmit={handleSubmit} className="space-builder-form">
           {/* You are... Section */}

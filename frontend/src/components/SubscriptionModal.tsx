@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSubscription } from '../hooks/useSubscription';
 import { showToast } from './Toast';
 import './SubscriptionModal.css';
@@ -11,14 +12,37 @@ interface SubscriptionModalProps {
 
 export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionModalProps) {
   const { upgradeToPro } = useSubscription();
+  const [mounted, setMounted] = useState(false);
+  const [portalElement, setPortalElement] = useState<HTMLElement | null>(null);
+
+  // Ensure component is mounted and portal element exists before rendering
+  useEffect(() => {
+    setMounted(true);
+    // Ensure we have a portal target
+    if (typeof document !== 'undefined') {
+      setPortalElement(document.body);
+    }
+    return () => {
+      setMounted(false);
+      setPortalElement(null);
+    };
+  }, []);
 
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       const originalOverflow = document.body.style.overflow;
+      const originalPaddingRight = document.body.style.paddingRight;
+      // Prevent background scroll
       document.body.style.overflow = 'hidden';
+      // Compensate for scrollbar width
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
       return () => {
         document.body.style.overflow = originalOverflow;
+        document.body.style.paddingRight = originalPaddingRight;
       };
     }
   }, [isOpen]);
@@ -37,7 +61,7 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted || !portalElement) return null;
 
   const handleSelectFree = () => {
     onProceed('free');
@@ -50,7 +74,7 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
     showToast('Upgraded to Pro plan!', 'success');
   };
 
-  return (
+  const modalContent = (
     <div className="subscription-modal-overlay" onClick={onClose}>
       <div className="subscription-modal" onClick={(e) => e.stopPropagation()}>
         <button 
@@ -125,5 +149,14 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
       </div>
     </div>
   );
+
+  // Render modal in a portal to ensure it's at the root level
+  try {
+    return createPortal(modalContent, portalElement);
+  } catch (error) {
+    console.error('Error rendering subscription modal:', error);
+    // Fallback: render directly if portal fails
+    return modalContent;
+  }
 }
 

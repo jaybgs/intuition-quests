@@ -27,9 +27,7 @@ import { BuilderDashboard } from './components/BuilderDashboard';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { AdminLogin } from './components/AdminLogin';
 import { spaceService } from './services/spaceService';
-import { QuestServiceBackend } from './services/questServiceBackend';
-
-const questServiceBackend = new QuestServiceBackend();
+import { questServiceBackend } from './services/questServiceBackend';
 import type { Space } from './types';
 import { useTrustBalance } from './hooks/useTrustBalance';
 import { useAuth } from './hooks/useAuth';
@@ -337,21 +335,12 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       const findQuestByName = async () => {
         try {
           const quests = await questServiceBackend.getAllQuests();
-          const normalizedQuestName = questName.toLowerCase().replace(/-/g, ' ');
-          const quest = quests.find(q => {
-            const normalizedTitle = q.title.toLowerCase();
-            const slugifiedTitle = createSlug(q.title);
-            return (
-              normalizedTitle === normalizedQuestName ||
-              slugifiedTitle === questName.toLowerCase() ||
-              q.id === questName ||
-              q.id.toLowerCase() === questName.toLowerCase()
-            );
-          });
+          const quest = quests.find(q => 
+            q.title.toLowerCase().replace(/\s+/g, '-') === questName.toLowerCase() ||
+            q.id === questName
+          );
           if (quest) {
             setSelectedQuestId(quest.id);
-          } else {
-            console.warn('Quest not found:', questName);
           }
         } catch (error) {
           console.error('Error finding quest:', error);
@@ -367,23 +356,24 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       // Find space by name and set selectedSpace
       const findSpaceByName = async () => {
         try {
+          // First try to get by slug directly (most efficient)
+          if (spaceService.getSpaceBySlug) {
+            const spaceBySlug = await spaceService.getSpaceBySlug(spaceName);
+            if (spaceBySlug) {
+              setSelectedSpace(spaceBySlug);
+              return;
+            }
+          }
+          
+          // Fallback: search all spaces
           const spaces = await spaceService.getAllSpaces();
-          const normalizedSpaceName = spaceName.toLowerCase().replace(/-/g, ' ');
-          const space = spaces.find((s: Space) => {
-            const normalizedName = s.name.toLowerCase();
-            const slugifiedName = createSlug(s.name);
-            return (
-              s.slug === spaceName.toLowerCase() ||
-              normalizedName === normalizedSpaceName ||
-              slugifiedName === spaceName.toLowerCase() ||
-              s.id === spaceName ||
-              s.id.toLowerCase() === spaceName.toLowerCase()
-            );
-          });
+          const space = spaces.find(s => 
+            s.slug === spaceName.toLowerCase() ||
+            s.name.toLowerCase().replace(/\s+/g, '-') === spaceName.toLowerCase() ||
+            s.id === spaceName
+          );
           if (space) {
             setSelectedSpace(space);
-          } else {
-            console.warn('Space not found:', spaceName);
           }
         } catch (error) {
           console.error('Error finding space:', error);
@@ -430,7 +420,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     } else if (params?.spaceName) {
       navigate(`/space-${createSlug(params.spaceName)}`);
     } else if (params?.spaceId) {
-      // Try to get space name first
+      // Try to get space name first (async for Supabase)
       spaceService.getSpaceById(params.spaceId).then(space => {
         if (space) {
           navigate(`/space-${createSlug(space.name)}`);
@@ -440,7 +430,6 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       }).catch(() => {
         navigate(`/space-${params.spaceId}`);
       });
-      return;
     } else if (routeMap[tab]) {
       navigate(routeMap[tab]);
     } else {
@@ -823,8 +812,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             )}
             {activeTab === 'space-builder' && (
               <SpaceBuilder 
-                onComplete={(space) => {
-                  setSelectedSpaceId(space.id);
+                onSpaceCreated={(spaceId) => {
+                  setSelectedSpaceId(spaceId);
                   const source = localStorage.getItem('spaceBuilderSource') || 'discover';
                   const previousTab = localStorage.getItem('previousTab') || source;
                   navigateToTab('builder-dashboard');
@@ -908,16 +897,25 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   );
 }
 
-function App() {
+interface AppProps {
+  initialTab?: string;
+  questName?: string | null;
+  spaceName?: string | null;
+}
+
+function App({ initialTab, questName, spaceName, navigate }: AppProps = {}) {
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={wagmiConfig}>
-        <AppContent />
+        <AppContent 
+          initialTab={initialTab}
+          questName={questName}
+          spaceName={spaceName}
+        />
       </WagmiProvider>
     </QueryClientProvider>
   );
 }
 
-// Export AppContent for use in AppWithRouter
-export { AppContent, TRUST_TOKEN_ADDRESS };
 export default App;
+export { TRUST_TOKEN_ADDRESS };

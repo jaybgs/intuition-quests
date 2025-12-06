@@ -14,22 +14,18 @@ export default defineConfig({
     global: 'globalThis',
   },
   css: {
-    postcss: undefined, // Let Vite handle CSS processing
+    postcss: undefined,
   },
   build: {
     assetsDir: 'assets',
-    cssCodeSplit: false, // Bundle all CSS into one file
+    cssCodeSplit: false,
     outDir: 'dist',
-    cssMinify: false, // Disable CSS minification to avoid syntax errors
+    cssMinify: false,
+    // Ensure manifest is generated for CSS
+    manifest: true,
     rollupOptions: {
       output: {
-        // Ensure CSS is always included
-        assetFileNames: (assetInfo) => {
-          if (assetInfo.name?.endsWith('.css')) {
-            return 'assets/style-[hash].css';
-          }
-          return 'assets/[name]-[hash].[ext]';
-        },
+        assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
   },

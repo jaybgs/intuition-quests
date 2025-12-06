@@ -15,7 +15,7 @@ export default defineConfig({
   },
   build: {
     assetsDir: 'assets',
-    cssCodeSplit: false,
+    cssCodeSplit: false, // Bundle all CSS into one file
     outDir: 'dist',
   },
 });

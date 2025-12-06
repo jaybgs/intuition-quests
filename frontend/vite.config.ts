@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/', // Ensure assets are loaded from root
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -11,6 +12,15 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
+  },
+  build: {
+    assetsDir: 'assets',
+    cssCodeSplit: false, // Bundle all CSS into one file
+    rollupOptions: {
+      output: {
+        assetFileNames: 'assets/[name].[ext]',
+      },
+    },
   },
 });
 

@@ -619,7 +619,7 @@
     width: 280px;
     max-width: calc(100vw - 32px);
     height: calc(100vh - 32px);
-    transform: translateX(-100%);
+    transform: translateX(calc(-100% - 16px));
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
     background: rgba(26, 31, 53, 0.2);
@@ -632,10 +632,14 @@
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
     -webkit-overflow-scrolling: touch;
+    visibility: hidden;
+    opacity: 0;
   }
 
   .builder-sidebar.open {
     transform: translateX(0);
+    visibility: visible;
+    opacity: 1;
   }
 
   /* Adjust sidebar header spacing on mobile */

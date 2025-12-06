@@ -13,19 +13,11 @@ interface SubscriptionModalProps {
 export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionModalProps) {
   const { upgradeToPro } = useSubscription();
   const [mounted, setMounted] = useState(false);
-  const [portalElement, setPortalElement] = useState<HTMLElement | null>(null);
 
-  // Ensure component is mounted and portal element exists before rendering
+  // Ensure component is mounted (for SSR/hydration)
   useEffect(() => {
     setMounted(true);
-    // Ensure we have a portal target
-    if (typeof document !== 'undefined') {
-      setPortalElement(document.body);
-    }
-    return () => {
-      setMounted(false);
-      setPortalElement(null);
-    };
+    return () => setMounted(false);
   }, []);
 
   // Lock body scroll when modal is open
@@ -61,7 +53,7 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !mounted || !portalElement) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleSelectFree = () => {
     onProceed('free');
@@ -151,12 +143,12 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
   );
 
   // Render modal in a portal to ensure it's at the root level
-  try {
-    return createPortal(modalContent, portalElement);
-  } catch (error) {
-    console.error('Error rendering subscription modal:', error);
-    // Fallback: render directly if portal fails
-    return modalContent;
+  // Fallback to regular render if portal is not available
+  if (typeof document !== 'undefined' && document.body) {
+    return createPortal(modalContent, document.body);
   }
+  
+  // Fallback for SSR or when document.body is not available
+  return modalContent;
 }
 

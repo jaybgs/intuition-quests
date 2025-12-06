@@ -26,6 +26,7 @@ import { SpaceDetailView } from './components/SpaceDetailView';
 import { BuilderDashboard } from './components/BuilderDashboard';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { AdminLogin } from './components/AdminLogin';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { spaceService } from './services/spaceService';
 import { questServiceBackend } from './services/questServiceBackend';
 import type { Space } from './types';
@@ -356,16 +357,6 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       // Find space by name and set selectedSpace
       const findSpaceByName = async () => {
         try {
-          // First try to get by slug directly (most efficient)
-          if (spaceService.getSpaceBySlug) {
-            const spaceBySlug = await spaceService.getSpaceBySlug(spaceName);
-            if (spaceBySlug) {
-              setSelectedSpace(spaceBySlug);
-              return;
-            }
-          }
-          
-          // Fallback: search all spaces
           const spaces = await spaceService.getAllSpaces();
           const space = spaces.find(s => 
             s.slug === spaceName.toLowerCase() ||
@@ -753,7 +744,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             {activeTab === 'leaderboard' && <Leaderboard />}
             {activeTab === 'create' && <CreateQuest />}
             {activeTab === 'profile' && <UserProfile />}
-            {activeTab === 'dashboard' && <UserDashboard onEditProfile={() => setActiveTab('edit-profile')} />}
+            {activeTab === 'dashboard' && <UserDashboard onEditProfile={() => {
+              // edit-profile is a sub-view, not a route, so use setActiveTab
+              setActiveTab('edit-profile');
+            }} />}
             {activeTab === 'edit-profile' && <EditProfile onBack={() => navigateToTab('dashboard')} />}
             {activeTab === 'community' && (
               <Community 
@@ -901,19 +895,22 @@ interface AppProps {
   initialTab?: string;
   questName?: string | null;
   spaceName?: string | null;
+  navigate?: (path: string) => void;
 }
 
 function App({ initialTab, questName, spaceName, navigate }: AppProps = {}) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={wagmiConfig}>
-        <AppContent 
-          initialTab={initialTab}
-          questName={questName}
-          spaceName={spaceName}
-        />
-      </WagmiProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <WagmiProvider config={wagmiConfig}>
+          <AppContent 
+            initialTab={initialTab}
+            questName={questName}
+            spaceName={spaceName}
+          />
+        </WagmiProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -65,6 +65,7 @@ export default function AppWithRouter() {
       initialTab={getInitialTab()}
       questName={getQuestName()}
       spaceName={getSpaceName()}
+      navigate={navigate}
     />
   );
 }

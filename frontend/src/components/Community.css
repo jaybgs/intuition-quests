@@ -362,6 +362,13 @@
     margin: clamp(1.5rem, 5vw, 2.5rem) 0 clamp(-1rem, -2vw, -1.25rem) 0;
     padding: 0 clamp(0.75rem, 2vw, 1rem);
   }
+
+  .community-banner-logo {
+    right: -20px;
+    transform: translateY(-50%) scale(1.5);
+    max-width: 120px;
+    opacity: 0.4;
+  }
 }
 
 @media (max-width: 1024px) {

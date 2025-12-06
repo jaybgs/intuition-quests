@@ -352,7 +352,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
 
   // Handle space name from URL
   useEffect(() => {
-    if (spaceName && activeTab === 'space-detail') {
+    if (spaceName && (activeTab === 'space-detail' || initialTab === 'space-detail')) {
       // Find space by name and set selectedSpace
       const findSpaceByName = async () => {
         try {
@@ -364,14 +364,21 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           );
           if (space) {
             setSelectedSpace(space);
+            setSelectedSpaceId(space.id);
+            setActiveTab('space-detail');
+          } else {
+            console.error('Space not found:', spaceName);
+            // Fallback to discover if space not found
+            navigateToTab('discover');
           }
         } catch (error) {
           console.error('Error finding space:', error);
+          navigateToTab('discover');
         }
       };
       findSpaceByName();
     }
-  }, [spaceName, activeTab]);
+  }, [spaceName, activeTab, initialTab]);
 
   // Helper function to create URL-friendly slug from name
   const createSlug = (name: string): string => {
@@ -393,6 +400,11 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       'space-builder': '/create-space',
       'create': '/create-quest',
     };
+
+    // Store previous tab before navigating
+    if (tab !== activeTab) {
+      localStorage.setItem('previousTab', activeTab);
+    }
 
     if (params?.questName) {
       navigate(`/quest-${createSlug(params.questName)}`);
@@ -769,10 +781,17 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                   setShowSubscriptionModal(true);
                 }}
                 onSpaceClick={async (spaceId) => {
-                  const space = await spaceService.getSpaceById(spaceId);
-                  if (space) {
-                    setSelectedSpace(space);
-                    navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
+                  try {
+                    const space = await spaceService.getSpaceById(spaceId);
+                    if (space) {
+                      setSelectedSpace(space);
+                      setSelectedSpaceId(space.id);
+                      localStorage.setItem('previousTab', 'discover');
+                      navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
+                    }
+                  } catch (error) {
+                    console.error('Error loading space:', error);
+                    showToast('Failed to load space details', 'error');
                   }
                 }}
               />

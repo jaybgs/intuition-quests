@@ -26,7 +26,8 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   const { isPro } = useSubscription();
 
   useEffect(() => {
-    if (!spaceId) {
+    // Handle empty string or null spaceId
+    if (!spaceId || spaceId.trim() === '') {
       // If no spaceId provided, try to get user's first space
       if (address) {
         spaceService.getSpacesByOwner(address).then(userSpaces => {
@@ -37,13 +38,22 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             setIsAuthorized(true);
           } else {
             setIsAuthorized(false);
+            if (onBack) {
+              setTimeout(() => onBack(), 1000); // Give user time to see the message
+            }
           }
         }).catch(error => {
           console.error('Error loading user spaces:', error);
           setIsAuthorized(false);
+          if (onBack) {
+            setTimeout(() => onBack(), 1000);
+          }
         });
       } else {
         setIsAuthorized(false);
+        if (onBack) {
+          setTimeout(() => onBack(), 1000);
+        }
       }
       return;
     }
@@ -64,8 +74,17 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
               if (userSpaces.length > 0) {
                 setSpace(userSpaces[0]);
                 setIsAuthorized(true);
-              } else if (onBack) {
-                onBack();
+              } else {
+                setIsAuthorized(false);
+                if (onBack) {
+                  setTimeout(() => onBack(), 1000);
+                }
+              }
+            }).catch(error => {
+              console.error('Error loading user spaces:', error);
+              setIsAuthorized(false);
+              if (onBack) {
+                setTimeout(() => onBack(), 1000);
               }
             });
           }
@@ -79,10 +98,22 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 setIsAuthorized(true);
               } else {
                 setIsAuthorized(false);
+                if (onBack) {
+                  setTimeout(() => onBack(), 1000);
+                }
+              }
+            }).catch(error => {
+              console.error('Error loading user spaces:', error);
+              setIsAuthorized(false);
+              if (onBack) {
+                setTimeout(() => onBack(), 1000);
               }
             });
           } else {
             setIsAuthorized(false);
+            if (onBack) {
+              setTimeout(() => onBack(), 1000);
+            }
           }
         }
       }).catch(error => {
@@ -95,10 +126,22 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
               setIsAuthorized(true);
             } else {
               setIsAuthorized(false);
+              if (onBack) {
+                setTimeout(() => onBack(), 1000);
+              }
+            }
+          }).catch(error => {
+            console.error('Error loading user spaces:', error);
+            setIsAuthorized(false);
+            if (onBack) {
+              setTimeout(() => onBack(), 1000);
             }
           });
         } else {
           setIsAuthorized(false);
+          if (onBack) {
+            setTimeout(() => onBack(), 1000);
+          }
         }
       });
     } else if (spaceId && !address) {

@@ -3,12 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import questRoutes from './routes/quests';
-import userRoutes from './routes/users';
-import leaderboardRoutes from './routes/leaderboard';
-import authRoutes from './routes/auth';
-import oauthRoutes from './routes/oauth';
-import spaceRoutes from './routes/spaces';
+import questRoutes from './routes/quests.js';
+import userRoutes from './routes/users.js';
+import leaderboardRoutes from './routes/leaderboard.js';
+import authRoutes from './routes/auth.js';
+import oauthRoutes from './routes/oauth.js';
+import spaceRoutes from './routes/spaces.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

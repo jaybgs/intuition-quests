@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { SupabaseSpaceService } from '../services/supabaseSpaceService';
-import { authenticateWallet, AuthRequest } from '../middleware/auth';
+import { SupabaseSpaceService } from '../services/supabaseSpaceService.js';
+import { authenticateWallet, AuthRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 
 const router = Router();

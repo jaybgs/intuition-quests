@@ -1,6 +1,6 @@
-import { supabase } from '../config/supabase';
-import { QuestCreateInput } from '../types';
-import { UserService } from './userService';
+import { supabase } from '../config/supabase.js';
+import { QuestCreateInput } from '../types/index.js';
+import { UserService } from './userService.js';
 
 type QuestStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'EXPIRED';
 

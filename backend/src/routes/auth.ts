@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { verifyMessage } from 'viem';
 import { z } from 'zod';
-import { UserService } from '../services/userService';
+import { UserService } from '../services/userService.js';
 
 const router = Router();
 const userService = new UserService();

@@ -28,8 +28,6 @@ build/
 **/.env
 **/.env.local
 **/.env.*.local
-_env
-**/_env
 
 # Frontend specific
 frontend/dist/
@@ -102,3 +100,6 @@ intuition-repos/
 .local/
 local/
 *.local
+_env
+contracts/_env
+scripts/_env

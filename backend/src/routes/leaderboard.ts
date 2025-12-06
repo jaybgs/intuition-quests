@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { XPService } from '../services/xpService';
+import { XPService } from '../services/xpService.js';
 
 const router = Router();
 const xpService = new XPService();

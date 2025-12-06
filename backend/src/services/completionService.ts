@@ -1,10 +1,10 @@
-import { supabase } from '../config/supabase';
-import { QuestCompletionInput } from '../types';
-import { QuestService } from './questService';
-import { VerificationService } from './verificationService';
-import { XPService } from './xpService';
-import { BlockchainService } from './blockchainService';
-import { UserService } from './userService';
+import { supabase } from '../config/supabase.js';
+import { QuestCompletionInput } from '../types/index.js';
+import { QuestService } from './questService.js';
+import { VerificationService } from './verificationService.js';
+import { XPService } from './xpService.js';
+import { BlockchainService } from './blockchainService.js';
+import { UserService } from './userService.js';
 
 export class CompletionService {
   private questService: QuestService;
@@ -50,13 +50,13 @@ export class CompletionService {
 
     // Verify all requirements
     const verificationResults = await Promise.all(
-      (questData.requirements || []).map(async (requirement: any) => {
+      (questData.requirements || []).map(async (requirement) => {
         const reqVerificationData = verificationData?.[requirement.id] || verificationData;
         return this.verificationService.verifyRequirement(
           requirement.type as any,
           requirement.verificationData as Record<string, any>,
           {
-            address: user.address as `0x${string}`,
+            address: user.address,
             twitterHandle: user.twitterHandle || undefined,
             discordId: user.discordId || undefined,
           }
@@ -100,7 +100,7 @@ export class CompletionService {
     if (questData.trustReward && questData.trustReward > 0) {
       try {
         const txHash = await this.blockchainService.distributeTrustToken(
-          user.address as `0x${string}`,
+          user.address,
           questData.trustReward.toString()
         );
 

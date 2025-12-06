@@ -1,7 +1,7 @@
 /**
  * User Service using Supabase
  */
-import { supabase } from '../config/supabase';
+import { supabase } from '../config/supabase.js';
 
 export interface User {
   id: string;

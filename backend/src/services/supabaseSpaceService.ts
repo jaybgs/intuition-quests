@@ -2,7 +2,7 @@
  * Space Service using Supabase
  * Example implementation showing how to use Supabase instead of Prisma
  */
-import { supabase } from '../config/supabase';
+import { supabase } from '../config/supabase.js';
 
 export interface SpaceCreateInput {
   name: string;

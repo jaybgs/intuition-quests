@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { QuestService } from '../services/questService';
-import { CompletionService } from '../services/completionService';
-import { authenticateWallet, AuthRequest } from '../middleware/auth';
-import { RequirementType } from '../types';
+import { QuestService } from '../services/questService.js';
+import { CompletionService } from '../services/completionService.js';
+import { authenticateWallet, AuthRequest } from '../middleware/auth.js';
+import { RequirementType } from '../types/index.js';
 import { z } from 'zod';
 
 const router = Router();

@@ -1,10 +1,10 @@
-import { supabase } from '../config/supabase';
-import { QuestCompletionInput } from '../types';
-import { QuestService } from './questService';
-import { VerificationService } from './verificationService';
-import { XPService } from './xpService';
-import { BlockchainService } from './blockchainService';
-import { UserService } from './userService';
+import { supabase } from '../config/supabase.js';
+import { QuestCompletionInput } from '../types/index.js';
+import { QuestService } from './questService.js';
+import { VerificationService } from './verificationService.js';
+import { XPService } from './xpService.js';
+import { BlockchainService } from './blockchainService.js';
+import { UserService } from './userService.js';
 
 export class CompletionService {
   private questService: QuestService;

@@ -1,5 +1,5 @@
-import { supabase } from '../config/supabase';
-import { UserService } from './userService';
+import { supabase } from '../config/supabase.js';
+import { UserService } from './userService.js';
 
 export class XPService {
   private userService: UserService;

@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { XPService } from '../services/xpService';
-import { CompletionService } from '../services/completionService';
-import { BlockchainService } from '../services/blockchainService';
-import { UserService } from '../services/userService';
-import { supabase } from '../config/supabase';
-import { authenticateWallet, AuthRequest, optionalAuth } from '../middleware/auth';
+import { XPService } from '../services/xpService.js';
+import { CompletionService } from '../services/completionService.js';
+import { BlockchainService } from '../services/blockchainService.js';
+import { UserService } from '../services/userService.js';
+import { supabase } from '../config/supabase.js';
+import { authenticateWallet, AuthRequest, optionalAuth } from '../middleware/auth.js';
 
 const router = Router();
 const xpService = new XPService();

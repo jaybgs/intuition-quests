@@ -3,12 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import questRoutes from './routes/quests';
-import userRoutes from './routes/users';
-import leaderboardRoutes from './routes/leaderboard';
-import authRoutes from './routes/auth';
-import oauthRoutes from './routes/oauth';
-import spaceRoutes from './routes/spaces';
+import questRoutes from './routes/quests.js';
+import userRoutes from './routes/users.js';
+import leaderboardRoutes from './routes/leaderboard.js';
+import authRoutes from './routes/auth.js';
+import oauthRoutes from './routes/oauth.js';
+import spaceRoutes from './routes/spaces.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,14 +21,28 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 // CORS configuration - allow requests from production and development domains
 const corsOptions = {
-  origin: [
-    'https://www.trustquests.com',
-    'https://trustquests.com',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000',
-  ],
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    const allowedOrigins = [
+      'https://www.trustquests.com',
+      'https://trustquests.com',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000',
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

@@ -1,4 +1,4 @@
-import { RequirementType, VerificationResult } from '../types';
+import { RequirementType, VerificationResult } from '../types/index.js';
 import axios from 'axios';
 
 export class VerificationService {

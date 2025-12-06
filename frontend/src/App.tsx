@@ -315,6 +315,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [pendingSpaceCreation, setPendingSpaceCreation] = useState<(() => void) | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hasCreatedSpaces, setHasCreatedSpaces] = useState<boolean>(false);
   const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdmin();
   const navRef = useRef<HTMLElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -518,6 +519,43 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     }
   }, [isConnected, address]);
 
+  // Check if user has created spaces
+  useEffect(() => {
+    const checkUserSpaces = async () => {
+      if (!address) {
+        setHasCreatedSpaces(false);
+        return;
+      }
+
+      try {
+        const userSpaces = await spaceService.getSpacesByOwner(address);
+        setHasCreatedSpaces(userSpaces.length > 0);
+      } catch (error) {
+        console.error('Error checking user spaces:', error);
+        setHasCreatedSpaces(false);
+      }
+    };
+
+    checkUserSpaces();
+
+    // Listen for space creation/deletion events to update the state
+    const handleSpaceCreated = () => {
+      checkUserSpaces();
+    };
+
+    const handleSpaceDeleted = () => {
+      checkUserSpaces();
+    };
+
+    window.addEventListener('spaceCreated', handleSpaceCreated);
+    window.addEventListener('spaceDeleted', handleSpaceDeleted);
+
+    return () => {
+      window.removeEventListener('spaceCreated', handleSpaceCreated);
+      window.removeEventListener('spaceDeleted', handleSpaceDeleted);
+    };
+  }, [address]);
+
   const menuItems = [
     { 
       label: 'Discover & Earn',
@@ -665,7 +703,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           )}
           <LoginButton 
             onProfileClick={() => navigateToTab('dashboard')}
-            onBuilderProfileClick={() => navigateToTab('builder-dashboard')}
+            onBuilderProfileClick={hasCreatedSpaces ? () => navigateToTab('builder-dashboard') : undefined}
           />
           {!isConnected && (
             <div className="header-right">

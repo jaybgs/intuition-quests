@@ -13,10 +13,14 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
+  css: {
+    postcss: undefined, // Let Vite handle CSS processing
+  },
   build: {
     assetsDir: 'assets',
     cssCodeSplit: false, // Bundle all CSS into one file
     outDir: 'dist',
+    cssMinify: false, // Disable CSS minification to avoid syntax errors
   },
 });
 

@@ -157,7 +157,7 @@ export async function estimateTransactionCost(
   args: any[],
   value: bigint,
   account?: Address
-): Promise<{ baseGasCost: bigint; feeAmount: bigint; totalCost: bigint }> {
+): Promise<{ baseGasCost: bigint; feeAmount: bigint; dAppFee: bigint; totalCost: bigint }> {
   try {
     // Estimate gas with the user's account address
     // If account is not provided, the estimation will fail, so we require it
@@ -188,7 +188,7 @@ export async function estimateTransactionCost(
     });
 
     // Calculate base gas cost
-    const baseGasCost = gasEstimate * gasPrice;
+    const baseGasCost = BigInt(gasEstimate) * gasPrice;
 
     // Calculate 30% dApp fee on base gas cost (this goes to revenue wallet)
     // Fee model: User pays operation cost + base gas + (base gas * 30%)

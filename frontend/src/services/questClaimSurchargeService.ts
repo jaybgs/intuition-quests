@@ -2,6 +2,7 @@ import { type Address, type Hash, keccak256, toHex, encodePacked } from 'viem';
 import { type WalletClient, type PublicClient } from 'viem';
 import { CONTRACT_ADDRESSES } from '../config/contracts';
 import { TRUST_TOKEN_ADDRESS } from '../App';
+import { intuitionChain } from '../config/wagmi';
 
 // QuestClaimSurcharge contract ABI
 const QUEST_CLAIM_SURCHARGE_ABI = [
@@ -224,6 +225,7 @@ export async function approveTrustToken(
   const approvalAmount = BigInt(1e24); // 1 million TRUST (should be enough for many claims)
 
   const hash = await walletClient.writeContract({
+    chain: intuitionChain,
     address: TRUST_TOKEN_ADDRESS as Address,
     abi: ERC20_ABI,
     functionName: 'approve',
@@ -256,6 +258,7 @@ export async function claimQuest(
   const questIdUint = questIdToUint256(questId);
 
   const hash = await walletClient.writeContract({
+    chain: intuitionChain,
     address: QUEST_CLAIM_SURCHARGE_ADDRESS,
     abi: QUEST_CLAIM_SURCHARGE_ABI,
     functionName: 'claim',

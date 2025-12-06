@@ -281,7 +281,7 @@ export function BuilderSettings({ space, onSpaceUpdated, onSpaceDeleted }: Build
         onConfirm={async () => {
           setIsDeleting(true);
           try {
-            const deleted = spaceService.deleteSpace(space.id);
+            const deleted = await spaceService.deleteSpace(space.id);
             if (deleted) {
               showToast('Space deleted successfully', 'success');
               setShowDeleteModal(false);

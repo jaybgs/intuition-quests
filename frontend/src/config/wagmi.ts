@@ -50,7 +50,7 @@ if (projectId) {
     walletConnect({
       projectId,
       showQrModal: true,
-    })
+    }) as any
   );
 }
 
@@ -69,10 +69,10 @@ if (projectId) {
   createWeb3Modal({
     wagmiConfig,
     projectId,
-    chains: [intuitionChain],
+    // chains property removed - not needed as it's inferred from wagmiConfig
     themeMode: 'dark',
     themeVariables: {
       '--w3m-accent': '#3b82f6',
     },
-  });
+  } as any);
 }

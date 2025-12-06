@@ -10,7 +10,7 @@ interface QuestCardProps {
   onClick?: () => void;
 }
 
-export function QuestCard({ quest }: QuestCardProps) {
+export function QuestCard({ quest, onClick }: QuestCardProps) {
   const { address } = useAccount();
   const { completeQuest, isCompleting } = useQuests();
   const [isHovered, setIsHovered] = useState(false);
@@ -189,7 +189,7 @@ export function QuestCard({ quest }: QuestCardProps) {
               e.stopPropagation();
               handleComplete();
             }}
-            disabled={!address || isCompleting || (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase())}
+            disabled={!address || isCompleting || (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase()) || false}
             className="complete-button"
           >
             {isCompleting ? (

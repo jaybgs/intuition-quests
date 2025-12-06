@@ -125,9 +125,13 @@ export async function createQuestTriple(
     const createdAtomData = stringToHex('created') as `0x${string}`;
     const createdAtomId = calculateAtomId(createdAtomData);
 
-    // Convert atom IDs to bytes32 format
-    const subjectId = `0x${creatorAtomId.toString(16).padStart(64, '0')}` as `0x${string}`;
-    const predicateId = `0x${createdAtomId.toString(16).padStart(64, '0')}` as `0x${string}`;
+    // Convert atom IDs to bytes32 format (already hex strings, just ensure 64 char padding)
+    const subjectId = creatorAtomId.startsWith('0x') 
+      ? (`0x${creatorAtomId.slice(2).padStart(64, '0')}` as `0x${string}`)
+      : (`0x${creatorAtomId.padStart(64, '0')}` as `0x${string}`);
+    const predicateId = createdAtomId.startsWith('0x')
+      ? (`0x${createdAtomId.slice(2).padStart(64, '0')}` as `0x${string}`)
+      : (`0x${createdAtomId.padStart(64, '0')}` as `0x${string}`);
     const objectId = questAtomId;
 
     // Get the triple cost from MultiVault contract (required minimum value)
@@ -230,9 +234,13 @@ export async function createQuestCompletionTriple(
     const completedAtomData = stringToHex('completed') as `0x${string}`;
     const completedAtomId = calculateAtomId(completedAtomData);
 
-    // Convert atom IDs to bytes32 format
-    const subjectId = `0x${userAtomId.toString(16).padStart(64, '0')}` as `0x${string}`;
-    const predicateId = `0x${completedAtomId.toString(16).padStart(64, '0')}` as `0x${string}`;
+    // Convert atom IDs to bytes32 format (already hex strings, just ensure 64 char padding)
+    const subjectId = userAtomId.startsWith('0x')
+      ? (`0x${userAtomId.slice(2).padStart(64, '0')}` as `0x${string}`)
+      : (`0x${userAtomId.padStart(64, '0')}` as `0x${string}`);
+    const predicateId = completedAtomId.startsWith('0x')
+      ? (`0x${completedAtomId.slice(2).padStart(64, '0')}` as `0x${string}`)
+      : (`0x${completedAtomId.padStart(64, '0')}` as `0x${string}`);
     const objectId = questAtomId;
 
     // Get the triple cost from MultiVault contract (required minimum value)

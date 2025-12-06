@@ -4,7 +4,8 @@ import { CreateQuestBuilder } from './CreateQuestBuilder';
 import { QuestServiceBackend } from '../services/questServiceBackend';
 import type { Quest } from '../types';
 import { getQuestWinners, calculateAndSaveWinners, getQuestCompletions } from '../utils/raffle';
-import { setWinners, distributeRewards, getQuestDeposit } from '../services/questEscrowService';
+import { setWinners as setWinnersInEscrow, distributeRewards, getQuestDeposit } from '../services/questEscrowService';
+import { useAdmin } from '../hooks/useAdmin';
 import { showToast } from './Toast';
 import './BuilderQuests.css';
 
@@ -748,13 +749,13 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
 
       // First, set winners in escrow contract
       showToast('Setting winners in escrow...', 'info');
-      const setWinnersHash = await setWinners(questId, winnerAddresses, amounts, walletClient);
-      await publicClient.waitForTransactionReceipt({ hash: setWinnersHash });
+      const setWinnersResult = await setWinnersInEscrow(questId, winnerAddresses, amounts, walletClient);
+      await publicClient.waitForTransactionReceipt({ hash: setWinnersResult.transactionHash });
 
       // Then distribute rewards
       showToast('Distributing rewards to winners...', 'info');
-      const distributeHash = await distributeRewards(questId, walletClient);
-      await publicClient.waitForTransactionReceipt({ hash: distributeHash });
+      const distributeResult = await distributeRewards(questId, walletClient);
+      await publicClient.waitForTransactionReceipt({ hash: distributeResult.transactionHash });
 
       // Update deposit info
       const deposit = await getQuestDeposit(questId, publicClient);

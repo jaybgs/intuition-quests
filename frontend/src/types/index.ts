@@ -13,6 +13,8 @@ export interface Quest {
   progress?: number;
   steps?: QuestStep[];
   completedSteps?: number;
+  completedCount?: number; // Number of times quest has been completed
+  image?: string; // Quest image URL or base64
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   estimatedTime?: string;
   creatorType?: 'project' | 'community'; // Distinguish between project and community quests

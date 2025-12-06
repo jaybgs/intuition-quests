@@ -16,6 +16,7 @@ import './CreateQuestBuilder.css';
 // Poll Editor Component
 interface PollEditorProps {
   config: {
+    customTitle?: string;
     questions?: Array<{
       id: string;
       type: 'SELECT' | 'TEXT_INPUT';
@@ -69,7 +70,7 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
     });
   };
 
-  const updateQuestion = (questionId: string, updates: Partial<QuizEditorProps['config']['questions'][0]>) => {
+  const updateQuestion = (questionId: string, updates: Partial<NonNullable<QuizEditorProps['config']['questions']>[0]>) => {
     setQuizConfig({
       ...quizConfig,
       questions: quizConfig.questions?.map(q => 
@@ -279,7 +280,7 @@ function PollEditor({ config, onChange }: PollEditorProps) {
     });
   };
 
-  const updateQuestion = (questionId: string, updates: Partial<PollEditorProps['config']['questions'][0]>) => {
+  const updateQuestion = (questionId: string, updates: Partial<NonNullable<PollEditorProps['config']['questions']>[0]>) => {
     setPollConfig({
       ...pollConfig,
       questions: pollConfig.questions?.map(q => 

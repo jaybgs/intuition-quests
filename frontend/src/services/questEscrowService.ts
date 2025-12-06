@@ -1,6 +1,7 @@
 import { type Address, parseUnits, formatUnits, type Hash } from 'viem';
 import { type WalletClient, type PublicClient } from 'viem';
 import { CONTRACT_ADDRESSES } from '../config/contracts';
+import { intuitionChain } from '../config/wagmi';
 
 // QuestEscrow contract ABI (updated for native token)
 const QUEST_ESCROW_ABI = [
@@ -144,12 +145,13 @@ export async function depositToEscrow(
 
   // Call deposit function with native token value
   const hash = await walletClient.writeContract({
+    chain: intuitionChain as any,
     address: escrowAddress,
     abi: QUEST_ESCROW_ABI,
     functionName: 'deposit',
     args: [questId, BigInt(numberOfWinners)],
     value: amountWei, // Send native tokens with the transaction
-  });
+  } as any);
 
   return { transactionHash: hash };
 }
@@ -172,11 +174,12 @@ export async function setWinners(
   const amountsWei = amounts.map((amt) => parseUnits(amt, 18));
 
   const hash = await walletClient.writeContract({
+    chain: intuitionChain as any,
     address: escrowAddress,
     abi: QUEST_ESCROW_ABI,
     functionName: 'setWinners',
     args: [questId, winnerAddresses, amountsWei],
-  });
+  } as any);
 
   return { transactionHash: hash };
 }
@@ -194,11 +197,12 @@ export async function distributeRewards(
   }
 
   const hash = await walletClient.writeContract({
+    chain: intuitionChain as any,
     address: escrowAddress,
     abi: QUEST_ESCROW_ABI,
     functionName: 'distributeRewards',
     args: [questId],
-  });
+  } as any);
 
   return { transactionHash: hash };
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChain } from 'wagmi';
 import { useQuests } from '../hooks/useQuests';
 import { useQueryClient } from '@tanstack/react-query';
-import { Quest } from '../types';
+import { Quest, QuestStep } from '../types';
 import { createQuestCompletionTriple } from '../services/questAtomService';
 import { intuitionChain } from '../config/wagmi';
 import { showToast } from './Toast';
@@ -1095,7 +1095,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile }: QuestDetai
         <button
           className={`quest-detail-claim-button-inline ${!allTasksCompleted || isClaimed || (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase()) ? 'disabled' : ''}`}
           onClick={handleClaimIQ}
-          disabled={!allTasksCompleted || isClaimed || isCompleting || isCheckingClaim || !address || (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase())}
+          disabled={!allTasksCompleted || isClaimed || isCompleting || isCheckingClaim || !address || !!(address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase())}
         >
           {isCheckingClaim ? (
             <>

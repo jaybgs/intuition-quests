@@ -239,7 +239,7 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
 
       // Step 3: Create the space using the space service (ONLY after atom creation succeeds)
       // At this point, we know atomResult exists and the transaction succeeded
-      const space = spaceService.createSpace({
+      const space = await spaceService.createSpace({
         name: name.trim(),
         description: description.trim(),
         logo: logoBase64,

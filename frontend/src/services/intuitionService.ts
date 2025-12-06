@@ -150,16 +150,16 @@ export class IntuitionService {
         if (userAtomId) {
           try {
             // Convert atomId to termId format
-            const termId = userAtomId.startsWith('0x') 
-              ? (userAtomId.length === 66 ? userAtomId as `0x${string}` : `0x${userAtomId.slice(2).padStart(64, '0')}`)
-              : `0x${userAtomId.padStart(64, '0')}`;
+            const termId: `0x${string}` = userAtomId.startsWith('0x') 
+              ? (userAtomId.length === 66 ? userAtomId as `0x${string}` : `0x${userAtomId.slice(2).padStart(64, '0')}` as `0x${string}`)
+              : (`0x${userAtomId.padStart(64, '0')}` as `0x${string}`);
             
             // Query balance for this specific claim
             const balance = await this.publicClient.readContract({
-              address: this.vaultAddress,
+              address: this.vaultAddress as `0x${string}`,
               abi: MULTIVAULT_ABI,
               functionName: 'balanceOf',
-              args: [userAddress, termId],
+              args: [userAddress as `0x${string}`, termId],
             }) as bigint;
 
             if (balance > 0n) {
@@ -210,13 +210,15 @@ export class IntuitionService {
         },
       ] as const;
 
-      const termId = claimId.startsWith('0x') ? claimId as `0x${string}` : `0x${claimId}`;
+      const termId: `0x${string}` = claimId.startsWith('0x') 
+        ? (claimId.length === 66 ? claimId as `0x${string}` : `0x${claimId.slice(2).padStart(64, '0')}` as `0x${string}`)
+        : (`0x${claimId.padStart(64, '0')}` as `0x${string}`);
       
       const balance = await this.publicClient.readContract({
-        address: this.vaultAddress,
+        address: this.vaultAddress as `0x${string}`,
         abi: MULTIVAULT_ABI,
         functionName: 'balanceOf',
-        args: [userAddress, termId],
+        args: [userAddress as `0x${string}`, termId],
       }) as bigint;
 
       return balance > 0n;

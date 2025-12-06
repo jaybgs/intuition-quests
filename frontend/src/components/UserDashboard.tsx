@@ -852,13 +852,13 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                                       {triples.map((triple, index) => (
                                         <tr key={triple.termId || index} style={{ transition: 'background 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                                           <td style={{ padding: '14px 16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', verticalAlign: 'middle' }}>
-                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.subjectId, 8, 6)}</code>
+                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.subjectId || '', 8, 6)}</code>
                                           </td>
                                           <td style={{ padding: '14px 16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', verticalAlign: 'middle' }}>
-                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.predicateId, 8, 6)}</code>
+                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.predicateId || '', 8, 6)}</code>
                                           </td>
                                           <td style={{ padding: '14px 16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', verticalAlign: 'middle' }}>
-                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.objectId, 8, 6)}</code>
+                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.objectId || '', 8, 6)}</code>
                                           </td>
                                           <td style={{ padding: '14px 16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', verticalAlign: 'middle' }}>{formatDate(triple.createdAt)}</td>
                                         </tr>

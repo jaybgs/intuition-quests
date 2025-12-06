@@ -121,7 +121,7 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
   const [hasSpaces, setHasSpaces] = useState(false);
 
   // Check if user has created any spaces
-  const checkSpaces = useCallback(() => {
+  const checkSpaces = useCallback(async () => {
     if (address) {
       try {
         const userSpaces = await spaceService.getSpacesByOwner(address);
@@ -674,7 +674,7 @@ function AppContent() {
           {isConnected && address ? (
             <LoginButton 
               onProfileClick={() => setActiveTab('dashboard')}
-              onBuilderProfileClick={() => {
+              onBuilderProfileClick={async () => {
                 // Get user's first space and navigate to builder dashboard
                 if (address) {
                   const userSpaces = await spaceService.getSpacesByOwner(address);

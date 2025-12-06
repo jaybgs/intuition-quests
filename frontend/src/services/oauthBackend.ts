@@ -34,7 +34,7 @@ export async function exchangeOAuthCode(
   redirectUri: string
 ): Promise<OAuthTokenExchangeResponse> {
   try {
-    const response = await apiClient.post<OAuthTokenExchangeResponse>(
+    const response = await apiClient.post(
       '/oauth/exchange',
       {
         platform,

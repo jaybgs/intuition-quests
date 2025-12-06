@@ -147,7 +147,12 @@ export function UserProfile() {
   };
 
   // Social connections state
-  const connectedAccounts = {
+  const connectedAccounts: {
+    twitter: { username?: string; address?: string } | null;
+    discord: { username?: string; address?: string } | null;
+    email: { username?: string; address?: string } | null;
+    github: { username?: string; address?: string } | null;
+  } = {
     twitter: null,
     discord: null,
     email: null,

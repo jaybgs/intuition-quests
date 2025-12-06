@@ -65,13 +65,15 @@
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
-  transform: scale(4);
   transform-origin: right center;
   position: absolute;
   right: -60px;
   top: 50%;
   transform: translateY(-50%) scale(4);
   z-index: 0;
+  opacity: 0.4;
+  pointer-events: none;
+  display: block;
 }
 
 .community-quests-title {

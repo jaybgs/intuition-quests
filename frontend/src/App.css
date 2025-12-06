@@ -2531,43 +2531,85 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   .app-header {
-    padding: 12px 16px;
-    flex-wrap: wrap;
-    margin: 12px 16px 0 16px; /* Smaller margins on mobile */
-    width: calc(100% - 32px); /* Full width minus left and right margins */
-    border-radius: 16px; /* Slightly smaller radius on mobile */
-    top: 12px; /* Smaller top margin on mobile */
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin: 8px 12px 0 12px;
+    width: calc(100% - 24px);
+    border-radius: 16px;
+    top: 8px;
   }
 
   .header-left {
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 12px;
+    flex-wrap: nowrap;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .logo {
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
   }
 
   .header-nav {
     gap: 4px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex: 1;
+    min-width: 0;
+    padding: 0 4px;
   }
 
   .header-nav::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
   }
 
   .header-nav-item {
-    padding: 6px 12px;
-    font-size: 13px;
+    padding: 6px 10px;
+    font-size: 12px;
     flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .header-nav-text {
-    display: block; /* Show text on mobile since icons are removed */
+    display: block;
   }
 
   .header-center {
     display: none;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .login-button {
+    padding: 8px 14px;
+    font-size: 12px;
+    margin-left: 0;
+  }
+
+  .profile-button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .profile-pic,
+  .profile-pic-placeholder {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
   }
 
   .quests-grid {

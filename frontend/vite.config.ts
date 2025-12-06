@@ -17,9 +17,16 @@ export default defineConfig({
     assetsDir: 'assets',
     cssCodeSplit: false, // Bundle all CSS into one file
     outDir: 'dist',
+    cssMinify: true,
+    minify: 'terser',
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name]-[hash].[ext]',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name && assetInfo.name.endsWith('.css')) {
+            return 'assets/style-[hash].css';
+          }
+          return 'assets/[name]-[hash].[ext]';
+        },
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
       },

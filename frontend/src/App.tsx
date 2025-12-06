@@ -31,7 +31,6 @@ import { useTrustBalance } from './hooks/useTrustBalance';
 import { useAuth } from './hooks/useAuth';
 import { useAdmin } from './hooks/useAdmin';
 import { wagmiConfig } from './config/wagmi';
-import './App.css';
 
 const queryClient = new QueryClient();
 

@@ -30,8 +30,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { spaceService } from './services/spaceService';
 import { questServiceBackend } from './services/questServiceBackend';
 import type { Space } from './types';
-import { useTrustBalance } from './hooks/useTrustBalance';
-import { useAuth } from './hooks/useAuth';
 import { useAdmin } from './hooks/useAdmin';
 import { wagmiConfig } from './config/wagmi';
 import './App.css';
@@ -317,7 +315,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [pendingSpaceCreation, setPendingSpaceCreation] = useState<(() => void) | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const { isAuthenticated: isAdminAuthenticated, adminRole, logout: adminLogout } = useAdmin();
+  const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdmin();
   const navRef = useRef<HTMLElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -336,7 +334,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       const findQuestByName = async () => {
         try {
           const quests = await questServiceBackend.getAllQuests();
-          const quest = quests.find(q => 
+          const quest = quests.find((q: any) => 
             q.title.toLowerCase().replace(/\s+/g, '-') === questName.toLowerCase() ||
             q.id === questName
           );
@@ -399,7 +397,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       navigate(`/quest-${createSlug(params.questName)}`);
     } else if (params?.questId) {
       // Try to get quest name first
-      questServiceBackend.getQuestById(params.questId).then(quest => {
+      questServiceBackend.getQuestById(params.questId).then((quest: any) => {
         if (quest) {
           navigate(`/quest-${createSlug(quest.title)}`);
         } else {
@@ -781,7 +779,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             {activeTab === 'rewards' && <Rewards />}
             {activeTab === 'bounties' && <Bounties />}
             {activeTab === 'raids' && <Raids />}
-            {activeTab === 'full-leaderboard' && <Leaderboard showFull={true} />}
+            {activeTab === 'full-leaderboard' && <Leaderboard />}
             {activeTab === 'all-quests' && (
               <AllQuests 
                 onBack={() => navigateToTab('community')}
@@ -798,9 +796,9 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                   const previousTab = localStorage.getItem('previousTab') || 'community';
                   navigateToTab(previousTab);
                 }}
-                onNavigateToProfile={(address) => {
+                onNavigateToProfile={() => {
                   // Navigate to user profile if needed
-                  console.log('Navigate to profile:', address);
+                  // Profile navigation can be implemented here
                 }}
               />
             )}
@@ -825,35 +823,30 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                   const previousTab = localStorage.getItem('previousTab') || 'discover';
                   navigateToTab(previousTab);
                 }}
-                onQuestClick={(questId) => {
-                  setSelectedQuestId(questId);
-                  navigateToTab('quest-detail', { questId });
-                }}
               />
             )}
-            {activeTab === 'builder-dashboard' && (
+            {activeTab === 'builder-dashboard' && selectedSpaceId && (
               <BuilderDashboard 
-                spaceId={selectedSpaceId || undefined}
+                spaceId={selectedSpaceId}
                 onBack={() => navigateToTab('discover')}
               />
             )}
           </>
         )}
       </main>
-      {showSignupModal && (
-        <SignupModal 
-          onClose={() => setShowSignupModal(false)}
-          onSuccess={() => {
-            setShowSignupModal(false);
-            if (isConnected && address) {
-              const isNewUser = localStorage.getItem('isNewUser') === 'true';
-              if (isNewUser) {
-                setShowOnboarding(true);
-              }
+      <SignupModal 
+        isOpen={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+        onSignupComplete={() => {
+          setShowSignupModal(false);
+          if (isConnected && address) {
+            const isNewUser = localStorage.getItem('isNewUser') === 'true';
+            if (isNewUser) {
+              setShowOnboarding(true);
             }
-          }}
-        />
-      )}
+          }
+        }}
+      />
       {showOnboarding && (
         <OnboardingSetup 
           onComplete={() => {
@@ -868,7 +861,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           setShowSubscriptionModal(false);
           setPendingSpaceCreation(null);
         }}
-        onProceed={(tier) => {
+        onProceed={() => {
           setShowSubscriptionModal(false);
           if (pendingSpaceCreation) {
             pendingSpaceCreation();
@@ -878,7 +871,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       />
       {showAdminLogin && (
         <AdminLogin
-          onClose={() => setShowAdminLogin(false)}
+          onCancel={() => setShowAdminLogin(false)}
           onSuccess={() => {
             setShowAdminLogin(false);
             showToast('Admin login successful', 'success');
@@ -895,10 +888,9 @@ interface AppProps {
   initialTab?: string;
   questName?: string | null;
   spaceName?: string | null;
-  navigate?: (path: string) => void;
 }
 
-function App({ initialTab, questName, spaceName, navigate }: AppProps = {}) {
+function App({ initialTab, questName, spaceName }: AppProps = {}) {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

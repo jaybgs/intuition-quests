@@ -236,3 +236,6 @@ export class QuestServiceBackend {
     };
   }
 }
+
+// Export singleton instance
+export const questServiceBackend = new QuestServiceBackend();

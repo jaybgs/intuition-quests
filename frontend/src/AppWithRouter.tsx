@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import App from './App';
 
@@ -65,7 +64,6 @@ export default function AppWithRouter() {
       initialTab={getInitialTab()}
       questName={getQuestName()}
       spaceName={getSpaceName()}
-      navigate={navigate}
     />
   );
 }

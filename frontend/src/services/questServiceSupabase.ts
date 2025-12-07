@@ -26,7 +26,7 @@ export class QuestServiceSupabase {
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
-        query = query.eq('status', filters.status.toUpperCase());
+        query = query.eq('status', filters.status.toLowerCase());
       }
 
       if (filters?.projectId) {
@@ -104,7 +104,7 @@ export class QuestServiceSupabase {
         space_id: quest.spaceId || null,
         xp_reward: quest.xpReward || quest.iqPoints || 100,
         iq_points: quest.iqPoints || quest.xpReward || 100,
-        status: (quest.status || 'active').toUpperCase(),
+        status: (quest.status || 'active').toLowerCase(),
         twitter_link: quest.twitterLink || null,
         atom_id: quest.atomId || null,
         atom_transaction_hash: quest.atomTransactionHash || null,
@@ -152,7 +152,7 @@ export class QuestServiceSupabase {
 
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.description !== undefined) updateData.description = updates.description;
-      if (updates.status !== undefined) updateData.status = updates.status.toUpperCase();
+      if (updates.status !== undefined) updateData.status = updates.status.toLowerCase();
       if (updates.xpReward !== undefined) updateData.xp_reward = updates.xpReward;
       if (updates.iqPoints !== undefined) updateData.iq_points = updates.iqPoints;
       if (updates.completedBy !== undefined) updateData.completed_by = JSON.stringify(updates.completedBy);

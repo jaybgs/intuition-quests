@@ -28,17 +28,45 @@ If you already have tables, check what you have:
 
 If they don't exist, run the migrations above.
 
-## Step 2: Set Up Row Level Security (RLS)
+## Step 2: Set Up Row Level Security (RLS) - **CRITICAL FIX**
 
-After creating the tables, set up RLS policies so users can read/write data:
+**⚠️ IMPORTANT:** This step fixes the issue where quests and spaces created by one user are not visible to other users. Without RLS policies, Supabase blocks all access to the tables.
+
+### Quick Fix (Recommended)
+
+Run both RLS migration files:
+
+**For Quests:**
+1. In your Supabase dashboard, click **"SQL Editor"** in the left sidebar
+2. Click **"New query"**
+3. Copy and paste the SQL from `backend/supabase/migrations/005_setup_rls_policies.sql`
+4. Click **"Run"** (or press Ctrl+Enter)
+5. Wait for it to complete successfully
+
+**For Spaces:**
+1. Click **"New query"** again
+2. Copy and paste the SQL from `backend/supabase/migrations/006_setup_spaces_rls_policies.sql`
+3. Click **"Run"** (or press Ctrl+Enter)
+4. Wait for it to complete successfully
+
+These migrations will:
+- Enable RLS on the `published_quests` and `spaces` tables
+- Create policies that allow ALL users to read ALL quests and spaces (fixes the visibility issue)
+- Allow all users to insert, update, and delete quests and spaces
+
+### Manual Setup (Alternative)
+
+If you prefer to set up manually, use the SQL below:
 
 ### For `spaces` table:
+
+**This is the critical fix for space visibility across accounts!**
 
 ```sql
 -- Enable RLS
 ALTER TABLE spaces ENABLE ROW LEVEL SECURITY;
 
--- Allow anyone to read spaces
+-- Allow anyone to read spaces (CRITICAL - makes spaces visible to all users)
 CREATE POLICY "Anyone can read spaces" ON spaces
   FOR SELECT USING (true);
 
@@ -57,11 +85,13 @@ CREATE POLICY "Anyone can delete spaces" ON spaces
 
 ### For `published_quests` table:
 
+**This is the critical fix for quest visibility across accounts!**
+
 ```sql
 -- Enable RLS
 ALTER TABLE published_quests ENABLE ROW LEVEL SECURITY;
 
--- Allow anyone to read published quests
+-- Allow anyone to read published quests (CRITICAL - makes quests visible to all users)
 CREATE POLICY "Anyone can read published quests" ON published_quests
   FOR SELECT USING (true);
 

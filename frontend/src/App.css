@@ -196,6 +196,15 @@ body {
   color: var(--text-primary);
 }
 
+.logo-center {
+  justify-content: center;
+}
+
+.logo-icon-center {
+  width: 48px !important;
+  height: 48px !important;
+}
+
 .logo-corner {
   position: fixed;
   top: 16px;
@@ -219,8 +228,15 @@ body {
 
 .header-center {
   flex: 1;
-  max-width: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin: 0 24px;
+}
+
+.logo-icon-center {
+  width: 60px !important;
+  height: 60px !important;
 }
 
 .search-container {
@@ -2645,7 +2661,25 @@ body {
     display: block;
   }
 
+  .mobile-menu-button {
+    display: flex;
+  }
+
+  .mobile-menu-overlay {
+    display: block;
+  }
+
+  .header-left {
+    display: none;
+  }
+
   .header-center {
+    display: flex;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .header-search-wrapper {
     display: none;
   }
 

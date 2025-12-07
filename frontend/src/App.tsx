@@ -303,6 +303,7 @@ interface AppContentProps {
 }
 
 function AppContent({ initialTab = 'discover', questName = null, spaceName = null }: AppContentProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests'>(initialTab as any);
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
@@ -640,10 +641,45 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     <div className="app">
       <div className="app-content-wrapper">
       <header className="app-header">
+        {/* Mobile Hamburger Menu Button */}
+        <button 
+          className="mobile-menu-button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {isMobileMenuOpen ? (
+              <path d="M18 6L6 18M6 6l12 12"/>
+            ) : (
+              <path d="M3 12h18M3 6h18M3 18h18"/>
+            )}
+          </svg>
+        </button>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="mobile-menu-dropdown" onClick={(e) => e.stopPropagation()}>
+              {menuItems.map((item, index) => (
+                <button
+                  key={index}
+                  className="mobile-menu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigateToTab(item.tab);
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Navigation */}
         <div className="header-left">
-          <Link to="/home" className="logo">
-            <img src="/logo.svg" alt="TrustQuests Logo" className="logo-icon" />
-          </Link>
           <nav 
             className="header-nav" 
             ref={navRef}
@@ -683,21 +719,30 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             ))}
           </nav>
         </div>
+
+        {/* Logo - Centered */}
         <div className="header-center">
-          <Search 
-            placeholder="Search quests, projects, spaces..." 
-            onSpaceSelect={(space) => {
-              setSelectedSpace(space);
-              navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
-            }}
-            isAdmin={isAdminAuthenticated}
-            onBuilderAccess={(space) => {
-              setSelectedSpaceId(space.id);
-              navigateToTab('builder-dashboard');
-            }}
-          />
+          <Link to="/home" className="logo logo-center">
+            <img src="/logo.svg" alt="TrustQuests Logo" className="logo-icon logo-icon-center" />
+          </Link>
         </div>
+
+        {/* Search and Profile - Right Side */}
         <div className="header-right">
+          <div className="header-search-wrapper">
+            <Search 
+              placeholder="Search quests, projects, spaces..." 
+              onSpaceSelect={(space) => {
+                setSelectedSpace(space);
+                navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
+              }}
+              isAdmin={isAdminAuthenticated}
+              onBuilderAccess={(space) => {
+                setSelectedSpaceId(space.id);
+                navigateToTab('builder-dashboard');
+              }}
+            />
+          </div>
           {isAdminAuthenticated && (
             <button
               onClick={() => {

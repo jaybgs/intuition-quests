@@ -1,8 +1,8 @@
 .discover-earn-container {
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 2vw, 1.25rem); /* Responsive gap: 16px to 20px */
-  padding: clamp(1rem, 3vw, 1.5rem) clamp(1rem, 4vw, 2.5rem) clamp(2rem, 5vw, 2.5rem) clamp(1rem, 4vw, 2.5rem); /* Responsive padding */
+  gap: clamp(0.75rem, 1.5vw, 1rem); /* Reduced gap: 12px to 16px */
+  padding: clamp(0.5rem, 2vw, 1rem) clamp(1rem, 4vw, 2.5rem) clamp(2rem, 5vw, 2.5rem) clamp(1rem, 4vw, 2.5rem); /* Reduced top padding */
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
@@ -15,6 +15,7 @@
   color: rgba(255, 255, 255, 0.95);
   text-align: center;
   margin: 0;
+  margin-bottom: clamp(0.5rem, 1vw, 0.75rem); /* Reduced bottom margin */
   padding: 0 clamp(1rem, 2vw, 2rem); /* Responsive padding */
   animation: fadeInUp 0.8s ease-out;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -43,8 +44,8 @@
 }
 
 .slideshow-glass {
-  width: clamp(85%, 90vw, 1000px);
-  max-width: 1000px;
+  width: 100%;
+  max-width: 100%;
   min-height: clamp(400px, 50vh, 500px); /* Responsive min-height */
   background: rgba(26, 31, 53, 0.2);
   backdrop-filter: blur(36px);
@@ -389,9 +390,10 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px; /* Reduced from 24px */
   opacity: 1;
   transform: translateY(0);
+  margin-top: clamp(0.5rem, 1vw, 0.75rem); /* Reduced top margin */
 }
 
 .spaces-header {

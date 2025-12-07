@@ -505,7 +505,7 @@
 .builder-mobile-menu-button {
   display: none;
   position: fixed;
-  top: 40px;
+  top: 32px;
   left: 16px;
   z-index: 1001;
   width: 44px;

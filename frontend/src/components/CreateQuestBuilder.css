@@ -851,18 +851,17 @@
   backdrop-filter: blur(36px);
   -webkit-backdrop-filter: blur(36px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
   box-sizing: border-box;
   overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .create-quest-builder-action-item-menu svg {
   width: 14px;
   height: 14px;
-}
-  border-radius: 8px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .create-quest-builder-action-item-menu:hover {

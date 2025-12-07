@@ -46,6 +46,7 @@ export class QuestServiceBackend {
                     description: quest.description || '',
                     projectId: quest.projectId,
                     projectName: quest.projectName || quest.projectId,
+                    spaceId: quest.spaceId || undefined,
                     xpReward: quest.xpReward || quest.iqPoints || 100,
                     iqPoints: quest.iqPoints ?? quest.xpReward ?? 100, // Prioritize iqPoints, use nullish coalescing
                     requirements: quest.requirements || [],
@@ -218,6 +219,7 @@ export class QuestServiceBackend {
       description: backendQuest.description,
       projectId: backendQuest.projectId,
       projectName: backendQuest.project?.name || backendQuest.projectId,
+      spaceId: backendQuest.spaceId || backendQuest.space_id || undefined,
       xpReward: backendQuest.xpReward,
       iqPoints: backendQuest.iqPoints || backendQuest.iq_points || backendQuest.xpReward, // Include iqPoints from backend
       intuitionClaimId: backendQuest.trustReward ? 'trust-reward' : undefined,
@@ -233,6 +235,7 @@ export class QuestServiceBackend {
       creatorType: backendQuest.creatorType || 'community',
       creatorAddress: backendQuest.creator?.address,
       twitterLink: twitterLink || backendQuest.twitterLink, // Use from quest data or creator's connections
+      image: backendQuest.image,
     };
   }
 }

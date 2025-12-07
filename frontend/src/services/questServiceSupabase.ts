@@ -101,6 +101,7 @@ export class QuestServiceSupabase {
         project_id: quest.projectId,
         project_name: quest.projectName,
         creator_address: quest.creatorAddress || null,
+        space_id: quest.spaceId || null,
         xp_reward: quest.xpReward || quest.iqPoints || 100,
         iq_points: quest.iqPoints || quest.xpReward || 100,
         status: (quest.status || 'active').toUpperCase(),
@@ -219,6 +220,7 @@ export class QuestServiceSupabase {
       description: row.description,
       projectId: row.project_id,
       projectName: row.project_name,
+      spaceId: row.space_id || undefined,
       xpReward: row.xp_reward || row.iq_points || 100,
       iqPoints: row.iq_points ?? row.xp_reward ?? 100, // Prioritize iq_points, use nullish coalescing
       requirements,
@@ -353,6 +355,7 @@ export class QuestServiceSupabase {
       description: quest.description || '',
       projectId: quest.projectId,
       projectName: quest.projectName || quest.projectId,
+      spaceId: quest.spaceId || undefined,
       xpReward: quest.xpReward || quest.iqPoints || 100,
       iqPoints: quest.iqPoints || quest.xpReward || 100,
       requirements: quest.requirements || [],

@@ -4,6 +4,7 @@ export interface Quest {
   description: string;
   projectId: string;
   projectName: string;
+  spaceId?: string; // Space ID that the quest belongs to
   xpReward: number;
   intuitionClaimId?: string;
   requirements: QuestRequirement[];
@@ -28,6 +29,7 @@ export interface Quest {
   winnerPrizes?: string[]; // Prize amounts for each winner
   rewardDeposit?: string; // Total deposit amount
   rewardToken?: string; // Token type for rewards
+  image?: string; // Quest image (base64 or URL)
 }
 
 export interface QuestStep {

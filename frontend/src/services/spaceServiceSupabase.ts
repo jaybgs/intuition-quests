@@ -244,6 +244,11 @@ export class SpaceServiceSupabase {
     }
 
     try {
+      // First, delete all quests associated with this space
+      const { questServiceSupabase } = await import('./questServiceSupabase');
+      await questServiceSupabase.deleteQuestsBySpaceId(id);
+
+      // Then delete the space
       const { error } = await supabase
         .from('spaces')
         .delete()
@@ -432,7 +437,15 @@ export class SpaceServiceSupabase {
     return spaces[index];
   }
 
-  private fallbackDeleteSpace(id: string): boolean {
+  private async fallbackDeleteSpace(id: string): Promise<boolean> {
+    // Delete associated quests first
+    try {
+      const { questServiceSupabase } = await import('./questServiceSupabase');
+      await questServiceSupabase.deleteQuestsBySpaceId(id);
+    } catch (error) {
+      console.error('Error deleting quests by space_id in fallback:', error);
+    }
+
     const spaces = this.fallbackToLocalStorage();
     const filtered = spaces.filter(space => space.id !== id);
     this.saveSpacesToLocalStorage(filtered);

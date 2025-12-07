@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
 import { CreateQuestBuilder } from './CreateQuestBuilder';
+import { QuestDetail } from './QuestDetail';
 import { QuestServiceBackend } from '../services/questServiceBackend';
 import type { Quest } from '../types';
 import { getQuestWinners, calculateAndSaveWinners, getQuestCompletions } from '../utils/raffle';
@@ -474,12 +475,20 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
             </div>
             <h2 className="builder-quests-empty-title">Loading published quests...</h2>
           </div>
+        ) : selectedQuestId ? (
+          <QuestDetail 
+            questId={selectedQuestId}
+            onBack={() => setSelectedQuestId(null)}
+            isFromBuilder={true}
+          />
         ) : publishedQuests.length > 0 ? (
           <div className="builder-quests-drafts-grid">
             {publishedQuests.map((quest) => (
               <div
                 key={quest.id}
                 className="builder-quests-draft-card"
+                onClick={() => setSelectedQuestId(quest.id)}
+                style={{ cursor: 'pointer' }}
               >
                 <div className="builder-quests-draft-header">
                   <div className="builder-quests-draft-icon">

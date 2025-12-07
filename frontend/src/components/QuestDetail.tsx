@@ -11,12 +11,14 @@ import { saveQuestCompletion } from '../utils/raffle';
 // Removed CONTRACT_ADDRESSES and formatUnits - no longer needed for free claiming
 import { useSubscription } from '../hooks/useSubscription';
 import { spaceService } from '../services/spaceService';
+import { questServiceSupabase } from '../services/questServiceSupabase';
 import './QuestDetail.css';
 
 interface QuestDetailProps {
   questId: string;
   onBack: () => void;
   onNavigateToProfile?: () => void;
+  isFromBuilder?: boolean;
 }
 
 type VerificationStatus = 'idle' | 'verifying' | 'verified' | 'failed' | 'cooldown';
@@ -26,7 +28,7 @@ interface StepVerificationState {
   cooldownEnd?: number;
 }
 
-export function QuestDetail({ questId, onBack, onNavigateToProfile }: QuestDetailProps) {
+export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilder = false }: QuestDetailProps) {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
@@ -47,6 +49,8 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile }: QuestDetai
   const [spaceTwitterUrl, setSpaceTwitterUrl] = useState<string | null>(null);
   const [creatorIsPro, setCreatorIsPro] = useState(false);
   const [showFeedbackTooltip, setShowFeedbackTooltip] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
 
@@ -559,6 +563,30 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile }: QuestDetai
       if (stepIndex >= 0) {
         setCurrentStep(stepIndex + 1);
       }
+    }
+  };
+
+  const handleDeleteQuest = async () => {
+    if (!quest) return;
+    
+    setIsDeleting(true);
+    try {
+      const success = await questServiceSupabase.deleteQuest(quest.id);
+      if (success) {
+        showToast('Quest deleted successfully', 'success');
+        // Invalidate quests cache
+        queryClient.invalidateQueries({ queryKey: ['quests'] });
+        // Navigate back
+        onBack();
+      } else {
+        showToast('Failed to delete quest', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting quest:', error);
+      showToast('Error deleting quest', 'error');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -1129,6 +1157,97 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile }: QuestDetai
           )}
         </button>
       </div>
+
+      {/* Delete Button - Only show when accessed from builder dashboard */}
+      {isFromBuilder && quest && (
+        <button
+          className="quest-detail-delete-button"
+          onClick={() => setShowDeleteConfirm(true)}
+          disabled={isDeleting}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '20px',
+            padding: '12px 24px',
+            backgroundColor: '#ef4444',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: isDeleting ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            zIndex: 1000,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#dc2626';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#ef4444';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          {isDeleting ? (
+            <>
+              <div className="claim-spinner" style={{ width: '16px', height: '16px' }}></div>
+              Deleting...
+            </>
+          ) : (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Delete Quest
+            </>
+          )}
+        </button>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="social-popup-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="social-popup-container" onClick={(e) => e.stopPropagation()}>
+            <div className="social-popup-header">
+              <h3>Delete Quest</h3>
+              <button 
+                className="social-popup-close"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div className="social-popup-content">
+              <p>Are you sure you want to delete "{quest?.title}"? This action cannot be undone.</p>
+            </div>
+            <div className="social-popup-actions">
+              <button 
+                className="social-popup-button"
+                onClick={handleDeleteQuest}
+                disabled={isDeleting}
+                style={{ backgroundColor: '#ef4444' }}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+              <button 
+                className="social-popup-button secondary"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Social Account Not Connected Popup */}
       {showSocialPopup && (

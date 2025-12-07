@@ -178,6 +178,65 @@ export class QuestServiceSupabase {
   }
 
   /**
+   * Delete a quest
+   */
+  async deleteQuest(questId: string): Promise<boolean> {
+    if (!supabase) {
+      return this.fallbackDeleteQuest(questId);
+    }
+
+    try {
+      const { error } = await supabase
+        .from('published_quests')
+        .delete()
+        .eq('id', questId);
+
+      if (error) {
+        console.error('Error deleting quest from Supabase:', error);
+        return this.fallbackDeleteQuest(questId);
+      }
+
+      // Dispatch custom event
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('questDeleted', {
+          detail: { questId }
+        }));
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting quest:', error);
+      return this.fallbackDeleteQuest(questId);
+    }
+  }
+
+  /**
+   * Delete all quests for a space
+   */
+  async deleteQuestsBySpaceId(spaceId: string): Promise<boolean> {
+    if (!supabase) {
+      return this.fallbackDeleteQuestsBySpaceId(spaceId);
+    }
+
+    try {
+      const { error } = await supabase
+        .from('published_quests')
+        .delete()
+        .eq('space_id', spaceId);
+
+      if (error) {
+        console.error('Error deleting quests by space_id from Supabase:', error);
+        return this.fallbackDeleteQuestsBySpaceId(spaceId);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting quests by space_id:', error);
+      return this.fallbackDeleteQuestsBySpaceId(spaceId);
+    }
+  }
+
+  /**
    * Map database row to Quest interface
    */
   private mapQuestFromDb(row: any): Quest {
@@ -346,6 +405,61 @@ export class QuestServiceSupabase {
       console.error('Error updating quest in localStorage:', error);
     }
     return null;
+  }
+
+  private fallbackDeleteQuest(questId: string): boolean {
+    try {
+      const keys = Object.keys(localStorage);
+      const publishedKeys = keys.filter(key => key.startsWith('published_quests_'));
+
+      for (const key of publishedKeys) {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const quests = JSON.parse(stored);
+          const index = quests.findIndex((q: any) => q.id === questId);
+          if (index >= 0) {
+            quests.splice(index, 1);
+            localStorage.setItem(key, JSON.stringify(quests));
+            
+            // Dispatch custom event
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('questDeleted', {
+                detail: { questId }
+              }));
+            }
+            
+            return true;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting quest from localStorage:', error);
+    }
+    return false;
+  }
+
+  private fallbackDeleteQuestsBySpaceId(spaceId: string): boolean {
+    try {
+      const keys = Object.keys(localStorage);
+      const publishedKeys = keys.filter(key => key.startsWith('published_quests_'));
+
+      let deleted = false;
+      for (const key of publishedKeys) {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const quests = JSON.parse(stored);
+          const filteredQuests = quests.filter((q: any) => q.spaceId !== spaceId);
+          if (filteredQuests.length !== quests.length) {
+            localStorage.setItem(key, JSON.stringify(filteredQuests));
+            deleted = true;
+          }
+        }
+      }
+      return deleted;
+    } catch (error) {
+      console.error('Error deleting quests by space_id from localStorage:', error);
+    }
+    return false;
   }
 
   private mapLocalQuest(quest: any): Quest {

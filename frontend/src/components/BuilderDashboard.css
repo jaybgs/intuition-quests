@@ -549,8 +549,8 @@
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: none; /* Removed blur */
+  -webkit-backdrop-filter: none; /* Removed blur */
   z-index: 999;
   animation: fadeIn 0.2s ease;
   margin: 0;
@@ -627,14 +627,13 @@
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
     background: rgba(26, 31, 53, 0.2);
-    backdrop-filter: blur(36px);
-    -webkit-backdrop-filter: blur(36px);
+    backdrop-filter: none; /* Removed blur */
+    -webkit-backdrop-filter: none; /* Removed blur */
     border: none;
     border-radius: 24px;
     overflow-y: auto;
     padding: 24px 20px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: none; /* Removed shadow */
     -webkit-overflow-scrolling: touch;
     visibility: hidden;
     opacity: 0;

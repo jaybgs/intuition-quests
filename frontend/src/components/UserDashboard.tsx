@@ -469,63 +469,25 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
           </div>
           <div className="user-info-main">
             <div className="user-name-row">
-              <h1 className="user-name">{username}</h1>
+              <h1 className="user-name">{truncateUsername(username, 7)}</h1>
               
               {/* IQ Progress Bar */}
-              <div style={{ 
-                margin: '0 40px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0',
-                maxWidth: '600px',
-                minWidth: '450px',
-                flexShrink: 1,
-                marginRight: '60px',
-              }}>
+              <div className="iq-progress-container">
                 {/* Hexagon Icon */}
                 <img 
                   src="/hexagon.svg" 
                   alt="Hexagon" 
-                  style={{
-                    width: '45px',
-                    height: '45px',
-                    flexShrink: 0,
-                    marginLeft: '20px',
-                    position: 'relative',
-                    zIndex: 1,
-                  }}
+                  className="iq-hexagon-icon"
                 />
-                <div style={{
-                  flex: 1,
-                  height: '12px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '6px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  minWidth: '200px',
-                  marginLeft: '-15px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0',
-                }}>
-                  <div style={{
-                    height: '8px',
-                    width: `${Math.min(100, (currentLevelXP / possibleXP) * 100)}%`,
-                    background: 'linear-gradient(90deg, #22c55e 0%, #16a34a 100%)',
-                    borderRadius: '4px',
-                    transition: 'width 1s ease',
-                    margin: '0 2px',
-                  }} />
+                <div className="iq-progress-bar-wrapper">
+                  <div 
+                    className="iq-progress-bar-fill"
+                    style={{
+                      width: `${Math.min(100, (currentLevelXP / possibleXP) * 100)}%`,
+                    }}
+                  />
                 </div>
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  marginLeft: '16px',
-                }}>
+                <span className="iq-progress-text">
                   {currentLevelXP} / {possibleXP} IQ
                 </span>
               </div>

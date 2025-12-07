@@ -150,6 +150,14 @@ export function Community({ onSeeMoreLeaderboard, onQuestClick, onCreateSpace, o
             console.log('Community logo SVG loaded successfully');
           }}
         />
+        <img 
+          src="/community-rec.svg" 
+          alt="Community Rec" 
+          className="community-banner-svg"
+          onError={(e) => {
+            console.error('Failed to load community-rec.svg');
+          }}
+        />
       </div>
 
       <h2 className="community-quests-title">Quests</h2>

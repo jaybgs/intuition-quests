@@ -336,9 +336,16 @@
   }
 
   .slideshow-glass {
-    width: 90%;
+    width: calc(100vw - 32px);
+    max-width: 343px; /* 375px viewport - 32px padding */
     min-height: clamp(350px, 60vh, 450px);
     padding: clamp(1rem, 3vw, 1.5rem);
+  }
+
+  @media (max-width: 360px) {
+    .slideshow-glass {
+      max-width: 328px; /* 360px viewport - 32px padding */
+    }
   }
 
   .slideshow-image {
@@ -676,5 +683,6 @@
     grid-template-columns: 1fr;
   }
 }
+
 
 

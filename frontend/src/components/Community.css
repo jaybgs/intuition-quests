@@ -88,8 +88,8 @@
   right: 0;
   top: 50%;
   transform: translateY(-50%) scale(2.5);
-  z-index: 0;
-  opacity: 0.5;
+  z-index: 2;
+  opacity: 1;
   pointer-events: none;
   display: block;
   max-width: 200px;
@@ -388,12 +388,19 @@
     padding: 0 clamp(0.75rem, 2vw, 1rem);
   }
 
-  .community-banner-logo,
-  .community-banner-svg {
+  .community-banner-logo {
     right: -20px;
     transform: translateY(-50%) scale(1.5);
     max-width: 120px;
     opacity: 0.4;
+  }
+
+  .community-banner-svg {
+    right: -20px;
+    transform: translateY(-50%) scale(1.5);
+    max-width: 120px;
+    opacity: 1;
+    z-index: 2;
   }
 }
 

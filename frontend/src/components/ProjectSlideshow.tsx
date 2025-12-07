@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from './Toast';
 import { spaceService } from '../services/spaceService';
 import { DiscoverPageSkeleton } from './Skeleton';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import type { Space } from '../types';
+import type { Quest } from '../types';
 import './ProjectSlideshow.css';
 
 interface Project {
@@ -58,6 +60,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
   const [sortByTrending, setSortByTrending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { address, status } = useAccount();
+  const queryClient = useQueryClient();
 
   // Page loading skeleton
   useEffect(() => {
@@ -96,13 +99,21 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
       loadSpaces();
     };
     
+    // Listen for quest published events to refresh quest counts
+    const handleQuestPublished = () => {
+      // Force re-render to update quest counts
+      setSpaces(prev => [...prev]);
+    };
+    
     window.addEventListener('spaceCreated', handleSpaceCreated);
+    window.addEventListener('questPublished', handleQuestPublished);
     
     // Reload spaces periodically in case they change
     const interval = setInterval(loadSpaces, 3000); // Reduced to 3 seconds for faster updates
     return () => {
       clearInterval(interval);
       window.removeEventListener('spaceCreated', handleSpaceCreated);
+      window.removeEventListener('questPublished', handleQuestPublished);
     };
   }, []);
 
@@ -165,8 +176,21 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
   // Get quest count for a space
   const getQuestCount = (spaceId: string): number => {
     try {
-      // Count published quests for this space from localStorage
       let count = 0;
+      
+      // First, try to get quests from React Query cache
+      const questsData = queryClient.getQueryData<Quest[]>(['quests']);
+      if (questsData && Array.isArray(questsData)) {
+        questsData.forEach((quest: any) => {
+          // Count active quests that belong to this space (check both spaceId and projectId for compatibility)
+          if ((quest.status === 'active' || !quest.status) && 
+              (quest.spaceId === spaceId || quest.projectId === spaceId)) {
+            count++;
+          }
+        });
+      }
+      
+      // Also check localStorage as fallback
       const keys = Object.keys(localStorage);
       const publishedKeys = keys.filter(key => key.startsWith('published_quests_'));
       
@@ -176,9 +200,15 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
           if (stored) {
             const parsedQuests = JSON.parse(stored);
             parsedQuests.forEach((quest: any) => {
-              // Count active quests that belong to this space
-              if ((quest.status === 'active' || !quest.status) && quest.projectId === spaceId) {
-                count++;
+              // Count active quests that belong to this space (check both spaceId and projectId for compatibility)
+              // Only count if not already counted from React Query cache
+              if ((quest.status === 'active' || !quest.status) && 
+                  (quest.spaceId === spaceId || quest.projectId === spaceId)) {
+                // Check if this quest was already counted from React Query
+                const alreadyCounted = questsData?.some(q => q.id === quest.id);
+                if (!alreadyCounted) {
+                  count++;
+                }
               }
             });
           }

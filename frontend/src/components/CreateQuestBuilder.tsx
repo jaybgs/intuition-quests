@@ -1106,7 +1106,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
         { number: 1, label: 'Details' },
         { number: 2, label: 'Actions' },
         { number: 3, label: 'Rewards' },
-        { number: 4, label: 'Deposit' },
+        { number: 4, label: 'Deposit', hidden: true }, // Hidden - will be reintegrated later
     { number: 5, label: 'Preview' },
   ];
 
@@ -1369,6 +1369,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
         description: description.trim(),
         projectId,
         projectName,
+        spaceId: spaceId || null, // Include spaceId for quest count tracking
         xpReward: iqPoints ? parseInt(iqPoints, 10) : xpReward, // Use iqPoints as xpReward if set
         requirements,
         status: 'active' as const,
@@ -1406,6 +1407,9 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
       } catch (error) {
         console.warn('Failed to publish quest to Supabase, using localStorage only:', error);
       }
+
+      // Dispatch event to refresh quest counts in space cards
+      window.dispatchEvent(new CustomEvent('questPublished', { detail: { spaceId, questData } }));
 
       // Dispatch event for real-time updates
       window.dispatchEvent(new CustomEvent('questPublished', { detail: { quest: questData } }));
@@ -1460,28 +1464,17 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
       }
     }
     
-    // Validate Rewards step (step 3) - check if winner prizes sum matches total deposit
+    // Validate Rewards step (step 3) - deposit validation disabled
     if (currentStep === 3) {
-      if (!isWinnerPrizesSumValid()) {
-        const depositAmount = parseFloat(rewardDeposit) || 0;
-        const prizesSum = calculateWinnerPrizesSum();
-        const difference = Math.abs(depositAmount - prizesSum);
-        
-        // Check if all fields are filled first
-        const numWinners = parseInt(numberOfWinners, 10) || 0;
-        const allPrizesFilled = numWinners > 0 && winnerPrizes.slice(0, numWinners).every((prize, idx) => idx < numWinners && prize && prize.trim() !== '');
-        
-        if (!rewardDeposit || rewardDeposit.trim() === '') {
-          showToast('Please enter a total deposit amount before proceeding.', 'warning');
-        } else if (!allPrizesFilled) {
-          showToast('Please fill in all winner prize amounts before proceeding.', 'warning');
-        } else if (prizesSum > depositAmount) {
-          showToast(`Winner prizes total (${prizesSum.toFixed(2)} TRUST) exceeds deposit amount (${depositAmount.toFixed(2)} TRUST) by ${difference.toFixed(2)} TRUST. Please adjust the prize amounts to match the deposit.`, 'warning');
-        } else {
-          showToast(`Winner prizes total (${prizesSum.toFixed(2)} TRUST) is less than deposit amount (${depositAmount.toFixed(2)} TRUST) by ${difference.toFixed(2)} TRUST. Please adjust the prize amounts to match the deposit.`, 'warning');
-        }
+      // Check if all fields are filled
+      const numWinners = parseInt(numberOfWinners, 10) || 0;
+      const allPrizesFilled = numWinners > 0 && winnerPrizes.slice(0, numWinners).every((prize, idx) => idx < numWinners && prize && prize.trim() !== '');
+      
+      if (!allPrizesFilled) {
+        showToast('Please fill in all winner prize amounts before proceeding.', 'warning');
         return;
       }
+      // Deposit validation disabled - will be reintegrated later
     }
     
     // Validate Actions step (step 2) - check if all actions requiring configuration are configured
@@ -1519,8 +1512,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
           }
     }
     if (currentStep < maxStep) {
-      // For regular quests: Step 1 -> Step 2 -> Step 3 (Rewards) -> Step 4 (Preview)
-      setCurrentStep(currentStep + 1);
+      // Skip step 4 (Deposit) - go directly from step 3 (Rewards) to step 5 (Preview)
+      if (currentStep === 3) {
+        setCurrentStep(5); // Skip to Preview
+      } else {
+        setCurrentStep(currentStep + 1);
+      }
     } else {
       // Final step - publish the quest
       await handlePublishQuest();
@@ -1529,8 +1526,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
 
   const handlePrevious = () => {
     if (currentStep > 1) {
-      // For regular quests: Step 5 -> Step 4 -> Step 3 -> Step 2 -> Step 1
-      setCurrentStep(currentStep - 1);
+      // Skip step 4 (Deposit) - go directly from step 5 (Preview) to step 3 (Rewards)
+      if (currentStep === 5) {
+        setCurrentStep(3); // Skip back to Rewards
+      } else {
+        setCurrentStep(currentStep - 1);
+      }
     }
   };
 
@@ -1601,10 +1602,19 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
   const handleStepClick = (stepNumber: number) => {
     // Allow navigation to any step that has been completed or is the current step
     // Also allow going to the next step (stepNumber === currentStep + 1)
+    // Skip step 4 (Deposit) - it's disabled
+    if (stepNumber === 4) {
+      return; // Don't allow clicking on disabled deposit step
+    }
     if (stepNumber <= currentStep + 1 && stepNumber >= 1) {
-      const maxStep = 4;
+      const maxStep = 5;
       if (stepNumber <= maxStep) {
-        setCurrentStep(stepNumber);
+        // If trying to go to step 5 from step 3, allow it (skipping step 4)
+        if (stepNumber === 5 && currentStep >= 3) {
+          setCurrentStep(5);
+        } else if (stepNumber !== 4) {
+          setCurrentStep(stepNumber);
+        }
       }
     }
   };
@@ -1623,7 +1633,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
 
       {/* Progress Steps */}
       <div className="create-quest-builder-steps">
-        {steps.map((step) => {
+        {steps.filter(step => !step.hidden).map((step) => {
           const isClickable = step.number <= currentStep + 1;
           return (
           <div
@@ -1656,7 +1666,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
                   onClick={() => setDistributionType('fcfs')}
                 >
                   <div className="create-quest-builder-distribution-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                     </svg>
                   </div>
@@ -1671,7 +1681,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
                   onClick={() => setDistributionType('raffle')}
                 >
                   <div className="create-quest-builder-distribution-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="12" cy="12" r="10"/>
                       <path d="M12 6v6l4 2"/>
                     </svg>
@@ -3007,12 +3017,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
               />
             </div>
 
-            {/* Reward Deposit Amount with Token Selection */}
-            <div className="create-quest-builder-field">
+            {/* Reward Deposit Amount with Token Selection - DISABLED */}
+            <div className="create-quest-builder-field" style={{ opacity: 0.5, pointerEvents: 'none' }}>
               <label className="create-quest-builder-label">
                 Total Deposit Amount <span className="required-asterisk">*</span>
               </label>
-              <p className="create-quest-builder-hint">Amount of tokens you want to deposit for winners</p>
+              <p className="create-quest-builder-hint">Amount of tokens you want to deposit for winners (Disabled - will be reintegrated later)</p>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
                 <input
                   type="number"
@@ -3029,6 +3039,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
                     }
                   }}
                   style={{ flex: 1 }}
+                  disabled
                 />
                 <select
                   className="create-quest-builder-select"
@@ -3277,7 +3288,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
                 isPublishing ||
                 (currentStep === 1 && (!title.trim() || !difficulty || !description.trim() || !endDate || !endTime || !numberOfWinners || parseInt(numberOfWinners, 10) < 1)) ||
                 (currentStep === 2 && selectedActions.some(action => requiresConfiguration(action.title) && !isActionConfigured(action))) ||
-                (currentStep === 3 && (!iqPoints || !rewardDeposit || !numberOfWinners || parseInt(numberOfWinners, 10) < 1 || winnerPrizes.some((prize, idx) => idx < parseInt(numberOfWinners, 10) && !prize.trim()) || !isWinnerPrizesSumValid())) ||
+                (currentStep === 3 && (!iqPoints || !numberOfWinners || parseInt(numberOfWinners, 10) < 1 || winnerPrizes.some((prize, idx) => idx < parseInt(numberOfWinners, 10) && !prize.trim()))) ||
                 (currentStep === 4 && (!rewardDeposit || parseFloat(rewardDeposit) <= 0))
               }
             >

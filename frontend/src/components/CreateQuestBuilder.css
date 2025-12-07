@@ -128,12 +128,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
   background: rgba(59, 130, 246, 0.2);
   color: var(--accent-blue);
   flex-shrink: 0;
+}
+
+.create-quest-builder-distribution-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .create-quest-builder-distribution-option.active .create-quest-builder-distribution-icon {
@@ -585,6 +590,9 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .create-quest-builder-button.save {
@@ -818,6 +826,12 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
   transition: all 0.2s ease;
 }
 
@@ -838,6 +852,14 @@
   backdrop-filter: blur(36px);
   -webkit-backdrop-filter: blur(36px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.create-quest-builder-action-item-menu svg {
+  width: 14px;
+  height: 14px;
+}
   border-radius: 8px;
   color: var(--text-secondary);
   cursor: pointer;

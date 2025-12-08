@@ -5,12 +5,13 @@ import { useActiveQuestCount } from '../hooks/useActiveQuestCount';
 import { useQuests } from '../hooks/useQuests';
 import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from './Toast';
-// Contract services disabled - contracts deleted
-// import { 
-//   depositToEscrow, 
-//   checkBalance,
-//   getQuestDeposit 
-// } from '../services/questEscrowService';
+// Contract services re-enabled
+import { 
+  depositToEscrow, 
+  checkBalance,
+  getQuestDeposit,
+} from '../services/questEscrowService';
+import { parseEther } from 'viem';
 import { parseUnits, formatUnits } from 'viem';
 import './CreateQuestBuilder.css';
 
@@ -1107,7 +1108,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
         { number: 1, label: 'Details' },
         { number: 2, label: 'Actions' },
         { number: 3, label: 'Rewards' },
-        { number: 4, label: 'Deposit', hidden: true }, // Hidden - will be reintegrated later
+        { number: 4, label: 'Deposit' }, // Re-enabled with escrow contracts
     { number: 5, label: 'Preview' },
   ];
 
@@ -1513,12 +1514,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
           }
     }
     if (currentStep < maxStep) {
-      // Skip step 4 (Deposit) - go directly from step 3 (Rewards) to step 5 (Preview)
-      if (currentStep === 3) {
-        setCurrentStep(5); // Skip to Preview
-      } else {
-        setCurrentStep(currentStep + 1);
-      }
+      // Normal step progression (Deposit tab is now enabled)
+      setCurrentStep(currentStep + 1);
     } else {
       // Final step - publish the quest
       await handlePublishQuest();
@@ -1527,12 +1524,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
 
   const handlePrevious = () => {
     if (currentStep > 1) {
-      // Skip step 4 (Deposit) - go directly from step 5 (Preview) to step 3 (Rewards)
-      if (currentStep === 5) {
-        setCurrentStep(3); // Skip back to Rewards
-      } else {
-        setCurrentStep(currentStep - 1);
-      }
+      // Normal step navigation (Deposit tab is now enabled)
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -1558,18 +1551,15 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
         return;
       }
 
-      // Convert to wei
-      const amountWei = parseUnits(rewardDeposit, 18);
+      // Calculate total cost (no fees)
+      const totalCost = parseEther(rewardDeposit);
 
-      // Check balance (native tokens don't need approval)
-      // Contract functionality disabled - contracts deleted
-      // const { sufficient, currentBalance } = await checkBalance(
-      //   address,
-      //   amountWei,
-      //   publicClient
-      // );
-      const sufficient = false; // Disabled
-      const currentBalance = '0'; // Disabled
+      // Check balance
+      const { sufficient, currentBalance } = await checkBalance(
+        address as `0x${string}`,
+        totalCost,
+        publicClient
+      );
 
       if (!sufficient) {
         showToast(
@@ -1580,21 +1570,38 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
         return;
       }
 
-      // Deposit to escrow - DISABLED: contracts deleted
-      showToast('Deposit functionality disabled - contracts deleted', 'warning');
-      // const { transactionHash } = await depositToEscrow(
-      //   questDraftId,
-      //   rewardDeposit,
-      //   numWinners,
-      //   walletClient,
-      //   publicClient
-      // );
-
-      // Wait for transaction - DISABLED
-      // await publicClient.waitForTransactionReceipt({ hash: transactionHash });
+      // Calculate quest expiry time
+      let expiresAt: number;
+      if (endDate && endTime) {
+        expiresAt = new Date(`${endDate}T${endTime}`).getTime();
+      } else {
+        // Default to 30 days from now if no end date specified
+        expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000);
+      }
       
+      // Validate expiry time is in the future
+      if (expiresAt <= Date.now()) {
+        showToast('Quest end time must be in the future', 'error');
+        setIsDepositing(false);
+        return;
+      }
+
+      // Deposit to escrow with expiry time and distribution type
+      showToast('Depositing to escrow...', 'info');
+      const { transactionHash, depositAmount: deposited } = await depositToEscrow(
+        {
+          questId: questDraftId,
+          amount: rewardDeposit,
+          numberOfWinners: numWinners,
+          expiresAt,
+          distributionType,
+        },
+        walletClient,
+        publicClient
+      );
+
       setDepositStatus('deposited');
-      showToast('Deposit functionality disabled - contracts deleted', 'warning');
+      showToast(`Deposit successful! ${formatUnits(deposited, 18)} TRUST deposited.`, 'success');
     } catch (error: any) {
       console.error('Deposit error:', error);
       showToast(error?.message || 'Deposit failed', 'error');
@@ -1606,9 +1613,14 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
   const handleStepClick = (stepNumber: number) => {
     // Allow navigation to any step that has been completed or is the current step
     // Also allow going to the next step (stepNumber === currentStep + 1)
-    // Skip step 4 (Deposit) - it's disabled
-    if (stepNumber === 4) {
-      return; // Don't allow clicking on disabled deposit step
+    // Step 4 (Deposit) is now enabled
+    // Validate before allowing navigation to deposit step
+    if (stepNumber === 4 && currentStep < 4) {
+      // Ensure rewards step is complete before deposit
+      if (!rewardDeposit || parseFloat(rewardDeposit) <= 0) {
+        showToast('Please set reward amount before proceeding to deposit', 'warning');
+        return;
+      }
     }
     if (stepNumber <= currentStep + 1 && stepNumber >= 1) {
       const maxStep = 5;
@@ -3026,7 +3038,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
               <label className="create-quest-builder-label">
                 Total Deposit Amount <span className="required-asterisk">*</span>
               </label>
-              <p className="create-quest-builder-hint">Amount of tokens you want to deposit for winners (Disabled - will be reintegrated later)</p>
+              <p className="create-quest-builder-hint">Amount of TRUST tokens you want to deposit for winners</p>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
                 <input
                   type="number"

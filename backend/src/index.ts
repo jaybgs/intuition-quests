@@ -1,6 +1,8 @@
+// Load environment variables FIRST - this must be the first import
+import './env.js';
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import questRoutes from './routes/quests.js';
@@ -12,8 +14,6 @@ import spaceRoutes from './routes/spaces.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;

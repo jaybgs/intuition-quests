@@ -461,9 +461,11 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: rgba(26, 31, 53, 0.2);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
   padding: 6px 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -472,12 +474,18 @@ body {
   font-weight: 500;
   white-space: nowrap;
   min-width: fit-content;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .profile-button:hover {
-  background: var(--hover-bg);
-  border-color: var(--accent-blue);
+  background: rgba(37, 43, 61, 0.25);
+  backdrop-filter: blur(45px);
+  -webkit-backdrop-filter: blur(45px);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
+  box-shadow: 0 7px 22px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .profile-pic {
@@ -486,6 +494,16 @@ body {
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--border-color);
+}
+
+.profile-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-pic-placeholder {
@@ -566,6 +584,105 @@ body {
   font-size: 13px;
   font-family: monospace;
   background: var(--bg-secondary);
+}
+
+/* TRUST Balance Display - Desktop Header */
+.header-balance-desktop {
+  display: flex;
+  align-items: center;
+}
+
+.trust-balance-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(26, 31, 53, 0.2);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.trust-balance-display:hover {
+  background: rgba(37, 43, 61, 0.25);
+  backdrop-filter: blur(45px);
+  -webkit-backdrop-filter: blur(45px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 7px 22px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.trust-balance-amount {
+  color: #fff;
+  font-weight: 700;
+}
+
+.trust-balance-symbol {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* Hide desktop balance on mobile */
+@media (max-width: 768px) {
+  .header-balance-desktop {
+    display: none;
+  }
+}
+
+/* Mobile Dropdown Balance Item - Hidden on desktop, visible on mobile */
+.dropdown-balance-item {
+  display: none; /* Hidden by default (desktop) */
+}
+
+.dropdown-balance-item.dropdown-balance-mobile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.dropdown-balance-item svg {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.dropdown-balance-amount {
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.dropdown-divider {
+  display: none; /* Hidden by default (desktop) */
+}
+
+.dropdown-divider.dropdown-divider-mobile {
+  display: block;
+  height: 1px;
+  background: var(--border-color);
+  margin: 0;
+}
+
+/* Show dropdown balance on mobile */
+@media (max-width: 768px) {
+  .dropdown-balance-item.dropdown-balance-mobile {
+    display: flex;
+  }
+  
+  .dropdown-divider.dropdown-divider-mobile {
+    display: block;
+  }
 }
 
 .profile-dropdown-item {
@@ -2771,6 +2888,10 @@ body {
     width: 28px;
     height: 28px;
     font-size: 12px;
+  }
+
+  .profile-name {
+    display: none;
   }
 
   /* Hide desktop logo on mobile */

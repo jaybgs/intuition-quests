@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Quest } from '../types';
 import { useAccount } from 'wagmi';
 import { truncateUsername } from '../utils/usernameUtils';
+import { getDiceBearAvatar } from '../utils/avatar';
 import './CommunityQuestCard.css';
 
 // Helper function to get profile picture from localStorage
@@ -71,26 +72,11 @@ export function CommunityQuestCard({ quest, onClick }: CommunityQuestCardProps) 
         <div className="quest-footer">
           <div className="quest-creator">
             <div className="creator-avatar">
-              {creatorProfilePic ? (
-                <img 
-                  src={creatorProfilePic} 
-                  alt={displayAddress}
-                  className="creator-avatar-img"
-                  onError={(e) => {
-                    // Fallback to profile icon if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const icon = target.nextElementSibling as HTMLElement;
-                    if (icon) icon.style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div className="creator-avatar-icon" style={{ display: creatorProfilePic ? 'none' : 'flex' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </div>
+              <img 
+                src={creatorProfilePic || getDiceBearAvatar(creatorAddress, 32)} 
+                alt={displayAddress}
+                className="creator-avatar-img"
+              />
             </div>
             <div className="creator-info">
               <span className="creator-label">Created by</span>

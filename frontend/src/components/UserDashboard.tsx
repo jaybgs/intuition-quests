@@ -9,6 +9,7 @@ import { useSocialConnections } from '../hooks/useSocialConnections';
 import { useIntuitionData, IntuitionAtom, IntuitionTriple } from '../hooks/useIntuitionData';
 import { showToast } from './Toast';
 import { truncateUsername } from '../utils/usernameUtils';
+import { getDiceBearAvatar } from '../utils/avatar';
 
 interface UserDashboardProps {
   onEditProfile: () => void;
@@ -451,16 +452,11 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       <div className="user-details-section">
         <div className="user-details-content">
           <div className="user-avatar-large">
-            {profilePicture ? (
-              <img src={profilePicture} alt="Profile" className="avatar-image" />
-            ) : (
-              <div className="avatar-placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </div>
-            )}
+            <img 
+              src={profilePicture || getDiceBearAvatar(address || 'anonymous')} 
+              alt="Profile" 
+              className="avatar-image" 
+            />
           </div>
           <div className="user-info-main">
             <div className="user-name-row">

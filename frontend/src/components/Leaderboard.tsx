@@ -3,6 +3,7 @@ import { useAccount } from 'wagmi';
 import { LeaderboardEntry } from '../types';
 import { LeaderboardRowSkeleton } from './Skeleton';
 import { useLeaderboard } from '../hooks/useLeaderboard';
+import { getDiceBearAvatar } from '../utils/avatar';
 import './Leaderboard.css';
 
 interface LeaderboardProps {
@@ -260,7 +261,7 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
                       <td>
                         <div className="leaderboard-user">
                           <div className="leaderboard-avatar">
-                            {entry.displayName?.charAt(0).toUpperCase() || entry.address.charAt(2).toUpperCase()}
+                            <img src={getDiceBearAvatar(entry.address, 40)} alt="" />
                           </div>
                           <div className="leaderboard-user-info">
                             <div className="leaderboard-username">

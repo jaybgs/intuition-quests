@@ -34,18 +34,46 @@ export class UserService {
       return this.mapUserFromDb(existingUser);
     }
 
-    // Create new user
-    const { data: newUser, error: createError } = await supabase
-      .from('users')
-      .insert({
-        address: normalizedAddress,
-      })
-      .select()
-      .single();
+    // Create new user with default username (first 7 characters of address)
+    let defaultUsername = normalizedAddress.slice(0, 7);
+    let attempts = 0;
+    let newUser;
+    let createError;
+
+    // Try to create user, handle potential username conflicts
+    while (attempts < 10) {
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          address: normalizedAddress,
+          username: defaultUsername,
+        })
+        .select()
+        .single();
+
+      if (!error) {
+        newUser = data;
+        createError = null;
+        break;
+      }
+
+      // If username conflict, try appending a number
+      if (error.code === '23505' && error.message?.includes('username')) {
+        attempts++;
+        defaultUsername = normalizedAddress.slice(0, 7) + attempts;
+      } else {
+        createError = error;
+        break;
+      }
+    }
 
     if (createError) {
       console.error('Error creating user:', createError);
       throw new Error(createError.message);
+    }
+
+    if (!newUser) {
+      throw new Error('Failed to create user after multiple attempts');
     }
 
     return this.mapUserFromDb(newUser);

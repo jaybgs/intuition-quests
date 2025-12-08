@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { createWeb3Modal } from '@web3modal/wagmi';
-import { walletConnect, injected, metaMask } from 'wagmi/connectors';
+import { walletConnect, injected } from 'wagmi/connectors';
 import { defineChain } from 'viem';
 import { getMultiVaultAddressFromChainId } from '@0xintuition/protocol';
 
@@ -15,7 +15,7 @@ export const intuitionChain = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.intuition.systems/http'],
+      http: ['https://rpc.intuition.systems'],
       webSocket: ['wss://rpc.intuition.systems/ws'],
     },
   },
@@ -38,10 +38,12 @@ export const multiVaultAddress = getMultiVaultAddressFromChainId(intuitionChain.
 // Get WalletConnect Project ID from environment
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
 
-// Create Wagmi config
-const connectors = [
-  injected(),
-  metaMask(),
+// Create connectors - use only injected() to avoid conflicts with multiple wallet extensions
+// injected() automatically detects and uses whatever wallet is available
+const connectors: any[] = [
+  injected({
+    shimDisconnect: true, // Properly handle disconnect state
+  }),
 ];
 
 // Only add WalletConnect if projectId is provided
@@ -62,6 +64,7 @@ export const wagmiConfig = createConfig({
   },
   ssr: false, // Disable SSR to prevent hydration issues
   syncConnectedChain: true, // Sync connected chain state
+  multiInjectedProviderDiscovery: true, // Better handling of multiple wallet extensions
 });
 
 // Create Web3Modal only if projectId is provided

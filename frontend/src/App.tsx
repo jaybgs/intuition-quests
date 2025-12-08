@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
-import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
+import { useAccount, useConnect, useDisconnect, useSwitchChain, useBalance } from 'wagmi';
 import { QuestList } from './components/QuestList';
 import { Leaderboard } from './components/Leaderboard';
 import { CreateQuest } from './components/CreateQuest';
@@ -32,6 +32,7 @@ import { questServiceBackend } from './services/questServiceBackend';
 import type { Space } from './types';
 import { useAdmin } from './hooks/useAdmin';
 import { wagmiConfig } from './config/wagmi';
+import { getDiceBearAvatar } from './utils/avatar';
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -127,6 +128,36 @@ const getStoredUsername = (address: string | undefined): string | null => {
   return null;
 };
 
+// TRUST Balance Display Component
+function TrustBalanceDisplay({ address }: { address: string }) {
+  const { data: balance, isLoading } = useBalance({
+    address: address as `0x${string}`,
+  });
+
+  const formatBalance = (value: bigint | undefined, decimals: number = 18): string => {
+    if (!value) return '0.00';
+    const num = Number(value) / Math.pow(10, decimals);
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(2) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(2) + 'K';
+    } else if (num >= 1) {
+      return num.toFixed(2);
+    } else {
+      return num.toFixed(4);
+    }
+  };
+
+  return (
+    <div className="trust-balance-display">
+      <span className="trust-balance-amount">
+        {isLoading ? '...' : formatBalance(balance?.value)}
+      </span>
+      <span className="trust-balance-symbol">TRUST</span>
+    </div>
+  );
+}
+
 interface ProfileDropdownProps {
   address: string;
   onDisconnect: () => void;
@@ -139,6 +170,9 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
   const username = getStoredUsername(address);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { data: balance } = useBalance({
+    address: address as `0x${string}`,
+  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -156,6 +190,16 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
     };
   }, [isOpen]);
 
+  // Format address for display
+  const displayName = username || `${address.slice(0, 6)}...${address.slice(-4)}`;
+  
+  // Format balance for mobile dropdown
+  const formatBalance = (value: bigint | undefined): string => {
+    if (!value) return '0.00';
+    const num = Number(value) / 1e18;
+    return num >= 1 ? num.toFixed(2) : num.toFixed(4);
+  };
+
   return (
     <div className="profile-dropdown" ref={dropdownRef}>
       <button
@@ -163,19 +207,27 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Profile menu"
       >
-        {profilePic ? (
-          <img src={profilePic} alt="Profile" className="profile-pic" />
-        ) : (
-          <div className="profile-pic-placeholder">
-            {username ? username.charAt(0).toUpperCase() : address.slice(2, 4).toUpperCase()}
-          </div>
-        )}
+        <img 
+          src={profilePic || getDiceBearAvatar(address)} 
+          alt="Profile" 
+          className="profile-pic" 
+        />
+        <span className="profile-name">{displayName}</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </button>
       {isOpen && (
         <div className="profile-dropdown-menu">
+          {/* TRUST Balance - First item in dropdown for mobile only */}
+          <div className="dropdown-balance-item dropdown-balance-mobile">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v12M8 10l4-4 4 4M8 14l4 4 4-4"/>
+            </svg>
+            <span className="dropdown-balance-amount">{formatBalance(balance?.value)} TRUST</span>
+          </div>
+          <div className="dropdown-divider dropdown-divider-mobile" />
           <button onClick={() => { onProfileClick(); setIsOpen(false); }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -825,6 +877,12 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               }}
             />
           </div>
+          {/* Desktop TRUST Balance Display */}
+          {isConnected && address && (
+            <div className="header-balance-desktop">
+              <TrustBalanceDisplay address={address} />
+            </div>
+          )}
           {isAdminAuthenticated && (
             <button
               onClick={() => {

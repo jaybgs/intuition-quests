@@ -3,7 +3,8 @@ import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChai
 import { showToast } from './Toast';
 import { spaceService } from '../services/spaceService';
 import { generateSlug } from '../utils/slugUtils';
-// Contract services disabled - contracts deleted
+// Space identity service for creating blockchain atoms
+import { createSpaceIdentity, getSpaceIdentityCost } from '../services/spaceIdentityService';
 import { intuitionChain } from '../config/wagmi';
 import { formatEther } from 'viem';
 import './SpaceBuilder.css';
@@ -33,7 +34,7 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
   const [projectType, setProjectType] = useState<'defi' | 'infofi' | 'other' | 'undisclosed'>('undisclosed');
   const [projectTypeOther, setProjectTypeOther] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Atom creation step removed - contracts deleted
+  const [atomCreationStep, setAtomCreationStep] = useState<'idle' | 'creating' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const maxDescriptionLength = 180;
 
@@ -196,7 +197,6 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
       }
 
       // Step 1: Convert logo to base64 if provided
-      // Note: Atom creation on blockchain is disabled - contracts deleted
       let logoBase64: string | undefined;
       if (logo) {
         logoBase64 = await new Promise<string>((resolve, reject) => {
@@ -209,8 +209,38 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         });
       }
 
-      // Step 2: Create the space using the space service
-      // Note: Atom creation on blockchain is disabled - contracts deleted
+      // Step 2: Create space identity on Intuition blockchain
+      setAtomCreationStep('creating');
+      showToast('Creating space identity on Intuition chain...', 'info');
+      
+      let atomId: string | undefined;
+      let atomTransactionHash: string | undefined;
+      
+      try {
+        const createdAt = Date.now();
+        const identityResult = await createSpaceIdentity(
+          {
+            spaceName: name.trim(),
+            createdAt,
+          },
+          walletClient,
+          publicClient
+        );
+        
+        atomId = identityResult.atomId;
+        atomTransactionHash = identityResult.transactionHash;
+        setAtomCreationStep('success');
+        showToast('Space identity created on blockchain!', 'success');
+      } catch (atomError: any) {
+        console.error('Space identity creation failed:', atomError);
+        setAtomCreationStep('error');
+        // MANDATORY: Cannot create space without blockchain identity
+        showToast('Failed to create space identity on blockchain. Please try again.', 'error');
+        setIsSubmitting(false);
+        return; // Stop the space creation process
+      }
+
+      // Step 3: Create the space using the space service (atomId is now required)
       const space = await spaceService.createSpace({
         name: name.trim(),
         description: description.trim(),
@@ -220,7 +250,8 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         userType: userType,
         projectType: projectType,
         projectTypeOther: projectType === 'other' ? projectTypeOther.trim() : undefined,
-        // atomId and atomTransactionHash are no longer used - contracts deleted
+        atomId,
+        atomTransactionHash,
       });
 
       // Store the X profile URL for use when creating quests

@@ -15,6 +15,14 @@ export function OnboardingSetup({ onComplete }: OnboardingSetupProps) {
   const [profilePicture, setProfilePicture] = useState('');
   const [description, setDescription] = useState('');
 
+  // Set default username to first 7 characters of wallet address
+  useEffect(() => {
+    if (address && !username) {
+      const defaultUsername = address.slice(0, 7);
+      setUsername(defaultUsername);
+    }
+  }, [address, username]);
+
   // Check if user already has an identity
   useEffect(() => {
     if (address && hasIdentity()) {

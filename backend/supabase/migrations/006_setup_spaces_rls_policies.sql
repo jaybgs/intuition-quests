@@ -38,3 +38,6 @@ BEGIN
     RAISE EXCEPTION 'Table spaces does not exist. Please run migration 001_create_tables.sql first.';
   END IF;
 END $$;
+
+
+

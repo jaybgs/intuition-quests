@@ -5,6 +5,7 @@ import { LeaderboardRowSkeleton } from './Skeleton';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import './FullLeaderboard.css';
 import { truncateUsername } from '../utils/usernameUtils';
+import { getDiceBearAvatar } from '../utils/avatar';
 
 interface FullLeaderboardProps {
   onBack: () => void;
@@ -184,7 +185,7 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
                       <td>
                         <div className="full-leaderboard-user">
                           <div className="full-leaderboard-avatar">
-                            {entry.displayName?.charAt(0).toUpperCase() || entry.address.charAt(2).toUpperCase()}
+                            <img src={getDiceBearAvatar(entry.address, 40)} alt="" />
                           </div>
                           <div className="full-leaderboard-user-info">
                             <div className="full-leaderboard-username">

@@ -28,9 +28,12 @@ export const intuitionMainnet: Chain = {
 };
 
 export function getMultiVaultAddressFromChainId(chainId: number): `0x${string}` {
-  // Placeholder vault address - replace with actual address when available
-  // This should return the MultiVault contract address for the given chain
-  return '0x0000000000000000000000000000000000000000' as `0x${string}`;
+  // Intuition MultiVault addresses by chain ID
+  const addresses: Record<number, `0x${string}`> = {
+    1155: '0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e', // Intuition Mainnet
+  };
+  
+  return addresses[chainId] || '0x0000000000000000000000000000000000000000' as `0x${string}`;
 }
 
 /**

@@ -577,6 +577,17 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       // Set the space and navigate to space detail
       if (params.spaceId) {
         setSelectedSpaceId(params.spaceId);
+        // Try to get the space if we have spaceId but not the space object
+        spaceService.getSpaceById(params.spaceId).then(space => {
+          if (space) {
+            setSelectedSpace(space);
+            setSelectedSpaceId(space.id);
+            localStorage.setItem('selectedSpaceId', space.id);
+            localStorage.setItem('selectedSpace', JSON.stringify(space));
+          }
+        }).catch(() => {
+          // If space fetch fails, still navigate
+        });
       }
       setActiveTab('space-detail');
       navigate(`/space-${createSlug(params.spaceName)}`);
@@ -1017,15 +1028,17 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     console.log('✅ Space loaded:', space);
                     
                     if (space) {
-                      // Set space data BEFORE navigating
+                      // Set space data BEFORE navigating - ensure state is set synchronously
                       setSelectedSpace(space);
                       setSelectedSpaceId(space.id);
                       localStorage.setItem('previousTab', 'discover');
                       localStorage.setItem('selectedSpaceId', space.id);
                       localStorage.setItem('selectedSpace', JSON.stringify(space));
                       
-                      // Use navigateToTab to properly navigate to space detail
-                      navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
+                      // Set active tab and navigate directly to ensure it works
+                      setActiveTab('space-detail');
+                      const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                      navigate(`/space-${spaceSlug}`);
                     } else {
                       console.error('❌ Space not found:', spaceId);
                       showToast('Space not found', 'error');

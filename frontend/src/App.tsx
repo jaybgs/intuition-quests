@@ -303,12 +303,34 @@ interface AppContentProps {
 }
 
 function AppContent({ initialTab = 'discover', questName = null, spaceName = null }: AppContentProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests'>(initialTab as any);
+  
+  // Sync activeTab with initialTab when it changes (e.g., from URL navigation)
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      console.log('🔄 Syncing activeTab with initialTab:', initialTab);
+      setActiveTab(initialTab as any);
+    }
+  }, [initialTab]);
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
-  const [selectedSpace, setSelectedSpace] = useState<Space | null>(null);
-  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
+  // Try to restore selectedSpace from localStorage on mount
+  const getInitialSpace = (): Space | null => {
+    try {
+      const stored = localStorage.getItem('selectedSpace');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Error parsing stored space:', e);
+    }
+    return null;
+  };
+  const [selectedSpace, setSelectedSpace] = useState<Space | null>(getInitialSpace());
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(() => {
+    const stored = localStorage.getItem('selectedSpaceId');
+    return stored || null;
+  });
   const { address, isConnected } = useAccount();
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -317,17 +339,38 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [pendingSpaceCreation, setPendingSpaceCreation] = useState<(() => void) | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hasCreatedSpaces, setHasCreatedSpaces] = useState<boolean>(false);
+  const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
   const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdmin();
   const navRef = useRef<HTMLElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Sync activeTab with initialTab prop (for routing)
   useEffect(() => {
-    if (initialTab) {
+    if (initialTab && initialTab !== activeTab) {
+      console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'from', activeTab);
       setActiveTab(initialTab as any);
     }
   }, [initialTab]);
+  
+  // Restore space from localStorage when on space-detail tab
+  useEffect(() => {
+    if ((activeTab === 'space-detail' || initialTab === 'space-detail') && !selectedSpace) {
+      const storedSpace = localStorage.getItem('selectedSpace');
+      const storedSpaceId = localStorage.getItem('selectedSpaceId');
+      if (storedSpace && storedSpaceId) {
+        try {
+          const space = JSON.parse(storedSpace);
+          console.log('📦 Restoring space from localStorage:', space);
+          setSelectedSpace(space);
+          setSelectedSpaceId(space.id);
+        } catch (e) {
+          console.error('Error parsing stored space:', e);
+        }
+      }
+    }
+  }, [activeTab, initialTab, selectedSpace]);
 
   // Handle quest name from URL
   useEffect(() => {
@@ -351,35 +394,93 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     }
   }, [questName, activeTab]);
 
-  // Handle space name from URL
+  // Close mobile menu when clicking outside
   useEffect(() => {
-    if (spaceName && (activeTab === 'space-detail' || initialTab === 'space-detail')) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMobileMenu && mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.mobile-menu-button') && !target.closest('.mobile-menu-content')) {
+          setShowMobileMenu(false);
+        }
+      }
+    };
+
+    if (showMobileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showMobileMenu]);
+
+  // Handle space name from URL (only if we don't already have selectedSpace)
+  useEffect(() => {
+    // First, try to restore from localStorage if we have a spaceId stored
+    const storedSpaceId = localStorage.getItem('selectedSpaceId');
+    const storedSpace = localStorage.getItem('selectedSpace');
+    
+    if (storedSpaceId && storedSpace && !selectedSpace && (activeTab === 'space-detail' || initialTab === 'space-detail')) {
+      try {
+        const space = JSON.parse(storedSpace);
+        console.log('📦 Restoring space from localStorage:', space);
+        setSelectedSpace(space);
+        setSelectedSpaceId(space.id);
+        setActiveTab('space-detail');
+        return; // Don't run the URL-based lookup if we restored from localStorage
+      } catch (e) {
+        console.error('Error parsing stored space:', e);
+      }
+    }
+    
+    // Only run if we have a spaceName, we're on space-detail tab, but don't have selectedSpace yet
+    if (spaceName && (activeTab === 'space-detail' || initialTab === 'space-detail') && !selectedSpace) {
+      console.log('🔍 Looking up space from URL, spaceName:', spaceName);
       // Find space by name and set selectedSpace
       const findSpaceByName = async () => {
         try {
           const spaces = await spaceService.getAllSpaces();
-          const space = spaces.find(s => 
-            s.slug === spaceName.toLowerCase() ||
-            s.name.toLowerCase().replace(/\s+/g, '-') === spaceName.toLowerCase() ||
-            s.id === spaceName
-          );
+          console.log('📋 Available spaces:', spaces.length);
+          // Try multiple matching strategies - normalize both sides
+          const normalizedSpaceName = spaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const space = spaces.find(s => {
+            const spaceSlug = (s.slug || s.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')).toLowerCase();
+            const spaceNameNormalized = s.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            return (
+              s.slug?.toLowerCase() === spaceName.toLowerCase() ||
+              s.slug?.toLowerCase() === normalizedSpaceName ||
+              spaceSlug === spaceName.toLowerCase() ||
+              spaceSlug === normalizedSpaceName ||
+              spaceNameNormalized === spaceName.toLowerCase() ||
+              spaceNameNormalized === normalizedSpaceName ||
+              s.id === spaceName
+            );
+          });
           if (space) {
+            console.log('✅ Found space:', space);
             setSelectedSpace(space);
             setSelectedSpaceId(space.id);
+            localStorage.setItem('selectedSpaceId', space.id);
+            localStorage.setItem('selectedSpace', JSON.stringify(space));
             setActiveTab('space-detail');
           } else {
-            console.error('Space not found:', spaceName);
-            // Fallback to discover if space not found
-            navigateToTab('discover');
+            console.error('❌ Space not found for:', spaceName);
+            console.log('📋 Available spaces:', spaces.map(s => ({ id: s.id, name: s.name, slug: s.slug })));
+            // Don't navigate away immediately - wait longer to see if space loads
+            setTimeout(() => {
+              if (!selectedSpace) {
+                console.log('⏱️ Space still not found after timeout, navigating to discover');
+                navigateToTab('discover');
+              }
+            }, 3000);
           }
         } catch (error) {
-          console.error('Error finding space:', error);
-          navigateToTab('discover');
+          console.error('❌ Error finding space:', error);
+          // Don't navigate away on error - might be a temporary issue
         }
       };
       findSpaceByName();
     }
-  }, [spaceName, activeTab, initialTab]);
+  }, [spaceName, activeTab, initialTab, selectedSpace]);
 
   // Helper function to create URL-friendly slug from name
   const createSlug = (name: string): string => {
@@ -641,45 +742,35 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     <div className="app">
       <div className="app-content-wrapper">
       <header className="app-header">
-        {/* Mobile Hamburger Menu Button */}
+        {/* Hamburger Menu Button - Mobile Only */}
         <button 
           className="mobile-menu-button"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
           aria-label="Toggle menu"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            {isMobileMenuOpen ? (
-              <path d="M18 6L6 18M6 6l12 12"/>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {showMobileMenu ? (
+              <>
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </>
             ) : (
-              <path d="M3 12h18M3 6h18M3 18h18"/>
+              <>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </>
             )}
           </svg>
         </button>
 
-        {/* Mobile Menu Dropdown */}
-        {isMobileMenuOpen && (
-          <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="mobile-menu-dropdown" onClick={(e) => e.stopPropagation()}>
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  className="mobile-menu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToTab(item.tab);
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Logo - Desktop: Left, Mobile: Center */}
+        <Link to="/home" className="logo logo-mobile-center">
+          <img src="/logo.svg" alt="TrustQuests Logo" className="logo-icon" />
+        </Link>
 
         {/* Desktop Navigation */}
-        <div className="header-left">
+        <div className="header-left header-desktop">
           <nav 
             className="header-nav" 
             ref={navRef}
@@ -719,17 +810,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             ))}
           </nav>
         </div>
-
-        {/* Logo - Centered */}
-        <div className="header-center">
-          <Link to="/home" className="logo logo-center">
-            <img src="/logo.svg" alt="TrustQuests Logo" className="logo-icon logo-icon-center" />
-          </Link>
-        </div>
-
-        {/* Search and Profile - Right Side */}
         <div className="header-right">
-          <div className="header-search-wrapper">
+          <div className="header-right-search header-desktop">
             <Search 
               placeholder="Search quests, projects, spaces..." 
               onSpaceSelect={(space) => {
@@ -785,6 +867,38 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             </div>
           )}
         </div>
+
+        {/* Mobile Menu Dropdown - Glassmorphism */}
+        {showMobileMenu && (
+          <div 
+            className="mobile-menu-dropdown"
+            ref={mobileMenuRef}
+            onClick={(e) => {
+              // Close menu when clicking outside
+              if (e.target === mobileMenuRef.current) {
+                setShowMobileMenu(false);
+              }
+            }}
+          >
+            <div className="mobile-menu-content" onClick={(e) => e.stopPropagation()}>
+              {menuItems.map((item, index) => (
+                <Link
+                  key={index}
+                  to={item.path}
+                  className="mobile-menu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigateToTab(item.tab);
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  <span className="mobile-menu-icon">{item.icon}</span>
+                  <span className="mobile-menu-text">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </header>
       <main className="app-main">
         {/* OAuth Callback Handler - Check URL path first (before other content) */}
@@ -835,15 +949,35 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 }}
                 onSpaceClick={async (spaceId) => {
                   try {
+                    console.log('🔄 Space card clicked, spaceId:', spaceId);
                     const space = await spaceService.getSpaceById(spaceId);
+                    console.log('✅ Space loaded:', space);
+                    
                     if (space) {
+                      // Set space data BEFORE navigating - use a small delay to ensure state is set
                       setSelectedSpace(space);
                       setSelectedSpaceId(space.id);
                       localStorage.setItem('previousTab', 'discover');
-                      navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
+                      localStorage.setItem('selectedSpaceId', space.id);
+                      localStorage.setItem('selectedSpace', JSON.stringify(space));
+                      
+                      // Navigate using space slug or name for URL (format: /space-{name})
+                      const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                      console.log('📍 Navigating to:', `/space-${spaceSlug}`);
+                      
+                      // Set active tab first
+                      setActiveTab('space-detail');
+                      
+                      // Use a small timeout to ensure state is set before navigation
+                      setTimeout(() => {
+                        navigate(`/space-${spaceSlug}`);
+                      }, 50);
+                    } else {
+                      console.error('❌ Space not found:', spaceId);
+                      showToast('Space not found', 'error');
                     }
                   } catch (error) {
-                    console.error('Error loading space:', error);
+                    console.error('❌ Error loading space:', error);
                     showToast('Failed to load space details', 'error');
                   }
                 }}
@@ -926,15 +1060,43 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 }}
               />
             )}
-            {activeTab === 'space-detail' && selectedSpace && (
-              <SpaceDetailView 
-                space={selectedSpace}
-                onBack={() => {
-                  const previousTab = localStorage.getItem('previousTab') || 'discover';
-                  navigateToTab(previousTab);
-                }}
-              />
-            )}
+            {(() => {
+              const isSpaceDetailTab = activeTab === 'space-detail' || initialTab === 'space-detail';
+              console.log('🎯 Rendering check - activeTab:', activeTab, 'initialTab:', initialTab, 'selectedSpace:', selectedSpace?.name, 'isSpaceDetailTab:', isSpaceDetailTab);
+              
+              if (isSpaceDetailTab && selectedSpace) {
+                return (
+                  <SpaceDetailView 
+                    space={selectedSpace}
+                    onBack={() => {
+                      const previousTab = localStorage.getItem('previousTab') || 'discover';
+                      navigateToTab(previousTab);
+                    }}
+                    onQuestClick={(questId) => {
+                      setSelectedQuestId(questId);
+                      navigateToTab('quest-detail', { questId });
+                    }}
+                  />
+                );
+              } else if (isSpaceDetailTab && !selectedSpace) {
+                return (
+                  <div style={{ 
+                    padding: '40px', 
+                    textAlign: 'center', 
+                    color: 'var(--text-secondary)',
+                    minHeight: '400px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <div>
+                      <p>Loading space...</p>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             {activeTab === 'builder-dashboard' && (
               <BuilderDashboard 
                 spaceId={selectedSpaceId || ''}

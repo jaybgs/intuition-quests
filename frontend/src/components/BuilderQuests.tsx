@@ -78,69 +78,68 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     }
   }, [address, spaceId, showCreateQuest]);
 
-  // Load published quests function
-  const loadPublishedQuests = async () => {
-    if (!address || activeTab !== 'published') return;
-
-    setIsLoadingPublished(true);
-    try {
-      // Fetch from backend
-      const allQuests = await questService.getAllQuests();
-      const userQuests = allQuests.filter(
-        (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
-      );
-
-      // Also check localStorage for published quests
-      let localPublishedQuests: any[] = [];
-      
-      try {
-        // Check published quests
-        const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
-        const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
-        if (storedPublishedQuests) {
-          const parsedQuests = JSON.parse(storedPublishedQuests);
-          parsedQuests.forEach((quest: any) => {
-            if (quest.creatorAddress?.toLowerCase() === address.toLowerCase()) {
-              localPublishedQuests.push({
-                id: quest.id,
-                title: quest.title,
-                description: quest.description || '',
-                createdAt: quest.createdAt || Date.now(),
-                status: quest.status || 'active',
-                creatorAddress: quest.creatorAddress,
-              });
-            }
-          });
-        }
-      } catch (error) {
-        console.warn('Error reading published quests from localStorage:', error);
-      }
-
-      // Combine backend and localStorage, removing duplicates
-      const allPublishedQuests = [...userQuests];
-      const seenIds = new Set(userQuests.map((q: Quest) => q.id));
-      
-      localPublishedQuests.forEach((localQuest: any) => {
-        if (!seenIds.has(localQuest.id)) {
-          allPublishedQuests.push(localQuest as Quest);
-          seenIds.add(localQuest.id);
-        }
-      });
-
-      // Sort by creation date (newest first)
-      allPublishedQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      
-      setPublishedQuests(allPublishedQuests);
-    } catch (error) {
-      console.error('Error loading published quests:', error);
-      setPublishedQuests([]);
-    } finally {
-      setIsLoadingPublished(false);
-    }
-  };
-
   // Load published quests from backend and localStorage
   useEffect(() => {
+    const loadPublishedQuests = async () => {
+      if (!address || activeTab !== 'published') return;
+
+      setIsLoadingPublished(true);
+      try {
+        // Fetch from backend
+        const allQuests = await questService.getAllQuests();
+        const userQuests = allQuests.filter(
+          (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
+        );
+
+        // Also check localStorage for published quests
+        let localPublishedQuests: any[] = [];
+        
+        try {
+          // Check published quests
+          const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
+          const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
+          if (storedPublishedQuests) {
+            const parsedQuests = JSON.parse(storedPublishedQuests);
+            parsedQuests.forEach((quest: any) => {
+              if (quest.creatorAddress?.toLowerCase() === address.toLowerCase()) {
+                localPublishedQuests.push({
+                  id: quest.id,
+                  title: quest.title,
+                  description: quest.description || '',
+                  createdAt: quest.createdAt || Date.now(),
+                  status: quest.status || 'active',
+                  creatorAddress: quest.creatorAddress,
+                });
+              }
+            });
+          }
+        } catch (error) {
+          console.warn('Error reading published quests from localStorage:', error);
+        }
+
+        // Combine backend and localStorage, removing duplicates
+        const allPublishedQuests = [...userQuests];
+        const seenIds = new Set(userQuests.map((q: Quest) => q.id));
+        
+        localPublishedQuests.forEach((localQuest: any) => {
+          if (!seenIds.has(localQuest.id)) {
+            allPublishedQuests.push(localQuest as Quest);
+            seenIds.add(localQuest.id);
+          }
+        });
+
+        // Sort by creation date (newest first)
+        allPublishedQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        
+        setPublishedQuests(allPublishedQuests);
+      } catch (error) {
+        console.error('Error loading published quests:', error);
+        setPublishedQuests([]);
+      } finally {
+        setIsLoadingPublished(false);
+      }
+    };
+
     loadPublishedQuests();
   }, [address, activeTab, showCreateQuest]);
 
@@ -149,15 +148,74 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     const handleQuestDeleted = () => {
       // Reload published quests when a quest is deleted
       if (activeTab === 'published' && address) {
+        const loadPublishedQuests = async () => {
+          setIsLoadingPublished(true);
+          try {
+            // Fetch from backend
+            const allQuests = await questService.getAllQuests();
+            const userQuests = allQuests.filter(
+              (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
+            );
+
+            // Also check localStorage for published quests
+            let localPublishedQuests: any[] = [];
+            
+            try {
+              // Check published quests
+              const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
+              const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
+              if (storedPublishedQuests) {
+                const parsedQuests = JSON.parse(storedPublishedQuests);
+                parsedQuests.forEach((quest: any) => {
+                  if (quest.creatorAddress?.toLowerCase() === address.toLowerCase()) {
+                    localPublishedQuests.push({
+                      id: quest.id,
+                      title: quest.title,
+                      description: quest.description || '',
+                      createdAt: quest.createdAt || Date.now(),
+                      status: quest.status || 'active',
+                      creatorAddress: quest.creatorAddress,
+                    });
+                  }
+                });
+              }
+            } catch (error) {
+              console.warn('Error reading published quests from localStorage:', error);
+            }
+
+            // Combine backend and localStorage, removing duplicates
+            const allPublishedQuests = [...userQuests];
+            const seenIds = new Set(userQuests.map((q: Quest) => q.id));
+            
+            localPublishedQuests.forEach((localQuest: any) => {
+              if (!seenIds.has(localQuest.id)) {
+                allPublishedQuests.push(localQuest as Quest);
+                seenIds.add(localQuest.id);
+              }
+            });
+
+            // Sort by creation date (newest first)
+            allPublishedQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            
+            setPublishedQuests(allPublishedQuests);
+          } catch (error) {
+            console.error('Error loading published quests:', error);
+            setPublishedQuests([]);
+          } finally {
+            setIsLoadingPublished(false);
+          }
+        };
         loadPublishedQuests();
       }
+      // Also clear selected quest if it was deleted
+      setSelectedQuestId(null);
     };
-
+    
     window.addEventListener('questDeleted', handleQuestDeleted);
     return () => {
       window.removeEventListener('questDeleted', handleQuestDeleted);
     };
-  }, [address, activeTab, loadPublishedQuests]);
+  }, [address, activeTab]);
 
   // Listen for quest publication events
   useEffect(() => {

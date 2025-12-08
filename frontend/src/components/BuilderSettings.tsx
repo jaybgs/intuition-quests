@@ -20,6 +20,8 @@ export function BuilderSettings({ space, onSpaceUpdated, onSpaceDeleted }: Build
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(space.logo || null);
   const [userType, setUserType] = useState<'project' | 'user'>(space.userType);
+  const [projectType, setProjectType] = useState<'defi' | 'infofi' | 'other' | 'undisclosed'>(space.projectType || 'undisclosed');
+  const [projectTypeOther, setProjectTypeOther] = useState(space.projectTypeOther || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,6 +34,8 @@ export function BuilderSettings({ space, onSpaceUpdated, onSpaceDeleted }: Build
     setTwitterUrl(space.twitterUrl);
     setLogoPreview(space.logo || null);
     setUserType(space.userType);
+    setProjectType(space.projectType || 'undisclosed');
+    setProjectTypeOther(space.projectTypeOther || '');
   }, [space]);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,6 +115,8 @@ export function BuilderSettings({ space, onSpaceUpdated, onSpaceDeleted }: Build
         description: description.trim(),
         logo: logoBase64 || space.logo,
         twitterUrl: twitterUrl.trim(),
+        projectType: userType === 'project' ? projectType : undefined,
+        projectTypeOther: userType === 'project' && projectType === 'other' ? projectTypeOther.trim() : undefined,
       });
 
       if (updatedSpace) {
@@ -240,6 +246,67 @@ export function BuilderSettings({ space, onSpaceUpdated, onSpaceDeleted }: Build
             />
             <p className="builder-settings-hint">Enter your X (Twitter) profile URL</p>
           </div>
+
+          {/* Project Type Section - Only show if userType is 'project' */}
+          {userType === 'project' && (
+            <div className="builder-settings-section">
+              <label className="builder-settings-label">
+                Project Type
+              </label>
+              <div className="builder-settings-radio-group">
+                <label className="builder-settings-radio">
+                  <input
+                    type="radio"
+                    name="projectType"
+                    value="defi"
+                    checked={projectType === 'defi'}
+                    onChange={(e) => setProjectType(e.target.value as 'defi' | 'infofi' | 'other' | 'undisclosed')}
+                  />
+                  <span>DeFi</span>
+                </label>
+                <label className="builder-settings-radio">
+                  <input
+                    type="radio"
+                    name="projectType"
+                    value="infofi"
+                    checked={projectType === 'infofi'}
+                    onChange={(e) => setProjectType(e.target.value as 'defi' | 'infofi' | 'other' | 'undisclosed')}
+                  />
+                  <span>InfoFi</span>
+                </label>
+                <label className="builder-settings-radio">
+                  <input
+                    type="radio"
+                    name="projectType"
+                    value="other"
+                    checked={projectType === 'other'}
+                    onChange={(e) => setProjectType(e.target.value as 'defi' | 'infofi' | 'other' | 'undisclosed')}
+                  />
+                  <span>Other</span>
+                </label>
+                <label className="builder-settings-radio">
+                  <input
+                    type="radio"
+                    name="projectType"
+                    value="undisclosed"
+                    checked={projectType === 'undisclosed'}
+                    onChange={(e) => setProjectType(e.target.value as 'defi' | 'infofi' | 'other' | 'undisclosed')}
+                  />
+                  <span>Undisclosed</span>
+                </label>
+              </div>
+              {projectType === 'other' && (
+                <input
+                  type="text"
+                  className="builder-settings-input"
+                  placeholder="Enter what your project offers..."
+                  value={projectTypeOther}
+                  onChange={(e) => setProjectTypeOther(e.target.value)}
+                  style={{ marginTop: '12px' }}
+                />
+              )}
+            </div>
+          )}
 
           {/* Submit Button */}
           <div className="builder-settings-actions">

@@ -137,6 +137,8 @@ export class SpaceServiceSupabase {
     twitterUrl: string;
     ownerAddress: string;
     userType: 'project' | 'user';
+    projectType?: 'defi' | 'infofi' | 'other' | 'undisclosed';
+    projectTypeOther?: string;
     atomId?: string;
     atomTransactionHash?: string;
   }): Promise<Space> {
@@ -160,6 +162,8 @@ export class SpaceServiceSupabase {
           twitter_url: data.twitterUrl.trim(),
           owner_address: data.ownerAddress.toLowerCase(),
           user_type: data.userType.toUpperCase(),
+          project_type: data.projectType,
+          project_type_other: data.projectTypeOther,
           atom_id: data.atomId,
           atom_transaction_hash: data.atomTransactionHash,
         })
@@ -214,6 +218,16 @@ export class SpaceServiceSupabase {
 
       if (updates.twitterUrl !== undefined) {
         updateData.twitter_url = updates.twitterUrl.trim();
+      }
+
+      if (updates.userType !== undefined) {
+        updateData.user_type = updates.userType.toUpperCase();
+      }
+      if (updates.projectType !== undefined) {
+        updateData.project_type = updates.projectType;
+      }
+      if (updates.projectTypeOther !== undefined) {
+        updateData.project_type_other = updates.projectTypeOther;
       }
 
       const { data, error } = await supabase
@@ -345,6 +359,8 @@ export class SpaceServiceSupabase {
       twitterUrl: row.twitter_url,
       ownerAddress: row.owner_address,
       userType: row.user_type?.toLowerCase() as 'project' | 'user',
+      projectType: row.project_type || undefined,
+      projectTypeOther: row.project_type_other || undefined,
       createdAt: new Date(row.created_at).getTime(),
       atomId: row.atom_id || undefined,
       atomTransactionHash: row.atom_transaction_hash || undefined,
@@ -402,6 +418,8 @@ export class SpaceServiceSupabase {
       twitterUrl: data.twitterUrl.trim(),
       ownerAddress: data.ownerAddress.toLowerCase(),
       userType: data.userType,
+      projectType: data.projectType,
+      projectTypeOther: data.projectTypeOther,
       createdAt: Date.now(),
       atomId: data.atomId,
       atomTransactionHash: data.atomTransactionHash,

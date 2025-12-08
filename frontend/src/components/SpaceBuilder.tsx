@@ -30,6 +30,8 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [twitterUrl, setTwitterUrl] = useState('');
   const [slug, setSlug] = useState('');
+  const [projectType, setProjectType] = useState<'defi' | 'infofi' | 'other' | 'undisclosed'>('undisclosed');
+  const [projectTypeOther, setProjectTypeOther] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [atomCreationStep, setAtomCreationStep] = useState<'idle' | 'creating' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -246,6 +248,8 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         twitterUrl: twitterUrl.trim(),
         ownerAddress: address,
         userType: userType,
+        projectType: projectType,
+        projectTypeOther: projectType === 'other' ? projectTypeOther.trim() : undefined,
         atomId: atomResult.atomId,
         atomTransactionHash: atomResult.transactionHash,
       });
@@ -369,6 +373,67 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
               <span className="character-count">{maxDescriptionLength - description.length}</span>
             </div>
           </div>
+
+          {/* Project Type Section - Only show if userType is 'project' */}
+          {userType === 'project' && (
+            <div className="space-builder-section">
+              <label className="space-builder-label">
+                Project Type
+              </label>
+              <div className="space-builder-radio-group">
+                <label className="space-builder-radio">
+                  <input
+                    type="radio"
+                    name="projectType"
+                    value="defi"
+                    checked={projectType === 'defi'}
+                    onChange={(e) => setProjectType(e.target.value as 'defi' | 'infofi' | 'other' | 'undisclosed')}
+                  />
+                  <span>DeFi</span>
+                </label>
+                <label className="space-builder-radio">
+                  <input
+                    type="radio"
+                    name="projectType"
+                    value="infofi"
+                    checked={projectType === 'infofi'}
+                    onChange={(e) => setProjectType(e.target.value as 'defi' | 'infofi' | 'other' | 'undisclosed')}
+                  />
+                  <span>InfoFi</span>
+                </label>
+                <label className="space-builder-radio">
+                  <input
+                    type="radio"
+                    name="projectType"
+                    value="other"
+                    checked={projectType === 'other'}
+                    onChange={(e) => setProjectType(e.target.value as 'defi' | 'infofi' | 'other' | 'undisclosed')}
+                  />
+                  <span>Other</span>
+                </label>
+                <label className="space-builder-radio">
+                  <input
+                    type="radio"
+                    name="projectType"
+                    value="undisclosed"
+                    checked={projectType === 'undisclosed'}
+                    onChange={(e) => setProjectType(e.target.value as 'defi' | 'infofi' | 'other' | 'undisclosed')}
+                  />
+                  <span>Undisclosed</span>
+                </label>
+              </div>
+              {projectType === 'other' && (
+                <input
+                  type="text"
+                  className="space-builder-input"
+                  placeholder="Enter what your project offers..."
+                  value={projectTypeOther}
+                  onChange={(e) => setProjectTypeOther(e.target.value)}
+                  style={{ marginTop: '12px' }}
+                />
+              )}
+            </div>
+          )}
 
           {/* Logo Section */}
           <div className="space-builder-section">

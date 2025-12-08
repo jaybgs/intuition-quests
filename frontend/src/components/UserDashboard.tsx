@@ -8,6 +8,7 @@ import { useUserActivity } from '../hooks/useUserActivity';
 import { useSocialConnections } from '../hooks/useSocialConnections';
 import { useIntuitionData, IntuitionAtom, IntuitionTriple } from '../hooks/useIntuitionData';
 import { showToast } from './Toast';
+import { truncateUsername } from '../utils/usernameUtils';
 
 interface UserDashboardProps {
   onEditProfile: () => void;
@@ -227,12 +228,6 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
     } catch {
       return null;
     }
-  };
-
-  // Helper to truncate username to 7 characters for display
-  const truncateUsername = (username: string | null, maxLength: number = 7): string => {
-    if (!username) return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'User';
-    return username.length > maxLength ? username.slice(0, maxLength) : username;
   };
 
   // Get profile picture and username from localStorage

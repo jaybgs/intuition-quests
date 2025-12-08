@@ -30,9 +30,10 @@
   position: absolute;
   right: 0;
   top: 50%;
-  transform: translateY(-50%) scale(1.5);
-  width: 50%;
+  transform: translateY(-50%);
+  width: auto;
   height: 100%;
+  max-height: 100%;
   object-fit: contain;
   object-position: right center;
   opacity: 0.4;
@@ -192,9 +193,14 @@
   }
 
   .rewards-background-svg {
-    width: 40%;
-    opacity: 0.3;
-    right: -10%;
+    right: 50%;
+    top: 50%;
+    transform: translate(50%, -50%) scale(1.2);
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    object-position: center center;
+    opacity: 0.6;
   }
 
   .rewards-content {

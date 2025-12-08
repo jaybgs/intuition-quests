@@ -4,6 +4,7 @@ import { LeaderboardEntry } from '../types';
 import { LeaderboardRowSkeleton } from './Skeleton';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import './FullLeaderboard.css';
+import { truncateUsername } from '../utils/usernameUtils';
 
 interface FullLeaderboardProps {
   onBack: () => void;
@@ -62,10 +63,6 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  const truncateUsername = (username: string | null | undefined, maxLength: number = 7): string => {
-    if (!username) return '';
-    return username.length > maxLength ? username.slice(0, maxLength) : username;
-  };
 
   return (
     <div className="full-leaderboard">

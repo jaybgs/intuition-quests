@@ -72,6 +72,8 @@ export class SpaceService {
     twitterUrl: string;
     ownerAddress: string;
     userType: 'project' | 'user';
+    projectType?: 'defi' | 'infofi' | 'other' | 'undisclosed';
+    projectTypeOther?: string;
     atomId?: string;
     atomTransactionHash?: string;
   }): Space {
@@ -91,6 +93,8 @@ export class SpaceService {
       twitterUrl: data.twitterUrl.trim(),
       ownerAddress: data.ownerAddress.toLowerCase(),
       userType: data.userType,
+      projectType: data.projectType,
+      projectTypeOther: data.projectTypeOther,
       createdAt: Date.now(),
       atomId: data.atomId,
       atomTransactionHash: data.atomTransactionHash,

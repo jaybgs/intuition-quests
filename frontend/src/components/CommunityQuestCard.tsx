@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Quest } from '../types';
 import { useAccount } from 'wagmi';
+import { truncateUsername } from '../utils/usernameUtils';
 import './CommunityQuestCard.css';
 
 // Helper function to get profile picture from localStorage
@@ -33,11 +34,9 @@ export function CommunityQuestCard({ quest, onClick }: CommunityQuestCardProps) 
   // Get participant count
   const participantCount = quest.completedBy?.length || 0;
   
-  // Format creator address
+  // Format creator address - truncate to 7 characters
   const creatorAddress = quest.creatorAddress || '0x0000...0000';
-  const displayAddress = creatorAddress.length > 10 
-    ? `${creatorAddress.slice(0, 6)}...${creatorAddress.slice(-4)}`
-    : creatorAddress;
+  const displayAddress = truncateUsername(creatorAddress, 7);
   
   // Get creator profile picture
   const creatorProfilePic = getStoredProfilePic(creatorAddress);

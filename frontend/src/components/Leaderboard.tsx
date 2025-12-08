@@ -92,10 +92,6 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  const truncateUsername = (username: string | null | undefined, maxLength: number = 7): string => {
-    if (!username) return '';
-    return username.length > maxLength ? username.slice(0, maxLength) : username;
-  };
 
   return (
     <div ref={leaderboardRef} className="leaderboard">

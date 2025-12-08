@@ -147,4 +147,3 @@ Once all tests pass:
 - ✅ RLS policies are correctly configured
 - ✅ Supabase backend is active and running
 - ✅ Quests are accessible across all user accounts
-

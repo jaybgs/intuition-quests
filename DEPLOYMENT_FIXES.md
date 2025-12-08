@@ -99,3 +99,5 @@ After deployment, verify:
 - The mount state check prevents hydration mismatches in SSR environments
 - Scroll lock now properly compensates for scrollbar width
 
+
+

@@ -89,6 +89,8 @@ export interface Space {
   twitterUrl: string;
   ownerAddress: string;
   userType: 'project' | 'user';
+  projectType?: 'defi' | 'infofi' | 'other' | 'undisclosed'; // Type of project/what it offers
+  projectTypeOther?: string; // Custom text when projectType is 'other'
   createdAt: number;
   atomId?: string; // Intuition atom ID created on-chain
   atomTransactionHash?: string; // Transaction hash of atom creation

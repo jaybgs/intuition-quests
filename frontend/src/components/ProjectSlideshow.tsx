@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { showToast } from './Toast';
 import { spaceService } from '../services/spaceService';
 import { DiscoverPageSkeleton } from './Skeleton';
@@ -54,6 +55,7 @@ interface ProjectSlideshowProps {
 }
 
 export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: ProjectSlideshowProps) {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [sortByVerified, setSortByVerified] = useState(false);
@@ -245,8 +247,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
   return (
     <div className="discover-earn-container">
       <h1 className="welcome-text">Welcome to TrustQuests</h1>
-      <div className="slideshow-container">
-        <div className="slideshow-glass">
+      <div className="slideshow-glass">
           <button 
             className="slideshow-nav slideshow-prev" 
             onClick={goToPrevious} 
@@ -329,7 +330,6 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
             </svg>
           </button>
         </div>
-      </div>
 
       {/* Spaces Grid Section */}
       <div ref={spacesRef} className="spaces-section">
@@ -384,7 +384,18 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                 <div
                   key={space.id}
                   className="space-card"
-                  onClick={() => onSpaceClick?.(space.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Navigate directly using space slug or name (format: /space-{name})
+                    const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    // Call onSpaceClick if provided, otherwise navigate directly
+                    if (onSpaceClick) {
+                      onSpaceClick(space.id);
+                    } else {
+                      navigate(`/space-${spaceSlug}`);
+                    }
+                  }}
                 >
                   <div className="space-card-header">
                     <div className="space-logo">
@@ -430,6 +441,17 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                         <span className="space-token-status">{tokenInfo.status}</span>
                       )}
                     </div>
+                    {space.userType === 'project' && space.projectType && (
+                      <div className="space-project-type">
+                        {space.projectType === 'other' && space.projectTypeOther
+                          ? space.projectTypeOther
+                          : space.projectType === 'defi'
+                          ? 'DeFi'
+                          : space.projectType === 'infofi'
+                          ? 'InfoFi'
+                          : 'Undisclosed'}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

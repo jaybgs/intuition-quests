@@ -51,15 +51,27 @@ export function CreateSpaceSection({ onCreateSpace }: CreateSpaceSectionProps) {
 
   return (
     <div ref={sectionRef} className="create-space-section">
+      {/* Desktop background SVG */}
       <img 
         src="/header%202.svg" 
-        alt="Intuition Header" 
-        className="create-space-foreground-svg"
+        alt="Create Space Background" 
+        className="create-space-background-svg create-space-background-desktop"
         onError={(e) => {
-          // Fallback if URL-encoded path doesn't work
           const target = e.target as HTMLImageElement;
           if (target.src.includes('%20')) {
             target.src = "/header 2.svg";
+          }
+        }}
+      />
+      {/* Mobile background SVG */}
+      <img 
+        src="/create%20space%20thing.svg" 
+        alt="Create Space Background" 
+        className="create-space-background-svg create-space-background-mobile"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          if (target.src.includes('%20')) {
+            target.src = "/create space thing.svg";
           }
         }}
       />
@@ -68,55 +80,49 @@ export function CreateSpaceSection({ onCreateSpace }: CreateSpaceSectionProps) {
       </h2>
       
       <div className="create-space-steps">
-        <div className="create-space-step">
-          <div className="step-icon-wrapper step-icon-build">
-            <img 
-              src="/build-no-code-quests.svg" 
-              alt="Build no-code Quests" 
-              className="step-icon-image"
-              onError={(e) => {
-                console.error('Failed to load build-no-code-quests.svg');
-              }}
-              onLoad={() => {
-                console.log('Build no-code quests SVG loaded successfully');
-              }}
-            />
-            <h3 className="step-title">Build no-code Quests</h3>
-          </div>
+        <div className="step-icon-wrapper step-icon-build">
+          <img 
+            src="/build-no-code-quests.svg" 
+            alt="Build no-code Quests" 
+            className="step-icon-image"
+            onError={(e) => {
+              console.error('Failed to load build-no-code-quests.svg');
+            }}
+            onLoad={() => {
+              console.log('Build no-code quests SVG loaded successfully');
+            }}
+          />
+          <h3 className="step-title">Build no-code Quests</h3>
         </div>
 
-        <div className="create-space-step">
-          <div className="step-icon-wrapper step-icon-lock">
-            <img 
-              src="/earn-yield.svg" 
-              alt="Deposit trust" 
-              className="step-icon-image"
-              onError={(e) => {
-                console.error('Failed to load earn-yield.svg');
-              }}
-              onLoad={() => {
-                console.log('Earn yield SVG loaded successfully');
-              }}
-            />
-            <h3 className="step-title">Deposit trust</h3>
-          </div>
+        <div className="step-icon-wrapper step-icon-lock">
+          <img 
+            src="/earn-yield.svg" 
+            alt="Deposit trust" 
+            className="step-icon-image"
+            onError={(e) => {
+              console.error('Failed to load earn-yield.svg');
+            }}
+            onLoad={() => {
+              console.log('Earn yield SVG loaded successfully');
+            }}
+          />
+            <h3 className="step-title">Deposit $TRUST</h3>
         </div>
 
-        <div className="create-space-step">
-          <div className="step-icon-wrapper step-icon-payment">
-            <img 
-              src="/distribute-rewards.svg" 
-              alt="Distribute rewards" 
-              className="step-icon-image"
-              onError={(e) => {
-                console.error('Failed to load distribute-rewards.svg');
-              }}
-              onLoad={() => {
-                console.log('Distribute rewards SVG loaded successfully');
-              }}
-            />
-            <h3 className="step-title">Distribute rewards</h3>
-          </div>
+        <div className="step-icon-wrapper step-icon-payment">
+          <img 
+            src="/distribute-rewards.svg" 
+            alt="Distribute rewards" 
+            className="step-icon-image"
+            onError={(e) => {
+              console.error('Failed to load distribute-rewards.svg');
+            }}
+            onLoad={() => {
+              console.log('Distribute rewards SVG loaded successfully');
+            }}
+          />
+          <h3 className="step-title">Distribute rewards</h3>
         </div>
       </div>
 

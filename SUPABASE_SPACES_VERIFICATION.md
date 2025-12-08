@@ -60,3 +60,5 @@ If Supabase is not accessible:
 - Spaces created locally will still show
 - But won't sync across devices/users
 
+
+

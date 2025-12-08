@@ -33,3 +33,5 @@ Make sure these are set in Vercel:
 - **Output Directory**: `dist` (or leave empty, Vercel will auto-detect)
 - **Install Command**: `npm install` (or leave empty, Vercel will auto-detect)
 
+
+

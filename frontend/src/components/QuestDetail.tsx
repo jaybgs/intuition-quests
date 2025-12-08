@@ -916,7 +916,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
             <div className="quest-detail-creator-name-row">
               <span className="quest-detail-creator-name">
                 {quest.creatorType === 'community' && quest.creatorAddress
-                  ? `${quest.creatorAddress.slice(0, 6)}...${quest.creatorAddress.slice(-4)}`
+                  ? quest.creatorAddress.slice(0, 7)
                   : quest.projectName}
               </span>
               {/* Show verified tick for pro users */}

@@ -378,8 +378,9 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) {
       // Don't override space-detail if we have a selectedSpace (manual navigation)
-      if (activeTab === 'space-detail' && selectedSpace && initialTab !== 'space-detail') {
-        console.log('🔄 Keeping space-detail tab (manual navigation)');
+      // This prevents React Router from resetting the tab when route doesn't match
+      if (activeTab === 'space-detail' && selectedSpace) {
+        console.log('🔄 Keeping space-detail tab (manual navigation), ignoring initialTab:', initialTab);
         return;
       }
       console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current activeTab:', activeTab);

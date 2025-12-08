@@ -109,28 +109,38 @@ router.put('/:address/username', optionalAuth, async (req: Request, res: Respons
     const address = req.params.address.toLowerCase();
     const { username } = req.body;
 
+    console.log(`[Users Route] Update username request for ${address}:`, username);
+
     if (!username || typeof username !== 'string' || username.trim().length === 0) {
+      console.log('[Users Route] Validation failed: username is empty');
       return res.status(400).json({ error: 'Username is required' });
     }
 
     const trimmedUsername = username.trim();
 
     // Check if username is already taken
+    console.log(`[Users Route] Checking if username "${trimmedUsername}" is taken`);
     const isTaken = await userService.isUsernameTaken(trimmedUsername, address);
     if (isTaken) {
+      console.log(`[Users Route] Username "${trimmedUsername}" is already taken`);
       return res.status(409).json({ error: 'Username is already taken' });
     }
 
     // Update username
+    console.log(`[Users Route] Updating username to "${trimmedUsername}"`);
     const user = await userService.updateUsername(address, trimmedUsername);
 
+    console.log(`[Users Route] Username updated successfully: ${user.username}`);
     res.json({ username: user.username });
   } catch (error: any) {
+    console.error('[Users Route] Error updating username:', error);
+    console.error('[Users Route] Error stack:', error.stack);
+    
     // Handle unique constraint violation
     if (error.code === '23505' && error.message?.includes('username')) {
       return res.status(409).json({ error: 'Username is already taken' });
     }
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message || 'Failed to update username' });
   }
 });
 

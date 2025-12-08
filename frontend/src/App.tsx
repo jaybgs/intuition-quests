@@ -713,8 +713,13 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     checkUserSpaces();
 
     // Listen for space creation/deletion events to update the state
-    const handleSpaceCreated = () => {
-      checkUserSpaces();
+    const handleSpaceCreated = async () => {
+      // Immediately set to true if we have an address (optimistic update)
+      if (address) {
+        setHasCreatedSpaces(true);
+      }
+      // Then verify by checking the database
+      await checkUserSpaces();
     };
 
     const handleSpaceDeleted = () => {
@@ -1111,6 +1116,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               <SpaceBuilder 
                 onSpaceCreated={(spaceId) => {
                   setSelectedSpaceId(spaceId);
+                  // Update hasCreatedSpaces immediately
+                  setHasCreatedSpaces(true);
+                  // Dispatch event to trigger refresh
+                  window.dispatchEvent(new CustomEvent('spaceCreated'));
                   const source = localStorage.getItem('spaceBuilderSource') || 'discover';
                   const previousTab = localStorage.getItem('previousTab') || source;
                   navigateToTab('builder-dashboard');

@@ -149,28 +149,35 @@ export class UserService {
    */
   async updateUsername(address: string, username: string): Promise<User> {
     const normalizedAddress = address.toLowerCase();
+    const trimmedUsername = username.trim();
+    
+    console.log(`[UserService] Updating username for ${normalizedAddress} to ${trimmedUsername}`);
     
     // Ensure user exists first
-    await this.getOrCreateUser(normalizedAddress);
+    const existingUser = await this.getOrCreateUser(normalizedAddress);
+    console.log(`[UserService] User exists: ${existingUser.id}`);
 
     // Update username
     const { data, error } = await supabase
       .from('users')
-      .update({ username: username.trim() })
+      .update({ username: trimmedUsername })
       .eq('address', normalizedAddress)
       .select()
       .maybeSingle();
 
     if (error) {
-      console.error('Error updating username:', error);
-      throw new Error(error.message);
+      console.error('[UserService] Error updating username:', error);
+      console.error('[UserService] Error details:', JSON.stringify(error, null, 2));
+      throw new Error(error.message || 'Failed to update username');
     }
 
     if (!data) {
+      console.error('[UserService] No data returned after update');
       // This shouldn't happen if getOrCreateUser worked, but handle it gracefully
       throw new Error('User not found after update');
     }
 
+    console.log(`[UserService] Username updated successfully: ${data.username}`);
     return this.mapUserFromDb(data);
   }
 

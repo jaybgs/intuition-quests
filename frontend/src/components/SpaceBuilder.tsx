@@ -266,8 +266,11 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
 
       showToast(`Space "${space.name}" created successfully!`, 'success');
       
-      // Dispatch event for real-time updates (this will trigger refresh in ProjectSlideshow)
+      // Dispatch event for real-time updates (this will trigger refresh in ProjectSlideshow and App)
       window.dispatchEvent(new CustomEvent('spaceCreated', { detail: { space } }));
+      
+      // Small delay to ensure state updates propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Navigate to builder dashboard for the new space immediately
       if (onSpaceCreated) {

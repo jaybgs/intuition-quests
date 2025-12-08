@@ -148,16 +148,27 @@ export class UserService {
    * Update user username
    */
   async updateUsername(address: string, username: string): Promise<User> {
+    const normalizedAddress = address.toLowerCase();
+    
+    // Ensure user exists first
+    await this.getOrCreateUser(normalizedAddress);
+
+    // Update username
     const { data, error } = await supabase
       .from('users')
       .update({ username: username.trim() })
-      .eq('address', address.toLowerCase())
+      .eq('address', normalizedAddress)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error updating username:', error);
       throw new Error(error.message);
+    }
+
+    if (!data) {
+      // This shouldn't happen if getOrCreateUser worked, but handle it gracefully
+      throw new Error('User not found after update');
     }
 
     return this.mapUserFromDb(data);

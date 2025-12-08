@@ -358,20 +358,6 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests'>(initialTab as any);
   
-  // Sync activeTab with initialTab when it changes (e.g., from URL navigation)
-  // But don't override if we're manually navigating to space-detail
-  useEffect(() => {
-    if (initialTab && initialTab !== activeTab) {
-      // Don't override space-detail if we have a selectedSpace (manual navigation)
-      if (activeTab === 'space-detail' && selectedSpace && initialTab !== 'space-detail') {
-        console.log('🔄 Keeping space-detail tab (manual navigation)');
-        return;
-      }
-      console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current activeTab:', activeTab);
-      setActiveTab(initialTab as any);
-    }
-  }, [initialTab, activeTab, selectedSpace]);
-  const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
   // Try to restore selectedSpace from localStorage on mount
   const getInitialSpace = (): Space | null => {
     try {
@@ -385,6 +371,21 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     return null;
   };
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(getInitialSpace());
+  const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
+  
+  // Sync activeTab with initialTab when it changes (e.g., from URL navigation)
+  // But don't override if we're manually navigating to space-detail
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      // Don't override space-detail if we have a selectedSpace (manual navigation)
+      if (activeTab === 'space-detail' && selectedSpace && initialTab !== 'space-detail') {
+        console.log('🔄 Keeping space-detail tab (manual navigation)');
+        return;
+      }
+      console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current activeTab:', activeTab);
+      setActiveTab(initialTab as any);
+    }
+  }, [initialTab, activeTab, selectedSpace]);
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(() => {
     const stored = localStorage.getItem('selectedSpaceId');
     return stored || null;

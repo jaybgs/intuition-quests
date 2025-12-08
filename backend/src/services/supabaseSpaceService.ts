@@ -145,19 +145,31 @@ export class SupabaseSpaceService {
     const slug = this.generateSlug(input.name);
     const uniqueSlug = await this.ensureUniqueSlug(slug);
 
+    // Prepare insert data - only include logo if it's provided and reasonable size
+    const insertData: any = {
+      name: input.name.trim(),
+      slug: uniqueSlug,
+      description: input.description.trim(),
+      twitter_url: input.twitterUrl.trim(),
+      owner_address: input.ownerAddress.toLowerCase(),
+      user_type: input.userType.toUpperCase(),
+      atom_id: input.atomId,
+      atom_transaction_hash: input.atomTransactionHash,
+    };
+
+    // Only include logo if it's provided and not too large
+    if (input.logo) {
+      const logoSize = input.logo.length;
+      if (logoSize < 1000000) { // ~1MB base64
+        insertData.logo = input.logo;
+      } else {
+        console.warn('Logo too large, skipping logo upload. Size:', logoSize, 'bytes');
+      }
+    }
+
     const { data, error } = await supabase
       .from('spaces')
-      .insert({
-        name: input.name.trim(),
-        slug: uniqueSlug,
-        description: input.description.trim(),
-        logo: input.logo,
-        twitter_url: input.twitterUrl.trim(),
-        owner_address: input.ownerAddress.toLowerCase(),
-        user_type: input.userType.toUpperCase(),
-        atom_id: input.atomId,
-        atom_transaction_hash: input.atomTransactionHash,
-      })
+      .insert(insertData)
       .select()
       .single();
 

@@ -153,21 +153,33 @@ export class SpaceServiceSupabase {
       // Ensure slug is unique
       const uniqueSlug = await this.ensureUniqueSlug(slug);
 
+      // Prepare insert data - only include fields that exist in the table
+      const insertData: any = {
+        name: data.name.trim(),
+        slug: uniqueSlug,
+        description: data.description.trim(),
+        twitter_url: data.twitterUrl.trim(),
+        owner_address: data.ownerAddress.toLowerCase(),
+        user_type: data.userType.toUpperCase(),
+        atom_id: data.atomId,
+        atom_transaction_hash: data.atomTransactionHash,
+      };
+
+      // Only include logo if it's provided and not too large (base64 images can be huge)
+      // If logo is too large, we'll skip it and user can upload it later via settings
+      if (data.logo) {
+        // Check if logo is reasonable size (less than 1MB base64 = ~750KB image)
+        const logoSize = data.logo.length;
+        if (logoSize < 1000000) { // ~1MB base64
+          insertData.logo = data.logo;
+        } else {
+          console.warn('Logo too large, skipping logo upload. Size:', logoSize, 'bytes. Please upload via settings later.');
+        }
+      }
+
       const { data: insertedData, error } = await supabase
         .from('spaces')
-        .insert({
-          name: data.name.trim(),
-          slug: uniqueSlug,
-          description: data.description.trim(),
-          logo: data.logo,
-          twitter_url: data.twitterUrl.trim(),
-          owner_address: data.ownerAddress.toLowerCase(),
-          user_type: data.userType.toUpperCase(),
-          project_type: data.projectType,
-          project_type_other: data.projectTypeOther,
-          atom_id: data.atomId,
-          atom_transaction_hash: data.atomTransactionHash,
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -181,15 +193,27 @@ export class SpaceServiceSupabase {
         // Try backend API as fallback (uses service role key, bypasses RLS)
         console.log('Attempting to create space via backend API...');
         try {
-          const response = await apiClient.post('/spaces', {
+          // Prepare API payload - only include logo if it's reasonable size
+          const apiPayload: any = {
             name: data.name.trim(),
             description: data.description.trim(),
-            logo: data.logo,
             twitterUrl: data.twitterUrl.trim(),
             userType: data.userType,
             atomId: data.atomId,
             atomTransactionHash: data.atomTransactionHash,
-          });
+          };
+
+          // Only include logo if it's provided and not too large
+          if (data.logo) {
+            const logoSize = data.logo.length;
+            if (logoSize < 1000000) { // ~1MB base64
+              apiPayload.logo = data.logo;
+            } else {
+              console.warn('Logo too large for API, skipping. Size:', logoSize, 'bytes');
+            }
+          }
+
+          const response = await apiClient.post('/spaces', apiPayload);
           
           const backendSpace = response.data.space;
           console.log('Space created successfully via backend API:', backendSpace.id);

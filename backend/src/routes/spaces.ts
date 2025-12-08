@@ -10,7 +10,7 @@ const spaceService = new SupabaseSpaceService();
 const createSpaceSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(2000),
-  logo: z.string().url().optional(),
+  logo: z.string().optional(), // Can be URL or base64 data URI
   twitterUrl: z.string().url(),
   userType: z.enum(['project', 'user']),
   atomId: z.string().optional(),

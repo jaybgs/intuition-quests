@@ -1044,19 +1044,15 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                       setSelectedSpace(space);
                       setSelectedSpaceId(space.id);
                       
-                      // Navigate to space detail - set active tab first, then navigate
-                      const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                      const targetPath = `/space-${spaceSlug}`;
-                      console.log('📍 About to navigate to:', targetPath);
+                      // Navigate to space detail - set active tab and don't navigate (route matching issue)
+                      // Just set the state and let the component render based on activeTab
+                      console.log('📍 Setting space detail view');
                       
-                      // Set the active tab first to ensure the view is ready
+                      // Set the active tab - this will trigger the space detail view to render
                       setActiveTab('space-detail');
                       
-                      // Small delay to ensure state is set, then navigate
-                      setTimeout(() => {
-                        navigate(targetPath);
-                        console.log('📍 Navigated to:', targetPath);
-                      }, 10);
+                      // Update URL without navigating (to show in address bar)
+                      window.history.pushState({}, '', `/space-${space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`);
                     } else {
                       console.error('❌ Space not found:', spaceId);
                       showToast('Space not found', 'error');

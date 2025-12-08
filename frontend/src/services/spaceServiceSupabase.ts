@@ -1,6 +1,7 @@
 import type { Space } from '../types';
 import { supabase } from '../config/supabase';
 import { generateSlug, ensureUniqueSlug } from '../utils/slugUtils';
+import { apiClient } from './apiClient';
 
 /**
  * Space Service using Supabase
@@ -171,8 +172,45 @@ export class SpaceServiceSupabase {
         .single();
 
       if (error) {
-        console.error('Error creating space in Supabase:', error);
-        return this.fallbackCreateSpace(data, uniqueSlug);
+        console.error('Error creating space in Supabase (direct):', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error hint:', error.hint);
+        
+        // Try backend API as fallback (uses service role key, bypasses RLS)
+        console.log('Attempting to create space via backend API...');
+        try {
+          const response = await apiClient.post('/spaces', {
+            name: data.name.trim(),
+            description: data.description.trim(),
+            logo: data.logo,
+            twitterUrl: data.twitterUrl.trim(),
+            userType: data.userType,
+            atomId: data.atomId,
+            atomTransactionHash: data.atomTransactionHash,
+          });
+          
+          const backendSpace = response.data.space;
+          console.log('Space created successfully via backend API:', backendSpace.id);
+          
+          // Backend returns Space object (already mapped by mapSpaceFromDb)
+          // Map it to ensure consistent format
+          const space = this.mapSpaceFromDb(backendSpace);
+          
+          // Dispatch custom event
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('spaceCreated', {
+              detail: { spaceId: space.id, ownerAddress: space.ownerAddress }
+            }));
+          }
+          
+          return space;
+        } catch (apiError: any) {
+          console.error('Error creating space via backend API:', apiError);
+          // If backend also fails, throw the original Supabase error
+          throw new Error(`Failed to save space to database: ${error.message || 'Unknown error'}. Please check your Supabase configuration and RLS policies.`);
+        }
       }
 
       const space = this.mapSpaceFromDb(insertedData);
@@ -185,9 +223,11 @@ export class SpaceServiceSupabase {
       }
 
       return space;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating space:', error);
-      return this.fallbackCreateSpace(data, slug);
+      // Re-throw the error instead of silently falling back
+      // This ensures the user sees the error and the space isn't created in localStorage only
+      throw error;
     }
   }
 

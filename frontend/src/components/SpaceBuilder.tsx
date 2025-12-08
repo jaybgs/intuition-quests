@@ -280,7 +280,11 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
       }
     } catch (error: any) {
       console.error('Error creating space:', error);
-      showToast(error.message || 'Failed to create space', 'error');
+      console.error('Error stack:', error.stack);
+      // Show detailed error message
+      const errorMessage = error.message || 'Failed to create space';
+      showToast(errorMessage, 'error');
+      setAtomCreationStep('idle'); // Reset atom creation step on error
     } finally {
       setIsSubmitting(false);
     }

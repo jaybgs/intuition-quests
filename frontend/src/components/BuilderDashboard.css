@@ -610,9 +610,9 @@
     display: flex;
   }
 
-  /* Show overlay when menu is open */
+  /* Hide overlay on mobile */
   .builder-menu-overlay {
-    display: block;
+    display: none !important;
   }
 
   /* Sidebar styling for mobile */

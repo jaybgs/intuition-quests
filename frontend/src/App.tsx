@@ -361,10 +361,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   // Sync activeTab with initialTab when it changes (e.g., from URL navigation)
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) {
-      console.log('🔄 Syncing activeTab with initialTab:', initialTab);
+      console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current activeTab:', activeTab);
       setActiveTab(initialTab as any);
     }
-  }, [initialTab]);
+  }, [initialTab, activeTab]);
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
   // Try to restore selectedSpace from localStorage on mount
   const getInitialSpace = (): Space | null => {
@@ -1033,19 +1033,14 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                       localStorage.setItem('selectedSpaceId', space.id);
                       localStorage.setItem('selectedSpace', JSON.stringify(space));
                       
-                      // Set space data - use functional update to ensure it's set
+                      // Set space data immediately
                       setSelectedSpace(space);
                       setSelectedSpaceId(space.id);
                       
-                      // Set active tab first
-                      setActiveTab('space-detail');
-                      
-                      // Navigate after a small delay to ensure state updates
+                      // Navigate to space detail - let the router handle setting the active tab
                       const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                      setTimeout(() => {
-                        navigate(`/space-${spaceSlug}`);
-                        console.log('📍 Navigated to space detail:', spaceSlug);
-                      }, 100);
+                      navigate(`/space-${spaceSlug}`);
+                      console.log('📍 Navigated to space detail:', spaceSlug);
                     } else {
                       console.error('❌ Space not found:', spaceId);
                       showToast('Space not found', 'error');

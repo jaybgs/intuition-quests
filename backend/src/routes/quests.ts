@@ -128,11 +128,10 @@ router.post('/:id/complete', authenticateWallet, async (req: AuthRequest, res: R
 
     const validated = completeQuestSchema.parse(req.body);
 
-    const completion = await completionService.completeQuest({
-      questId: req.params.id,
-      userId: req.user.userId,
-      verificationData: validated.verificationData,
-    });
+    const completion = await completionService.completeQuest(
+      req.params.id,
+      req.user.userId
+    );
 
     res.json({ completion });
   } catch (error: any) {

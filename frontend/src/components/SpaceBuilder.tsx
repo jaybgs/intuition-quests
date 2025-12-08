@@ -3,7 +3,7 @@ import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChai
 import { showToast } from './Toast';
 import { spaceService } from '../services/spaceService';
 import { generateSlug } from '../utils/slugUtils';
-import { createSpaceAtom } from '../services/intuitionAtomService';
+// Contract services disabled - contracts deleted
 import { intuitionChain } from '../config/wagmi';
 import { formatEther } from 'viem';
 import './SpaceBuilder.css';
@@ -33,7 +33,7 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
   const [projectType, setProjectType] = useState<'defi' | 'infofi' | 'other' | 'undisclosed'>('undisclosed');
   const [projectTypeOther, setProjectTypeOther] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [atomCreationStep, setAtomCreationStep] = useState<'idle' | 'creating' | 'success' | 'error'>('idle');
+  // Atom creation step removed - contracts deleted
   const fileInputRef = useRef<HTMLInputElement>(null);
   const maxDescriptionLength = 180;
 
@@ -164,7 +164,6 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
     }
 
     setIsSubmitting(true);
-    setAtomCreationStep('idle');
     
     try {
       if (!address) {
@@ -196,37 +195,8 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         return;
       }
 
-      // Step 1: Create atom on Intuition blockchain
-      // This MUST succeed before we create the space
-      setAtomCreationStep('creating');
-      showToast('Creating atom on Intuition blockchain...', 'info');
-      
-      let atomResult;
-      try {
-        atomResult = await createSpaceAtom(name.trim(), {
-          walletClient,
-          publicClient,
-          depositAmount: BigInt(0), // No initial deposit for now
-        });
-        
-        // Verify the transaction was successful by waiting for receipt
-        // The createSpaceAtom function already waits for receipt, but let's be explicit
-        if (!atomResult || !atomResult.transactionHash) {
-          throw new Error('Atom creation did not return a transaction hash');
-        }
-        
-        setAtomCreationStep('success');
-        showToast(`Atom created! Transaction: ${atomResult.transactionHash.slice(0, 10)}...`, 'success');
-      } catch (atomError: any) {
-        setAtomCreationStep('error');
-        console.error('Atom creation failed:', atomError);
-        showToast(`Atom creation failed: ${atomError.message}. Space will not be created.`, 'error');
-        // DO NOT create the space if atom creation fails
-        setIsSubmitting(false);
-        return; // Exit early - don't create the space
-      }
-
-      // Step 2: Convert logo to base64 if provided
+      // Step 1: Convert logo to base64 if provided
+      // Note: Atom creation on blockchain is disabled - contracts deleted
       let logoBase64: string | undefined;
       if (logo) {
         logoBase64 = await new Promise<string>((resolve, reject) => {
@@ -239,9 +209,9 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         });
       }
 
-      // Step 3: Create the space using the space service (ONLY after atom creation succeeds)
-      // At this point, we know atomResult exists and the transaction succeeded
-      const space = spaceService.createSpace({
+      // Step 2: Create the space using the space service
+      // Note: Atom creation on blockchain is disabled - contracts deleted
+      const space = await spaceService.createSpace({
         name: name.trim(),
         description: description.trim(),
         logo: logoBase64,
@@ -250,8 +220,7 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         userType: userType,
         projectType: projectType,
         projectTypeOther: projectType === 'other' ? projectTypeOther.trim() : undefined,
-        atomId: atomResult.atomId,
-        atomTransactionHash: atomResult.transactionHash,
+        // atomId and atomTransactionHash are no longer used - contracts deleted
       });
 
       // Store the X profile URL for use when creating quests
@@ -264,10 +233,9 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         console.error('Error fetching owner spaces:', error);
       });
 
-      // At this point, atomResult is guaranteed to exist since we return early on failure
-        showToast(`Space "${space.name}" created successfully with on-chain identity!`, 'success');
+      showToast(`Space "${space.name}" created successfully!`, 'success');
       
-      // Dispatch event for real-time updates
+      // Dispatch event for real-time updates (this will trigger refresh in ProjectSlideshow)
       window.dispatchEvent(new CustomEvent('spaceCreated', { detail: { space } }));
       
       // Navigate to builder dashboard for the new space immediately
@@ -277,7 +245,6 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         onBack();
       }
     } catch (error: any) {
-      setAtomCreationStep('error');
       console.error('Error creating space:', error);
       showToast(error.message || 'Failed to create space', 'error');
     } finally {

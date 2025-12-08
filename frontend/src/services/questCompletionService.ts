@@ -1,7 +1,8 @@
 import { getAddress, type Address, toHex, stringToHex } from 'viem';
 import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChain } from 'wagmi';
 import { intuitionChain } from '../config/wagmi';
-import { createTriplesWithFee, depositWithFee, estimateTransactionCost } from './transactionWrapperService';
+// Contract services disabled - contracts deleted
+// import { createTriplesWithFee, depositWithFee, estimateTransactionCost } from './transactionWrapperService';
 import { createAtomFromString } from '@0xintuition/sdk';
 import { getMultiVaultAddressFromChainId } from '@0xintuition/protocol';
 import { showToast } from '../components/Toast';
@@ -69,9 +70,8 @@ export async function completeQuestOnChain(
     // This assumes user atom and "completed" atom already exist
     // You'll need to implement atom creation/checking logic
 
-    showToast('Quest completion on-chain integration requires atom creation logic. Please implement atom creation first.', 'info');
-    
-    throw new Error('Quest completion on-chain not fully implemented. Need to create/get atoms first.');
+    // Contract functionality disabled - contracts deleted
+    throw new Error('Quest completion on-chain disabled - contracts deleted');
 
   } catch (error: any) {
     console.error('Error completing quest on-chain:', error);
@@ -90,26 +90,28 @@ export async function stakeOnQuestCompletion(
   walletClient: any,
   publicClient: any
 ): Promise<{ shares: bigint; txHash: string }> {
-  try {
-    // Use the wrapper to deposit (stake) on the triple
-    const result = await depositWithFee(
-      {
-        receiver: userAddress,
-        termId: tripleId,
-        curveId: 0n, // Default curve
-        minShares: 0n,
-        depositAmount,
-      },
-      walletClient,
-      publicClient
-    );
+  // Contract functionality disabled - contracts deleted
+  throw new Error('Staking functionality disabled - contracts deleted');
+  // try {
+  //   // Use the wrapper to deposit (stake) on the triple
+  //   const result = await depositWithFee(
+  //     {
+  //       receiver: userAddress,
+  //       termId: tripleId,
+  //       curveId: 0n, // Default curve
+  //       minShares: 0n,
+  //       depositAmount,
+  //     },
+  //     walletClient,
+  //     publicClient
+  //   );
 
-    showToast('Successfully staked on quest completion!', 'success');
-    return result;
-  } catch (error: any) {
-    console.error('Error staking on quest completion:', error);
-    showToast(error.message || 'Failed to stake on quest completion', 'error');
-    throw error;
-  }
+  //   showToast('Successfully staked on quest completion!', 'success');
+  //   return result;
+  // } catch (error: any) {
+  //   console.error('Error staking on quest completion:', error);
+  //   showToast(error.message || 'Failed to stake on quest completion', 'error');
+  //   throw error;
+  // }
 }
 

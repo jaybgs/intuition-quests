@@ -5,7 +5,8 @@ import { QuestDetail } from './QuestDetail';
 import { QuestServiceBackend } from '../services/questServiceBackend';
 import type { Quest } from '../types';
 import { getQuestWinners, calculateAndSaveWinners, getQuestCompletions } from '../utils/raffle';
-import { setWinners, distributeRewards, getQuestDeposit } from '../services/questEscrowService';
+// Contract services disabled - contracts deleted
+// import { setWinners, distributeRewards, getQuestDeposit } from '../services/questEscrowService';
 import { showToast } from './Toast';
 import './BuilderQuests.css';
 
@@ -777,13 +778,13 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
             setWinners(existingWinners);
           }
 
-          // Load deposit info from escrow
+          // Load deposit info from escrow - DISABLED: contracts deleted
           if (publicClient) {
             try {
-              const deposit = await getQuestDeposit(questId, publicClient);
+              // Contract functionality disabled
               setDepositInfo({
-                totalAmount: deposit.totalAmount,
-                isDistributed: deposit.isDistributed,
+                totalAmount: '0',
+                isDistributed: false,
               });
             } catch (error) {
               console.warn('Could not load deposit info (quest may not have deposit yet):', error);
@@ -829,24 +830,25 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
         return prize;
       });
 
-      // First, set winners in escrow contract
-      showToast('Setting winners in escrow...', 'info');
-      const setWinnersHash = await setWinners(questId, winnerAddresses, amounts, walletClient);
-      await publicClient.waitForTransactionReceipt({ hash: setWinnersHash });
+      // Contract functionality disabled - contracts deleted
+      // First, set winners in escrow contract - DISABLED
+      showToast('Setting winners functionality disabled - contracts deleted', 'warning');
+      // const setWinnersHash = await setWinners(questId, winnerAddresses, amounts, walletClient);
+      // await publicClient.waitForTransactionReceipt({ hash: setWinnersHash });
 
-      // Then distribute rewards
-      showToast('Distributing rewards to winners...', 'info');
-      const distributeHash = await distributeRewards(questId, walletClient);
-      await publicClient.waitForTransactionReceipt({ hash: distributeHash });
+      // Then distribute rewards - DISABLED
+      showToast('Distributing rewards functionality disabled - contracts deleted', 'warning');
+      // const distributeHash = await distributeRewards(questId, walletClient);
+      // await publicClient.waitForTransactionReceipt({ hash: distributeHash });
 
-      // Update deposit info
-      const deposit = await getQuestDeposit(questId, publicClient);
+      // Update deposit info - DISABLED
+      // const deposit = await getQuestDeposit(questId, publicClient);
       setDepositInfo({
-        totalAmount: deposit.totalAmount,
-        isDistributed: deposit.isDistributed,
+        totalAmount: '0',
+        isDistributed: false,
       });
 
-      showToast('Rewards distributed successfully!', 'success');
+      showToast('Reward distribution disabled - contracts deleted', 'warning');
     } catch (error: any) {
       console.error('Distribution error:', error);
       showToast(error?.message || 'Failed to distribute rewards', 'error');

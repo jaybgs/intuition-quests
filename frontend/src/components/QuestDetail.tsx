@@ -3,7 +3,8 @@ import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChai
 import { useQuests } from '../hooks/useQuests';
 import { useQueryClient } from '@tanstack/react-query';
 import { Quest } from '../types';
-import { createQuestCompletionTriple } from '../services/questAtomService';
+// Contract services disabled - contracts deleted
+// import { createQuestCompletionTriple } from '../services/questAtomService';
 import { intuitionChain } from '../config/wagmi';
 import { showToast } from './Toast';
 import { saveQuestCompletion } from '../utils/raffle';
@@ -734,26 +735,32 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       let tripleId: string | undefined;
       let tripleTransactionHash: string | undefined;
       
+      // Contract functionality disabled - contracts deleted
       if (quest.atomId) {
         try {
-          const tripleResult = await createQuestCompletionTriple(
-            address as `0x${string}`,
-            quest.atomId as `0x${string}`,
-            walletClient,
-            publicClient
-          );
-          tripleId = tripleResult.tripleId;
-          tripleTransactionHash = tripleResult.transactionHash;
+          // const tripleResult = await createQuestCompletionTriple(
+          //   address as `0x${string}`,
+          //   quest.atomId as `0x${string}`,
+          //   walletClient,
+          //   publicClient
+          // );
+          // tripleId = tripleResult.tripleId;
+          // tripleTransactionHash = tripleResult.transactionHash;
+          tripleId = undefined; // Disabled
+          tripleTransactionHash = undefined; // Disabled
           
           // Register participant for raffle/FCFS with their connected wallet address
-          // This happens when the on-chain transaction is confirmed
+          // This happens even without on-chain transaction now
           if (address) {
             saveQuestCompletion(quest.id, address);
             console.log('✅ Participant registered for quest:', quest.id, 'Address:', address);
           }
         } catch (tripleError: any) {
-          console.warn('Failed to create completion triple on-chain:', tripleError);
-          showToast('Warning: Quest completion triple creation failed, but continuing with quest completion.', 'warning');
+          console.warn('On-chain completion disabled - contracts deleted:', tripleError);
+          // Still register participant even if on-chain fails
+          if (address) {
+            saveQuestCompletion(quest.id, address);
+          }
         }
       } else {
         // Even if quest doesn't have atomId, register participant when they complete

@@ -990,7 +990,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               // edit-profile is a sub-view, not a route, so use setActiveTab
               setActiveTab('edit-profile');
             }} />}
-            {activeTab === 'edit-profile' && <EditProfile onBack={() => navigateToTab('dashboard')} />}
+            {activeTab === 'edit-profile' && <EditProfile onBack={() => {
+              setActiveTab('dashboard');
+              navigate('/dashboard');
+            }} />}
             {activeTab === 'community' && (
               <Community 
                 onSeeMoreLeaderboard={() => setActiveTab('full-leaderboard')}

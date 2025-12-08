@@ -5,11 +5,12 @@ import { useActiveQuestCount } from '../hooks/useActiveQuestCount';
 import { useQuests } from '../hooks/useQuests';
 import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from './Toast';
-import { 
-  depositToEscrow, 
-  checkBalance,
-  getQuestDeposit 
-} from '../services/questEscrowService';
+// Contract services disabled - contracts deleted
+// import { 
+//   depositToEscrow, 
+//   checkBalance,
+//   getQuestDeposit 
+// } from '../services/questEscrowService';
 import { parseUnits, formatUnits } from 'viem';
 import './CreateQuestBuilder.css';
 
@@ -1561,11 +1562,14 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
       const amountWei = parseUnits(rewardDeposit, 18);
 
       // Check balance (native tokens don't need approval)
-      const { sufficient, currentBalance } = await checkBalance(
-        address,
-        amountWei,
-        publicClient
-      );
+      // Contract functionality disabled - contracts deleted
+      // const { sufficient, currentBalance } = await checkBalance(
+      //   address,
+      //   amountWei,
+      //   publicClient
+      // );
+      const sufficient = false; // Disabled
+      const currentBalance = '0'; // Disabled
 
       if (!sufficient) {
         showToast(
@@ -1576,21 +1580,21 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
         return;
       }
 
-      // Deposit to escrow (native tokens sent with transaction)
-      showToast('Depositing to escrow...', 'info');
-      const { transactionHash } = await depositToEscrow(
-        questDraftId,
-        rewardDeposit,
-        numWinners,
-        walletClient,
-        publicClient
-      );
+      // Deposit to escrow - DISABLED: contracts deleted
+      showToast('Deposit functionality disabled - contracts deleted', 'warning');
+      // const { transactionHash } = await depositToEscrow(
+      //   questDraftId,
+      //   rewardDeposit,
+      //   numWinners,
+      //   walletClient,
+      //   publicClient
+      // );
 
-      // Wait for transaction
-      await publicClient.waitForTransactionReceipt({ hash: transactionHash });
+      // Wait for transaction - DISABLED
+      // await publicClient.waitForTransactionReceipt({ hash: transactionHash });
       
       setDepositStatus('deposited');
-      showToast('Deposit successful!', 'success');
+      showToast('Deposit functionality disabled - contracts deleted', 'warning');
     } catch (error: any) {
       console.error('Deposit error:', error);
       showToast(error?.message || 'Deposit failed', 'error');

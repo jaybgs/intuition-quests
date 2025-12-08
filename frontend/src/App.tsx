@@ -1041,8 +1041,12 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                       const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                       const targetPath = `/space-${spaceSlug}`;
                       console.log('📍 About to navigate to:', targetPath, 'current path:', window.location.pathname);
-                      // Use window.location for immediate navigation to ensure route matches
-                      window.location.href = targetPath;
+                      // Navigate using React Router - ensure we're using the correct path format
+                      navigate(targetPath, { replace: false });
+                      // Also update the browser URL directly to ensure it matches
+                      window.history.pushState({}, '', targetPath);
+                      // Force React Router to update by dispatching a popstate event
+                      window.dispatchEvent(new PopStateEvent('popstate'));
                     } else {
                       console.error('❌ Space not found:', spaceId);
                       showToast('Space not found', 'error');

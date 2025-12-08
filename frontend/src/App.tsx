@@ -1037,16 +1037,19 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                       setSelectedSpace(space);
                       setSelectedSpaceId(space.id);
                       
-                      // Navigate to space detail - let the router handle setting the active tab
+                      // Navigate to space detail - set active tab first, then navigate
                       const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                       const targetPath = `/space-${spaceSlug}`;
-                      console.log('📍 About to navigate to:', targetPath, 'current path:', window.location.pathname);
-                      // Navigate using React Router - ensure we're using the correct path format
-                      navigate(targetPath, { replace: false });
-                      // Also update the browser URL directly to ensure it matches
-                      window.history.pushState({}, '', targetPath);
-                      // Force React Router to update by dispatching a popstate event
-                      window.dispatchEvent(new PopStateEvent('popstate'));
+                      console.log('📍 About to navigate to:', targetPath);
+                      
+                      // Set the active tab first to ensure the view is ready
+                      setActiveTab('space-detail');
+                      
+                      // Small delay to ensure state is set, then navigate
+                      setTimeout(() => {
+                        navigate(targetPath);
+                        console.log('📍 Navigated to:', targetPath);
+                      }, 10);
                     } else {
                       console.error('❌ Space not found:', spaceId);
                       showToast('Space not found', 'error');

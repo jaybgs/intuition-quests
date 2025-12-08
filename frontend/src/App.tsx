@@ -359,12 +359,18 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests'>(initialTab as any);
   
   // Sync activeTab with initialTab when it changes (e.g., from URL navigation)
+  // But don't override if we're manually navigating to space-detail
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) {
+      // Don't override space-detail if we have a selectedSpace (manual navigation)
+      if (activeTab === 'space-detail' && selectedSpace && initialTab !== 'space-detail') {
+        console.log('🔄 Keeping space-detail tab (manual navigation)');
+        return;
+      }
       console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current activeTab:', activeTab);
       setActiveTab(initialTab as any);
     }
-  }, [initialTab, activeTab]);
+  }, [initialTab, activeTab, selectedSpace]);
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
   // Try to restore selectedSpace from localStorage on mount
   const getInitialSpace = (): Space | null => {

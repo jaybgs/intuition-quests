@@ -1039,8 +1039,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                       
                       // Navigate to space detail - let the router handle setting the active tab
                       const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                      navigate(`/space-${spaceSlug}`);
-                      console.log('📍 Navigated to space detail:', spaceSlug);
+                      const targetPath = `/space-${spaceSlug}`;
+                      console.log('📍 About to navigate to:', targetPath, 'current path:', window.location.pathname);
+                      navigate(targetPath);
+                      console.log('📍 Navigated to space detail:', spaceSlug, 'new path:', window.location.pathname);
                     } else {
                       console.error('❌ Space not found:', spaceId);
                       showToast('Space not found', 'error');

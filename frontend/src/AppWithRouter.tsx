@@ -23,6 +23,7 @@ export default function AppWithRouter() {
   // Get initial tab from route
   const getInitialTab = (): string => {
     const path = location.pathname;
+    console.log('🔍 AppWithRouter: Current pathname:', path, 'params:', params);
     
     // Handle dynamic routes
     if (path.startsWith('/quest-')) {

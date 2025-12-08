@@ -1028,17 +1028,24 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     console.log('✅ Space loaded:', space);
                     
                     if (space) {
-                      // Set space data BEFORE navigating - ensure state is set synchronously
-                      setSelectedSpace(space);
-                      setSelectedSpaceId(space.id);
+                      // Store in localStorage first for persistence
                       localStorage.setItem('previousTab', 'discover');
                       localStorage.setItem('selectedSpaceId', space.id);
                       localStorage.setItem('selectedSpace', JSON.stringify(space));
                       
-                      // Set active tab and navigate directly to ensure it works
+                      // Set space data - use functional update to ensure it's set
+                      setSelectedSpace(space);
+                      setSelectedSpaceId(space.id);
+                      
+                      // Set active tab first
                       setActiveTab('space-detail');
+                      
+                      // Navigate after a small delay to ensure state updates
                       const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                      navigate(`/space-${spaceSlug}`);
+                      setTimeout(() => {
+                        navigate(`/space-${spaceSlug}`);
+                        console.log('📍 Navigated to space detail:', spaceSlug);
+                      }, 100);
                     } else {
                       console.error('❌ Space not found:', spaceId);
                       showToast('Space not found', 'error');

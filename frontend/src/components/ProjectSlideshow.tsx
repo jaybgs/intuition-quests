@@ -387,12 +387,14 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    // Navigate directly using space slug or name (format: /space-{name})
-                    const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    console.log('🖱️ Space card clicked directly, space:', space.name, 'id:', space.id);
                     // Call onSpaceClick if provided, otherwise navigate directly
                     if (onSpaceClick) {
+                      console.log('📞 Calling onSpaceClick handler');
                       onSpaceClick(space.id);
                     } else {
+                      console.log('⚠️ No onSpaceClick handler, navigating directly');
+                      const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                       navigate(`/space-${spaceSlug}`);
                     }
                   }}

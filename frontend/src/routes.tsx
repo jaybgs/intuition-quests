@@ -50,6 +50,7 @@ export const router = createBrowserRouter([
   {
     path: '/space-:spaceName',
     element: <AppWithRouter />,
+    caseSensitive: false,
   },
   {
     path: '*',

@@ -29,11 +29,14 @@ export default function AppWithRouter() {
       return 'quest-detail';
     }
     if (path.startsWith('/space-')) {
+      console.log('🔍 AppWithRouter: Detected space route, returning space-detail');
       return 'space-detail';
     }
     
     // Handle static routes
-    return routeToTab[path] || 'discover';
+    const tab = routeToTab[path] || 'discover';
+    console.log('🔍 AppWithRouter: Path', path, '-> Tab', tab);
+    return tab;
   };
 
   // Get quest/space name from URL

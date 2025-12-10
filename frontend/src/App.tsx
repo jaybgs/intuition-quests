@@ -1269,6 +1269,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                       setSelectedQuestId(questId);
                       navigateToTab('quest-detail', { questId });
                     }}
+                    onBuilderAccess={(spaceId) => {
+                      setSelectedSpaceId(spaceId);
+                      navigateToTab('builder-dashboard');
+                    }}
                   />
                 );
               } else if (isSpaceDetailTab && !selectedSpace) {

@@ -95,10 +95,7 @@ export function QuestCard({ quest }: QuestCardProps) {
         </div>
         {isCompleted && (
           <div className="quest-completed-overlay">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
+            <img src="/verified.svg" alt="Verified" width="48" height="48" />
           </div>
         )}
         {quest.difficulty && (
@@ -176,10 +173,7 @@ export function QuestCard({ quest }: QuestCardProps) {
         {isCompleted ? (
           <div className="quest-completed-state">
             <span className="completed-badge">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
+              <img src="/verified.svg" alt="Verified" width="16" height="16" />
               Completed
             </span>
           </div>

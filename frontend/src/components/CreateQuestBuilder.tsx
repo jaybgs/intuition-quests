@@ -1030,7 +1030,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       'Wait',
       'Staked on a claim',
       'Hold a token',
-      'Hold an NFT'
+      'Hold an NFT',
+      'Read docs'
     ];
     return configurableActions.some(configurable => actionTitle.includes(configurable) || actionTitle === configurable);
   };
@@ -1078,6 +1079,10 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     
     if (action.title === 'Wait') {
       return !!(action.config?.waitConfig?.amount && action.config.waitConfig.unit);
+    }
+    
+    if (action.title === 'Read docs') {
+      return !!(action.config?.readDocsConfig?.documents && action.config.readDocsConfig.documents.length > 0);
     }
     
     // For Twitter and Discord actions
@@ -1297,7 +1302,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       'TNS minted',
       'Poll',
       'Quiz',
-      'Wait'
+      'Wait',
+      'Read docs'
     ];
     return advancedActions.some(advanced => actionTitle.includes(advanced));
   };
@@ -2024,7 +2030,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                           if (requiresConfiguration(action.title)) {
                             // Show edit modal for configurable actions
                             setEditingActionIndex(index);
-                            setEditingActionConfig(action.config || {});
+                            const config = action.config || {};
+                            // Initialize readDocsConfig if it's a Read docs action
+                            if (action.title === 'Read docs' && !config.readDocsConfig) {
+                              config.readDocsConfig = { documents: [''] };
+                            }
+                            setEditingActionConfig(config);
                             setShowEditActionModal(true);
                           } else {
                             // For non-configurable actions, just show a message or do nothing
@@ -2651,6 +2662,23 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                             <h4 className="create-quest-builder-action-title">Wait {isFree && <span className="pro-badge">Pro</span>}</h4>
                             <p className="create-quest-builder-action-desc">Add a timed waiting period</p>
                           </div>
+                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                            if (isFree) {
+                              setShowSubscribePopup(true);
+                              return;
+                            }
+                            setSelectedActions([...selectedActions, { id: 19, title: 'Read docs' }]);
+                            setShowActionsModal(false);
+                          }}>
+                            <div className="create-quest-builder-action-icon blue">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                              </svg>
+                            </div>
+                            <h4 className="create-quest-builder-action-title">Read docs {isFree && <span className="pro-badge">Pro</span>}</h4>
+                            <p className="create-quest-builder-action-desc">Require users to read documents</p>
+                          </div>
                         </>
 
                         {/* Row 10 - PRO ONLY */}
@@ -2902,6 +2930,104 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                         }}
                       />
                     )}
+                    {selectedActions[editingActionIndex]?.title === 'Read docs' && (
+                      <>
+                        <div className="create-quest-builder-field">
+                          <label className="create-quest-builder-label">
+                            Custom Title
+                          </label>
+                          <input
+                            type="text"
+                            className="create-quest-builder-input"
+                            placeholder="Enter custom title (optional)"
+                            value={editingActionConfig.customTitle || ''}
+                            onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
+                          />
+                        </div>
+                        <div className="create-quest-builder-field">
+                          <label className="create-quest-builder-label">
+                            Documents to Read <span className="required-asterisk">*</span>
+                          </label>
+                          <div style={{ marginBottom: '1rem' }}>
+                            {(editingActionConfig.readDocsConfig?.documents || []).map((doc: string, index: number) => (
+                              <div key={index} style={{ 
+                                display: 'flex', 
+                                gap: '0.5rem', 
+                                marginBottom: '0.5rem',
+                                alignItems: 'center'
+                              }}>
+                                <input
+                                  type="text"
+                                  className="create-quest-builder-input"
+                                  placeholder={`Read docs ${index + 1}`}
+                                  value={doc}
+                                  onChange={(e) => {
+                                    const documents = [...(editingActionConfig.readDocsConfig?.documents || [])];
+                                    documents[index] = e.target.value;
+                                    setEditingActionConfig({
+                                      ...editingActionConfig,
+                                      readDocsConfig: {
+                                        documents
+                                      }
+                                    });
+                                  }}
+                                  style={{ flex: 1 }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const documents = [...(editingActionConfig.readDocsConfig?.documents || [])];
+                                    documents.splice(index, 1);
+                                    setEditingActionConfig({
+                                      ...editingActionConfig,
+                                      readDocsConfig: {
+                                        documents
+                                      }
+                                    });
+                                  }}
+                                  style={{
+                                    padding: '0.5rem 1rem',
+                                    background: 'rgba(239, 68, 68, 0.2)',
+                                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                                    borderRadius: '8px',
+                                    color: '#ef4444',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem'
+                                  }}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const documents = [...(editingActionConfig.readDocsConfig?.documents || []), ''];
+                                setEditingActionConfig({
+                                  ...editingActionConfig,
+                                  readDocsConfig: {
+                                    documents
+                                  }
+                                });
+                              }}
+                              style={{
+                                padding: '0.5rem 1rem',
+                                background: 'rgba(59, 130, 246, 0.2)',
+                                border: '1px solid rgba(59, 130, 246, 0.4)',
+                                borderRadius: '8px',
+                                color: '#3b82f6',
+                                cursor: 'pointer',
+                                fontSize: '0.875rem',
+                                marginTop: '0.5rem'
+                              }}
+                            >
+                              + Add Document
+                            </button>
+                          </div>
+                          <p className="create-quest-builder-hint">Add documents that users must read. Each document will be listed as "Read docs 1", "Read docs 2", etc.</p>
+                        </div>
+                      </>
+                    )}
                     {getActionType(selectedActions[editingActionIndex]?.title) === 'twitter' && (
                       <>
                         <div className="create-quest-builder-field">
@@ -3054,6 +3180,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                           selectedActions[editingActionIndex]?.title === 'Open Link' ||
                           selectedActions[editingActionIndex]?.title === 'Wait'
                             ? false 
+                            : selectedActions[editingActionIndex]?.title === 'Read docs'
+                            ? !(editingActionConfig.readDocsConfig?.documents && editingActionConfig.readDocsConfig.documents.length > 0 && editingActionConfig.readDocsConfig.documents.every((doc: string) => doc.trim()))
                             : selectedActions[editingActionIndex]?.title === 'Visit website'
                             ? !editingActionConfig.accountUrl
                             : selectedActions[editingActionIndex]?.title === 'Staked on a claim'
@@ -3262,10 +3390,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                     </>
                   ) : depositStatus === 'deposited' ? (
                     <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', marginRight: '8px' }}>
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                      </svg>
+                      <img src="/verified.svg" alt="Verified" width="16" height="16" style={{ display: 'inline-block', marginRight: '8px' }} />
                       Deposited
                     </>
                   ) : (

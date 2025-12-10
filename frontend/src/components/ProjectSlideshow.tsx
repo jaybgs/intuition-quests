@@ -335,10 +335,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                 <h2 className="slideshow-title">{currentProject.title}</h2>
                 {currentProject.questCount && (
                   <div className="slideshow-quest-count">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                      <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
+                    <img src="/verified.svg" alt="Verified" width="16" height="16" />
                     {currentProject.questCount} Quests
                   </div>
                 )}
@@ -385,10 +382,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
               className={`spaces-filter-button ${sortByVerified ? 'active' : ''}`}
               onClick={() => setSortByVerified(!sortByVerified)}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
+              <img src="/verified.svg" alt="Verified" width="16" height="16" />
               Verified
             </button>
             <button
@@ -452,10 +446,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                       )}
                     </div>
                     <div className="space-verified-badge">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                      </svg>
+                      <img src="/verified.svg" alt="Verified" width="16" height="16" />
                     </div>
                   </div>
                   <div className="space-card-content">

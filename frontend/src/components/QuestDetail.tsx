@@ -1123,10 +1123,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                 title={isCooldown ? `Verify again in ${cooldownSeconds}s` : isVerified ? 'Verified' : 'Verify task'}
               >
                 {isVerified ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
+                  <img src="/verified.svg" alt="Verified" width="16" height="16" />
                 ) : (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="23 4 23 10 17 10"/>
@@ -1157,10 +1154,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
             </>
           ) : isClaimed ? (
             <>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
+              <img src="/verified.svg" alt="Verified" width="20" height="20" />
               Claimed
             </>
           ) : isCompleting ? (

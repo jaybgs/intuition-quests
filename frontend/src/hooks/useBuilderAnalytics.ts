@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, usePublicClient } from 'wagmi';
 import { apiClient } from '../services/apiClient';
 import { QuestServiceBackend } from '../services/questServiceBackend';
+import { getQuestDeposit } from '../services/questEscrowService';
+import { formatEther } from 'viem';
 import type { Address } from 'viem';
 
 const questService = new QuestServiceBackend();
@@ -67,6 +69,7 @@ interface BuilderAnalytics {
  */
 export function useBuilderAnalytics(creatorAddress?: Address): BuilderAnalytics {
   const { address } = useAccount();
+  const publicClient = usePublicClient();
   const [analytics, setAnalytics] = useState<BuilderAnalytics>({
     questStatusBreakdown: { active: 0, paused: 0, completed: 0, expired: 0 },
     participantData: {
@@ -243,18 +246,34 @@ export function useBuilderAnalytics(creatorAddress?: Address): BuilderAnalytics 
         let totalDeposited = 0;
         let totalDistributed = 0;
 
-        // Calculate deposited (from quest trustReward * maxCompletions or from localStorage)
+        // Calculate deposited from actual escrow contract deposits
         // Only count quests from Dec 4, 2025 onwards
-        filteredQuests.forEach((quest: any) => {
-          const reward = quest.trustReward ? parseFloat(String(quest.trustReward)) : 0;
-          const maxCompletions = quest.maxCompletions || 0;
-          if (reward > 0 && maxCompletions > 0) {
-            totalDeposited += reward * maxCompletions;
-          } else if (reward > 0) {
-            // Estimate based on current completions + buffer
-            totalDeposited += reward * (quest.completedCount || 0) * 1.5;
+        if (publicClient) {
+          for (const quest of filteredQuests) {
+            try {
+              const deposit = await getQuestDeposit(quest.id, publicClient);
+              if (deposit && deposit.totalAmount > 0n) {
+                const depositAmount = parseFloat(formatEther(deposit.totalAmount));
+                totalDeposited += depositAmount;
+              }
+            } catch (error) {
+              // Quest may not have a deposit yet, or contract not deployed - skip it
+              console.debug(`No deposit found for quest ${quest.id}:`, error);
+            }
           }
-        });
+        } else {
+          // Fallback: estimate if publicClient is not available
+          filteredQuests.forEach((quest: any) => {
+            const reward = quest.trustReward ? parseFloat(String(quest.trustReward)) : 0;
+            const maxCompletions = quest.maxCompletions || 0;
+            if (reward > 0 && maxCompletions > 0) {
+              totalDeposited += reward * maxCompletions;
+            } else if (reward > 0) {
+              // Estimate based on current completions + buffer
+              totalDeposited += reward * (quest.completedCount || 0) * 1.5;
+            }
+          });
+        }
 
         // Calculate distributed (from actual completions, only from Dec 4, 2025 onwards)
         for (const quest of filteredQuests) {
@@ -446,7 +465,7 @@ export function useBuilderAnalytics(creatorAddress?: Address): BuilderAnalytics 
     };
 
     fetchAnalytics();
-  }, [creatorAddress, address]);
+  }, [creatorAddress, address, publicClient]);
 
   return analytics;
 }

@@ -731,10 +731,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
                 >
                   <div className="builder-quests-draft-header">
                     <div className="builder-quests-draft-icon">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                      </svg>
+                      <img src="/verified.svg" alt="Verified" width="24" height="24" />
                     </div>
                     <div className="builder-quests-draft-status">
                       <span className="builder-quests-draft-status-badge" style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.5)' }}>
@@ -757,10 +754,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
         ) : (
           <div className="builder-quests-empty-state">
             <div className="builder-quests-empty-icon">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
+              <img src="/verified.svg" alt="Verified" width="64" height="64" />
             </div>
             <h2 className="builder-quests-empty-title">No concluded quests yet</h2>
             <p className="builder-quests-empty-description">
@@ -1083,10 +1077,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
                 </>
               ) : (
                 <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', marginRight: '8px' }}>
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
+                  <img src="/verified.svg" alt="Verified" width="16" height="16" style={{ display: 'inline-block', marginRight: '8px' }} />
                   Distribute Rewards
                 </>
               )}
@@ -1102,10 +1093,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
               fontSize: '0.875rem',
               fontWeight: 600
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', marginRight: '8px' }}>
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
+              <img src="/verified.svg" alt="Verified" width="16" height="16" style={{ display: 'inline-block', marginRight: '8px' }} />
               Rewards Distributed
             </div>
           )}

@@ -13,15 +13,19 @@ interface SpaceDetailViewProps {
   space: Space;
   onBack: () => void;
   onQuestClick?: (questId: string) => void;
+  onBuilderAccess?: (spaceId: string) => void;
 }
 
-export function SpaceDetailView({ space, onBack, onQuestClick }: SpaceDetailViewProps) {
+export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }: SpaceDetailViewProps) {
   const { address } = useAccount();
   const { quests, isLoading: questsLoading } = useQuests();
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  
+  // Check if current user is the owner of this space
+  const isOwner = address && space.ownerAddress && address.toLowerCase() === space.ownerAddress.toLowerCase();
   
   // Filter quests for this space
   const spaceQuests = useMemo(() => {
@@ -146,21 +150,16 @@ export function SpaceDetailView({ space, onBack, onQuestClick }: SpaceDetailView
                 {space.name}
                 {isPro && (
                   <span title="Verified" style={{ marginLeft: '8px', display: 'inline-block', verticalAlign: 'middle' }}>
-                    <svg 
+                    <img 
+                      src="/verified.svg" 
+                      alt="Verified" 
                       width="20" 
-                      height="20" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="#3b82f6" 
-                      strokeWidth="2"
+                      height="20"
                       style={{ 
                         display: 'inline-block',
                         verticalAlign: 'middle'
                       }}
-                    >
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                      <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
+                    />
                   </span>
                 )}
               </h1>
@@ -194,13 +193,24 @@ export function SpaceDetailView({ space, onBack, onQuestClick }: SpaceDetailView
                 </svg>
               </a>
             )}
-            <button 
-              className={`space-detail-follow-button ${isFollowing ? 'following' : ''}`}
-              onClick={handleFollow}
-              disabled={isLoadingFollow}
-            >
-              {isLoadingFollow ? '...' : isFollowing ? 'Following' : '+ Follow'}
-            </button>
+            {isOwner && onBuilderAccess && (
+              <button 
+                className="space-detail-follow-button"
+                onClick={() => onBuilderAccess(space.id)}
+                title="Builder Dashboard"
+              >
+                Builder Dashboard
+              </button>
+            )}
+            {!isOwner && (
+              <button 
+                className={`space-detail-follow-button ${isFollowing ? 'following' : ''}`}
+                onClick={handleFollow}
+                disabled={isLoadingFollow}
+              >
+                {isLoadingFollow ? '...' : isFollowing ? 'Following' : '+ Follow'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -232,13 +242,24 @@ export function SpaceDetailView({ space, onBack, onQuestClick }: SpaceDetailView
                   </svg>
                 </a>
               )}
-              <button 
-                className={`space-detail-follow-button ${isFollowing ? 'following' : ''}`}
-                onClick={handleFollow}
-                disabled={isLoadingFollow}
-              >
-                {isLoadingFollow ? '...' : isFollowing ? 'Following' : '+ Follow'}
-              </button>
+              {isOwner && onBuilderAccess && (
+                <button 
+                  className="space-detail-follow-button"
+                  onClick={() => onBuilderAccess(space.id)}
+                  title="Builder Dashboard"
+                >
+                  Builder Dashboard
+                </button>
+              )}
+              {!isOwner && (
+                <button 
+                  className={`space-detail-follow-button ${isFollowing ? 'following' : ''}`}
+                  onClick={handleFollow}
+                  disabled={isLoadingFollow}
+                >
+                  {isLoadingFollow ? '...' : isFollowing ? 'Following' : '+ Follow'}
+                </button>
+              )}
             </div>
             {/* Description */}
             <div className="space-detail-description-section">

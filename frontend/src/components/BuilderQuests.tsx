@@ -3,6 +3,7 @@ import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
 import { CreateQuestBuilder } from './CreateQuestBuilder';
 import { QuestDetail } from './QuestDetail';
 import { QuestServiceBackend } from '../services/questServiceBackend';
+import { questDraftService } from '../services/questDraftService';
 import type { Quest } from '../types';
 import { getQuestWinners, calculateAndSaveWinners, getQuestCompletions } from '../utils/raffle';
 // Contract services disabled - contracts deleted
@@ -43,40 +44,24 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
-  // Load drafts from localStorage
+  // Load drafts from backend (Supabase)
   useEffect(() => {
-    if (address) {
-      const draftsListKey = `quest_drafts_${address.toLowerCase()}`;
-      const savedDrafts = localStorage.getItem(draftsListKey);
-      console.log('🔍 Loading drafts - Key:', draftsListKey, 'Found:', savedDrafts);
-      if (savedDrafts) {
+    const loadDrafts = async () => {
+      if (address) {
         try {
-          const draftsList: QuestDraft[] = JSON.parse(savedDrafts);
+          const draftsList = await questDraftService.getAllDrafts(address, spaceId);
           console.log('📋 All drafts:', draftsList);
-          // Filter by spaceId if provided
-          // If spaceId is provided, show drafts matching that spaceId OR drafts with no spaceId
-          // If no spaceId, show all drafts
-          const filteredDrafts = spaceId 
-            ? draftsList.filter(d => {
-                // Match if spaceId matches OR if draft has no spaceId (legacy drafts)
-                return d.spaceId === spaceId || !d.spaceId;
-              })
-            : draftsList;
-          console.log('✅ Filtered drafts (spaceId:', spaceId, '):', filteredDrafts);
-          // Sort by updatedAt (newest first)
-          filteredDrafts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-          setDrafts(filteredDrafts);
+          setDrafts(draftsList);
         } catch (error) {
           console.error('❌ Error loading drafts:', error);
           setDrafts([]);
         }
       } else {
-        console.log('⚠️ No drafts found in localStorage');
         setDrafts([]);
       }
-    } else {
-      setDrafts([]);
-    }
+    };
+
+    loadDrafts();
   }, [address, spaceId, showCreateQuest]);
 
   // Load published quests from backend and localStorage
@@ -411,13 +396,128 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     loadWinnersQuests();
   }, [address, activeTab, showCreateQuest]);
 
+  // Handle editing a published quest - convert it to a draft
+  const handleEditQuest = async (questId: string) => {
+    if (!address) {
+      showToast('Please connect your wallet to edit quest', 'warning');
+      return;
+    }
+
+    try {
+      // Find the quest in published quests
+      let questToEdit: Quest | null = null;
+      
+      // Try to find in published quests from localStorage
+      const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
+      const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
+      if (storedPublishedQuests) {
+        const quests = JSON.parse(storedPublishedQuests);
+        questToEdit = quests.find((q: Quest) => q.id === questId) || null;
+      }
+
+      // Also try backend
+      if (!questToEdit) {
+        try {
+          const allQuests = await questService.getAllQuests();
+          questToEdit = allQuests.find((q: Quest) => q.id === questId && q.creatorAddress?.toLowerCase() === address.toLowerCase()) || null;
+        } catch (error) {
+          console.warn('Error loading quest from backend:', error);
+        }
+      }
+
+      if (!questToEdit) {
+        showToast('Quest not found', 'error');
+        return;
+      }
+
+      // Check if quest can be edited
+      const now = Date.now();
+      const isExpired = questToEdit.expiresAt && questToEdit.expiresAt < now;
+      const hasCompletions = questToEdit.completedBy && questToEdit.completedBy.length > 0;
+      
+      if (isExpired) {
+        showToast('Cannot edit quest: Quest has already expired', 'error');
+        return;
+      }
+      
+      if (hasCompletions) {
+        showToast('Cannot edit quest: Users have already completed and claimed IQ points', 'error');
+        return;
+      }
+
+      // Convert quest to draft format
+      const draftId = `draft_${questId}_${Date.now()}`;
+      
+      // Convert requirements back to actions format
+      const selectedActions = questToEdit.requirements?.map((req: any) => {
+        let config = {};
+        try {
+          if (typeof req.verification === 'string') {
+            config = JSON.parse(req.verification);
+          } else {
+            config = req.verification || {};
+          }
+        } catch (e) {
+          config = {};
+        }
+        
+        return {
+          type: req.type || 'action',
+          title: req.description || '',
+          config: config,
+        };
+      }) || [];
+
+      const draftData = {
+        id: draftId,
+        user_address: address.toLowerCase(),
+        space_id: questToEdit.spaceId || null,
+        title: questToEdit.title || null,
+        difficulty: questToEdit.difficulty || null,
+        description: questToEdit.description || null,
+        image_preview: questToEdit.image || null,
+        end_date: questToEdit.endDate || null,
+        end_time: questToEdit.endTime || null,
+        selected_actions: selectedActions.length > 0 ? selectedActions : null,
+        number_of_winners: questToEdit.numberOfWinners?.toString() || null,
+        winner_prizes: questToEdit.winnerPrizes || null,
+        iq_points: questToEdit.iqPoints?.toString() || questToEdit.xpReward?.toString() || null,
+        reward_deposit: questToEdit.rewardDeposit || null,
+        reward_token: questToEdit.rewardToken || null,
+        distribution_type: questToEdit.distributionType || null,
+        current_step: 1,
+      };
+
+      // Save as draft
+      await questDraftService.saveDraft(draftData);
+
+      // Store original quest ID for republishing
+      localStorage.setItem(`editing_quest_${draftId}`, questId);
+
+      // Navigate to edit mode
+      setSelectedQuestId(null);
+      setSelectedDraftId(draftId);
+      setShowCreateQuest(true);
+      showToast('Quest loaded for editing. Changes will be saved to draft. Republish to update on-chain and Supabase.', 'info');
+    } catch (error) {
+      console.error('Error editing quest:', error);
+      showToast('Failed to load quest for editing', 'error');
+    }
+  };
 
   if (showCreateQuest) {
+    // Check if we're editing a published quest
+    const isEditingPublished = selectedDraftId ? localStorage.getItem(`editing_quest_${selectedDraftId}`) !== null : false;
+    const originalQuestId = selectedDraftId ? localStorage.getItem(`editing_quest_${selectedDraftId}`) || undefined : undefined;
+    
     return (
       <CreateQuestBuilder
         onBack={() => {
           setShowCreateQuest(false);
           setSelectedDraftId(null);
+          if (selectedDraftId) {
+            localStorage.removeItem(`editing_quest_${selectedDraftId}`);
+          }
         }}
         onSave={() => {
           // Draft is saved automatically in handleSave
@@ -429,6 +529,8 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
         }}
         spaceId={spaceId}
         draftId={selectedDraftId || undefined}
+        isEditingPublishedQuest={isEditingPublished}
+        originalQuestId={originalQuestId}
       />
     );
   }
@@ -555,6 +657,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
             questId={selectedQuestId}
             onBack={() => setSelectedQuestId(null)}
             isFromBuilder={true}
+            onEdit={handleEditQuest}
           />
         ) : publishedQuests.length > 0 ? (
           <div className="builder-quests-drafts-grid">
@@ -1029,7 +1132,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
                       width: '40px',
                       height: '40px',
                       borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'var(--accent-primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

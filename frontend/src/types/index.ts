@@ -86,6 +86,7 @@ export interface Space {
   slug: string;
   description: string;
   logo?: string; // Base64 or URL
+  coverPhoto?: string; // Base64 or URL
   twitterUrl: string;
   ownerAddress: string;
   userType: 'project' | 'user';

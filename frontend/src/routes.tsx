@@ -48,15 +48,11 @@ export const router = createBrowserRouter([
     element: <AppWithRouter />,
   },
   {
-    path: '/space-:spaceName',
+    path: '/space/:spaceName',
     element: <AppWithRouter />,
-    caseSensitive: false,
   },
   {
     path: '*',
     element: <Navigate to="/home" replace />,
   },
 ]);
-
-
-

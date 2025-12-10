@@ -2252,7 +2252,7 @@
 .pro-badge {
   display: inline-block;
   padding: 2px 8px;
-  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  background: var(--accent-primary);
   color: #fff;
   font-size: 10px;
   font-weight: 600;

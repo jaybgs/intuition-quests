@@ -10,9 +10,13 @@ import {
   depositToEscrow, 
   checkBalance,
   getQuestDeposit,
+  getGracePeriod,
 } from '../services/questEscrowService';
+import { questDraftService } from '../services/questDraftService';
+import { createQuestAtom } from '../services/questAtomService';
 import { parseEther } from 'viem';
-import { parseUnits, formatUnits } from 'viem';
+import { parseUnits, formatUnits, createPublicClient, http } from 'viem';
+import { intuitionChain } from '../config/wagmi';
 import './CreateQuestBuilder.css';
 
 // Poll Editor Component
@@ -874,9 +878,11 @@ interface CreateQuestBuilderProps {
   onNext?: () => void;
   spaceId?: string;
   draftId?: string;
+  isEditingPublishedQuest?: boolean;
+  originalQuestId?: string;
 }
 
-export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }: CreateQuestBuilderProps) {
+export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, isEditingPublishedQuest = false, originalQuestId }: CreateQuestBuilderProps) {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
@@ -959,6 +965,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositStatus, setDepositStatus] = useState<'none' | 'approved' | 'deposited'>('none');
   const [rewardToken, setRewardToken] = useState<'TRUST'>('TRUST');
+  const [gracePeriod, setGracePeriod] = useState<bigint | null>(null);
 
   // Calculate sum of winner prizes
   const calculateWinnerPrizesSum = (): number => {
@@ -1155,42 +1162,60 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
 
   // Load draft on mount if draftId is provided
   useEffect(() => {
-    if (draftId && address) {
-      const savedDraft = localStorage.getItem(`quest_draft_${draftId}_${address.toLowerCase()}`);
-      if (savedDraft) {
+    const loadDraft = async () => {
+      if (draftId && address) {
         try {
-          const draft = JSON.parse(savedDraft);
-          setTitle(draft.title || '');
-          setDifficulty(draft.difficulty || '');
-          setDescription(draft.description || '');
-          setImagePreview(draft.imagePreview || null);
-          // Start date/time is set automatically when publishing, so we don't load it from draft
-          setEndDate(draft.endDate || '');
-          setEndTime(draft.endTime || '');
-          // Only load actions if they exist in the draft, otherwise keep empty array
-          setSelectedActions(Array.isArray(draft.selectedActions) && draft.selectedActions.length > 0 ? draft.selectedActions : []);
-          setWinnerPrizes(Array.isArray(draft.winnerPrizes) ? draft.winnerPrizes : []);
-          setIqPoints(draft.iqPoints || '');
-          setRewardDeposit(draft.rewardDeposit || '');
-          setRewardToken(draft.rewardToken || 'TRUST');
-          setDistributionType(draft.distributionType || 'fcfs');
-          setCurrentStep(draft.currentStep || 1);
-          setQuestDraftId(draft.id || questDraftId);
-          showToast('Draft loaded successfully', 'success');
+          const draft = await questDraftService.getDraftById(draftId, address);
+          if (draft) {
+            setTitle(draft.title || '');
+            setDifficulty(draft.difficulty || '');
+            setDescription(draft.description || '');
+            setImagePreview(draft.image_preview || null);
+            // Start date/time is set automatically when publishing, so we don't load it from draft
+            setEndDate(draft.end_date || '');
+            setEndTime(draft.end_time || '');
+            // Only load actions if they exist in the draft, otherwise keep empty array
+            setSelectedActions(Array.isArray(draft.selected_actions) && draft.selected_actions.length > 0 ? draft.selected_actions : []);
+            setWinnerPrizes(Array.isArray(draft.winner_prizes) ? draft.winner_prizes : []);
+            setIqPoints(draft.iq_points || '');
+            setRewardDeposit(draft.reward_deposit || '');
+            setRewardToken(draft.reward_token || 'TRUST');
+            setDistributionType(draft.distribution_type || 'fcfs');
+            setCurrentStep(draft.current_step || 1);
+            setQuestDraftId(draft.id || questDraftId);
+            showToast('Draft loaded successfully', 'success');
+          } else {
+            // If draftId is provided but no draft found, ensure actions are empty
+            setSelectedActions([]);
+          }
         } catch (error) {
           console.error('Error loading draft:', error);
           // Ensure actions stay empty if there's an error
           setSelectedActions([]);
         }
       } else {
-        // If draftId is provided but no draft found, ensure actions are empty
+        // If no draftId, ensure actions start empty (new quest)
         setSelectedActions([]);
       }
-    } else {
-      // If no draftId, ensure actions start empty (new quest)
-      setSelectedActions([]);
-    }
+    };
+
+    loadDraft();
   }, [draftId, address]);
+
+  // Load grace period when on deposit step
+  useEffect(() => {
+    const loadGracePeriod = async () => {
+      if (currentStep === 4 && publicClient) {
+        try {
+          const period = await getGracePeriod(publicClient);
+          setGracePeriod(period);
+        } catch (error) {
+          console.error('Error loading grace period:', error);
+        }
+      }
+    };
+    loadGracePeriod();
+  }, [currentStep, publicClient]);
 
   // Sync winner prizes array with number of winners
   useEffect(() => {
@@ -1211,69 +1236,46 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
     }
   }, [numberOfWinners]);
 
-  const handleSave = () => {
+  const handleSave = async (showToastNotification: boolean = true) => {
     if (!address) {
-      showToast('Please connect your wallet to save', 'warning');
+      if (showToastNotification) {
+        showToast('Please connect your wallet to save', 'warning');
+      }
       return;
     }
 
     try {
-      const draftData = {
+      // Save to backend (Supabase) - this handles both create and update
+      await questDraftService.saveDraft({
         id: questDraftId,
-        spaceId: spaceId || null,
-        title,
-        difficulty,
-        description,
-        imagePreview, // Save as base64 string
+        user_address: address.toLowerCase(),
+        space_id: spaceId || null,
+        title: title || null,
+        difficulty: difficulty || null,
+        description: description || null,
+        image_preview: imagePreview || null,
         // Start date/time is set automatically when publishing, so we don't save it in draft
-        endDate,
-        endTime,
-        selectedActions,
-        numberOfWinners,
-        winnerPrizes,
-        iqPoints,
-        rewardDeposit,
-        rewardToken,
-        distributionType,
-        currentStep,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
+        end_date: endDate || null,
+        end_time: endTime || null,
+        selected_actions: selectedActions || null,
+        number_of_winners: numberOfWinners || null,
+        winner_prizes: winnerPrizes || null,
+        iq_points: iqPoints || null,
+        reward_deposit: rewardDeposit || null,
+        reward_token: rewardToken || null,
+        distribution_type: distributionType || null,
+        current_step: currentStep,
+      });
 
-      // Save to localStorage
-      const storageKey = `quest_draft_${questDraftId}_${address.toLowerCase()}`;
-      localStorage.setItem(storageKey, JSON.stringify(draftData));
-
-      // Also save to a list of drafts for this user
-      const draftsListKey = `quest_drafts_${address.toLowerCase()}`;
-      const existingDrafts = JSON.parse(localStorage.getItem(draftsListKey) || '[]');
-      const draftIndex = existingDrafts.findIndex((d: any) => d.id === questDraftId);
-      
-      const draftListItem = {
-        id: questDraftId,
-        title: title || 'Untitled Quest',
-        updatedAt: Date.now(),
-        currentStep: currentStep,
-        spaceId: spaceId || null,
-      };
-      
-      console.log('💾 Saving draft to list:', draftListItem);
-      console.log('📍 spaceId:', spaceId);
-      
-      if (draftIndex >= 0) {
-        existingDrafts[draftIndex] = draftListItem;
-      } else {
-        existingDrafts.push(draftListItem);
+      if (showToastNotification) {
+        showToast('Quest draft saved successfully!', 'success');
       }
-      
-      localStorage.setItem(draftsListKey, JSON.stringify(existingDrafts));
-      console.log('✅ Draft list saved:', existingDrafts);
-
-      showToast('Quest draft saved successfully!', 'success');
       onSave?.();
     } catch (error) {
       console.error('Error saving draft:', error);
-      showToast('Failed to save draft', 'error');
+      if (showToastNotification) {
+        showToast('Failed to save draft', 'error');
+      }
     }
   };
 
@@ -1313,10 +1315,63 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
     let tripleTransactionHash: string | undefined;
 
     try {
-      // Quest creation - no on-chain atom creation needed
-      atomId = undefined;
-      tripleId = undefined;
-      atomTransactionHash = undefined;
+      // Step 1: Check wallet connection and chain
+      if (!walletClient || !publicClient) {
+        showToast('Please connect your wallet to publish quest', 'error');
+        setIsPublishing(false);
+        return;
+      }
+
+      // Check if user is on Intuition Network (chain ID 1155)
+      if (chainId !== intuitionChain.id) {
+        showToast('Please switch to Intuition Network to publish quest', 'warning');
+        try {
+          await switchChain({ chainId: intuitionChain.id });
+          // Wait a moment for network switch
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (switchError: any) {
+          if (switchError.code !== 4902) { // 4902 = user rejected
+            showToast('Failed to switch network. Please switch to Intuition Network manually.', 'error');
+          }
+          setIsPublishing(false);
+          return;
+        }
+      }
+
+      // Step 2: Create quest atom on-chain
+      showToast('Creating quest on-chain...', 'info');
+      const client = publicClient || createPublicClient({
+        chain: intuitionChain,
+        transport: http('https://rpc.intuition.systems'),
+      });
+
+      // Get space atom ID if space exists
+      let spaceAtomId: string | undefined;
+      if (spaceId) {
+        try {
+          const { spaceServiceSupabase } = await import('../services/spaceServiceSupabase');
+          const space = await spaceServiceSupabase.getSpaceById(spaceId);
+          spaceAtomId = space?.atomId;
+        } catch (error) {
+          console.warn('Could not fetch space atom ID:', error);
+        }
+      }
+
+      // Create quest atom
+      const questIdForAtom = questDraftId || `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const atomResult = await createQuestAtom(
+        {
+          questId: questIdForAtom,
+          questTitle: title.trim(),
+          spaceAtomId,
+        },
+        walletClient,
+        client
+      );
+
+      atomId = atomResult.atomId;
+      atomTransactionHash = atomResult.transactionHash;
+      tripleId = undefined; // No triple creation for quest publishing
       tripleTransactionHash = undefined;
 
       // Step 3: Convert image to base64 if present
@@ -1405,9 +1460,11 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
       // Also publish to Supabase
       try {
         const { questServiceSupabase } = await import('../services/questServiceSupabase');
-        await questServiceSupabase.publishQuest(questData);
+        const publishedQuest = await questServiceSupabase.publishQuest(questData);
+        console.log('✅ Quest published to Supabase:', publishedQuest);
       } catch (error) {
-        console.warn('Failed to publish quest to Supabase, using localStorage only:', error);
+        console.error('❌ Failed to publish quest to Supabase:', error);
+        showToast('Quest published locally but failed to sync to database. Please try again later.', 'warning');
       }
 
       // Dispatch event to refresh quest counts in space cards
@@ -1420,8 +1477,16 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       queryClient.refetchQueries({ queryKey: ['quests'] });
 
-      // Remove draft if it exists
-      if (questDraftId) {
+      // Remove draft if it exists - from both Supabase and localStorage
+      if (questDraftId && address) {
+        try {
+          // Delete from Supabase
+          await questDraftService.deleteDraft(questDraftId, address);
+        } catch (error) {
+          console.warn('Failed to delete draft from Supabase:', error);
+        }
+        
+        // Also remove from localStorage (fallback)
         const draftKey = `quest_draft_${questDraftId}_${address.toLowerCase()}`;
         localStorage.removeItem(draftKey);
         
@@ -1501,8 +1566,10 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
           }
     }
     
-    // Save progress before moving to next step
-    handleSave();
+    // Save progress before moving to next step (async to ensure actions are saved)
+    if (address) {
+      await handleSave(false); // Auto-save without toast
+    }
     
     const maxStep = 5; // Regular quests have 5 steps (Details, Actions, Rewards, Deposit, Preview)
     
@@ -1522,8 +1589,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = async () => {
     if (currentStep > 1) {
+      // Save progress before moving to previous step
+      if (address) {
+        await handleSave(false); // Auto-save without toast
+      }
       // Normal step navigation (Deposit tab is now enabled)
       setCurrentStep(currentStep - 1);
     }
@@ -1554,16 +1625,19 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
       // Calculate total cost (no fees)
       const totalCost = parseEther(rewardDeposit);
 
-      // Check balance
-      const { sufficient, currentBalance } = await checkBalance(
-        address as `0x${string}`,
-        totalCost,
-        publicClient
-      );
+      // Check user balance - use direct client if publicClient is not available
+      const client = publicClient || createPublicClient({
+        chain: intuitionChain,
+        transport: http('https://rpc.intuition.systems'),
+      });
+      
+      const userBalance = await client.getBalance({
+        address: address as `0x${string}`,
+      });
 
-      if (!sufficient) {
+      if (userBalance < totalCost) {
         showToast(
-          `Insufficient balance. You have ${formatUnits(currentBalance, 18)} TRUST, but need ${rewardDeposit} TRUST.`,
+          `Insufficient balance. You have ${formatUnits(userBalance, 18)} TRUST, but need ${rewardDeposit} TRUST.`,
           'error'
         );
         setIsDepositing(false);
@@ -1587,21 +1661,22 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
       }
 
       // Deposit to escrow with expiry time and distribution type
+      // The rewardDeposit value is the EXACT amount the user entered - this will be deducted from their wallet
       showToast('Depositing to escrow...', 'info');
-      const { transactionHash, depositAmount: deposited } = await depositToEscrow(
+      const { transactionHash } = await depositToEscrow(
         {
           questId: questDraftId,
-          amount: rewardDeposit,
           numberOfWinners: numWinners,
           expiresAt,
           distributionType,
         },
+        rewardDeposit, // This is the exact amount the user entered in the deposit field
         walletClient,
-        publicClient
+        client
       );
 
       setDepositStatus('deposited');
-      showToast(`Deposit successful! ${formatUnits(deposited, 18)} TRUST deposited.`, 'success');
+      showToast(`Deposit successful! ${rewardDeposit} TRUST deposited.`, 'success');
     } catch (error: any) {
       console.error('Deposit error:', error);
       showToast(error?.message || 'Deposit failed', 'error');
@@ -1644,8 +1719,26 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
           </svg>
           Back
         </button>
-        <h1 className="create-quest-builder-title">Create a Quest</h1>
+        <h1 className="create-quest-builder-title">{isEditingPublishedQuest ? 'Edit Quest' : 'Create a Quest'}</h1>
       </div>
+
+      {isEditingPublishedQuest && (
+        <div style={{
+          margin: '0 1.5rem 1.5rem 1.5rem',
+          padding: '1rem',
+          background: 'rgba(59, 130, 246, 0.1)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: '8px',
+          color: 'rgba(255, 255, 255, 0.9)'
+        }}>
+          <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500 }}>
+            ⚠️ Editing Published Quest
+          </p>
+          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+            You can edit and save quest details. Changes are saved to drafts. To update the quest on-chain and in Supabase, you must republish it.
+          </p>
+        </div>
+      )}
 
       {/* Progress Steps */}
       <div className="create-quest-builder-steps">
@@ -3033,8 +3126,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
               />
             </div>
 
-            {/* Reward Deposit Amount with Token Selection - DISABLED */}
-            <div className="create-quest-builder-field" style={{ opacity: 0.5, pointerEvents: 'none' }}>
+            {/* Reward Deposit Amount with Token Selection */}
+            <div className="create-quest-builder-field">
               <label className="create-quest-builder-label">
                 Total Deposit Amount <span className="required-asterisk">*</span>
               </label>
@@ -3055,14 +3148,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
                     }
                   }}
                   style={{ flex: 1 }}
-                  disabled
                 />
                 <select
                   className="create-quest-builder-select"
                   value={rewardToken}
                   onChange={(e) => setRewardToken(e.target.value as 'TRUST')}
                   style={{ width: '120px', flexShrink: 0 }}
-                  disabled
                 >
                   <option value="TRUST">TRUST</option>
                 </select>
@@ -3220,6 +3311,27 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
                       <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.6)', margin: '0.5rem 0' }}>
                         This amount will be deposited to fund the rewards.
                       </p>
+                      {gracePeriod !== null && (
+                        <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '8px' }}>
+                          <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', margin: '0 0 0.25rem 0', fontWeight: 500 }}>
+                            Grace Period:
+                          </p>
+                          <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.6)', margin: 0 }}>
+                            {gracePeriod > 0n ? (
+                              gracePeriod >= 86400n ? (
+                                `${Number(gracePeriod) / 86400} day${Number(gracePeriod) / 86400 !== 1 ? 's' : ''}`
+                              ) : gracePeriod >= 3600n ? (
+                                `${Number(gracePeriod) / 3600} hour${Number(gracePeriod) / 3600 !== 1 ? 's' : ''}`
+                              ) : (
+                                `${Number(gracePeriod) / 60} minute${Number(gracePeriod) / 60 !== 1 ? 's' : ''}`
+                              )
+                            ) : 'Not available'}
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.5)', margin: '0.5rem 0 0 0' }}>
+                            If the quest expires without winners, you can reclaim funds after this period.
+                          </p>
+                        </div>
+                      )}
                       {winnerPrizes.filter(p => p.trim()).length > 0 && (
                         <div style={{ marginTop: '1rem' }}>
                           <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '0.5rem' }}>Prize Distribution:</p>
@@ -3292,7 +3404,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId }:
             <button
               type="button"
               className="create-quest-builder-button save"
-              onClick={handleSave}
+              onClick={() => handleSave(true)}
             >
               Save
             </button>

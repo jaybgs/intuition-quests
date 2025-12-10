@@ -17,9 +17,18 @@ export function useQuests() {
 
   const { data: quests, isLoading } = useQuery({
     queryKey: ['quests'],
-    queryFn: () => questService.getAllQuests(),
-    refetchInterval: 3000, // Refetch every 3 seconds to catch new quests quickly
-    staleTime: 2000, // Consider data stale after 2 seconds
+    queryFn: async () => {
+      try {
+        return await questService.getAllQuests();
+      } catch (error) {
+        console.error('Error fetching quests:', error);
+        return []; // Return empty array on error instead of blocking
+      }
+    },
+    refetchInterval: 10000, // Reduced to 10 seconds to reduce load
+    staleTime: 5000, // Consider data stale after 5 seconds
+    retry: 2, // Retry up to 2 times on failure
+    retryDelay: 1000, // Wait 1 second between retries
   });
 
   // User XP is now handled by useUserXP hook

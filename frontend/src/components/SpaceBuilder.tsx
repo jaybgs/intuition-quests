@@ -29,6 +29,8 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
   const [description, setDescription] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
+  const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null);
   const [twitterUrl, setTwitterUrl] = useState('');
   const [slug, setSlug] = useState('');
   const [projectType, setProjectType] = useState<'defi' | 'infofi' | 'other' | 'undisclosed'>('undisclosed');
@@ -36,6 +38,7 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [atomCreationStep, setAtomCreationStep] = useState<'idle' | 'creating' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverPhotoInputRef = useRef<HTMLInputElement>(null);
   const maxDescriptionLength = 180;
 
   // Check if user already has a space on mount
@@ -111,6 +114,53 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCoverPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit for cover photos
+        showToast('Cover photo file size must be less than 10MB', 'error');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        showToast('Please upload an image file', 'error');
+        return;
+      }
+      setCoverPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCoverPhotoDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleCoverPhotoDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('Cover photo file size must be less than 10MB', 'error');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        showToast('Please upload an image file', 'error');
+        return;
+      }
+      setCoverPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverPhotoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -209,6 +259,19 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         });
       }
 
+      // Convert cover photo to base64 if provided
+      let coverPhotoBase64: string | undefined;
+      if (coverPhoto) {
+        coverPhotoBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(reader.result as string);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(coverPhoto);
+        });
+      }
+
       // Step 2: Create space identity on Intuition blockchain
       setAtomCreationStep('creating');
       showToast('Creating space identity on Intuition chain...', 'info');
@@ -245,6 +308,7 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
         name: name.trim(),
         description: description.trim(),
         logo: logoBase64,
+        coverPhoto: coverPhotoBase64,
         twitterUrl: twitterUrl.trim(),
         ownerAddress: address,
         userType: userType,
@@ -491,6 +555,62 @@ export function SpaceBuilder({ onBack, onSpaceCreated, defaultUserType }: SpaceB
                 type="file"
                 accept="image/*"
                 onChange={handleLogoUpload}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
+
+          {/* Cover Photo Section */}
+          <div className="space-builder-section">
+            <label className="space-builder-label">
+              Cover Photo
+            </label>
+            <p className="space-builder-hint">(Optional - Recommended size: 1920x1080 or similar wide format)</p>
+            <div
+              className="logo-upload-area"
+              onDragOver={handleCoverPhotoDragOver}
+              onDrop={handleCoverPhotoDrop}
+              onClick={() => coverPhotoInputRef.current?.click()}
+            >
+              {coverPhotoPreview ? (
+                <div className="logo-preview">
+                  <img src={coverPhotoPreview} alt="Cover photo preview" />
+                  <button
+                    type="button"
+                    className="logo-remove"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCoverPhoto(null);
+                      setCoverPhotoPreview(null);
+                      if (coverPhotoInputRef.current) {
+                        coverPhotoInputRef.current.value = '';
+                      }
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="upload-icon">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <div className="upload-text">
+                    <span className="upload-label">Upload</span>
+                    <span className="upload-hint">Drag or click to upload</span>
+                  </div>
+                </>
+              )}
+              <input
+                ref={coverPhotoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleCoverPhotoUpload}
                 style={{ display: 'none' }}
               />
             </div>

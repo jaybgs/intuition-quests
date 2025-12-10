@@ -135,6 +135,7 @@ export class SpaceServiceSupabase {
     name: string;
     description: string;
     logo?: string;
+    coverPhoto?: string;
     twitterUrl: string;
     ownerAddress: string;
     userType: 'project' | 'user';
@@ -177,6 +178,16 @@ export class SpaceServiceSupabase {
         }
       }
 
+      // Only include cover photo if it's provided and not too large
+      if (data.coverPhoto) {
+        const coverPhotoSize = data.coverPhoto.length;
+        if (coverPhotoSize < 2000000) { // ~2MB base64 for cover photos (larger than logo)
+          insertData.cover_photo = data.coverPhoto;
+        } else {
+          console.warn('Cover photo too large, skipping cover photo upload. Size:', coverPhotoSize, 'bytes. Please upload via settings later.');
+        }
+      }
+
       const { data: insertedData, error } = await supabase
         .from('spaces')
         .insert(insertData)
@@ -210,6 +221,16 @@ export class SpaceServiceSupabase {
               apiPayload.logo = data.logo;
             } else {
               console.warn('Logo too large for API, skipping. Size:', logoSize, 'bytes');
+            }
+          }
+
+          // Only include cover photo if it's provided and not too large
+          if (data.coverPhoto) {
+            const coverPhotoSize = data.coverPhoto.length;
+            if (coverPhotoSize < 2000000) { // ~2MB base64 for cover photos
+              apiPayload.coverPhoto = data.coverPhoto;
+            } else {
+              console.warn('Cover photo too large for API, skipping. Size:', coverPhotoSize, 'bytes');
             }
           }
 
@@ -420,6 +441,7 @@ export class SpaceServiceSupabase {
       slug: row.slug,
       description: row.description,
       logo: row.logo || undefined,
+      coverPhoto: row.cover_photo || undefined,
       twitterUrl: row.twitter_url,
       ownerAddress: row.owner_address,
       userType: row.user_type?.toLowerCase() as 'project' | 'user',
@@ -479,6 +501,7 @@ export class SpaceServiceSupabase {
       slug: uniqueSlug,
       description: data.description.trim(),
       logo: data.logo,
+      coverPhoto: data.coverPhoto,
       twitterUrl: data.twitterUrl.trim(),
       ownerAddress: data.ownerAddress.toLowerCase(),
       userType: data.userType,

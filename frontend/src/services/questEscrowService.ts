@@ -28,10 +28,16 @@ export function questIdToBytes32(questId: string): `0x${string}` {
 
 /**
  * Deposit TRUST tokens to escrow for quest rewards
+ * 
+ * @param params - Quest deposit parameters
+ * @param amount - The exact amount of TRUST tokens the user entered (as a string, e.g., "0.1")
+ *                 This exact amount will be deducted from the user's wallet and sent to the escrow contract
+ * @param walletClient - Wallet client for signing transactions
+ * @param publicClient - Public client for reading blockchain state
  */
 export async function depositToEscrow(
   params: DepositToEscrowParams,
-  amount: string, // Amount in TRUST (e.g., "0.1")
+  amount: string, // Amount in TRUST (e.g., "0.1") - this is the EXACT amount the user entered
   walletClient: any,
   publicClient: any
 ): Promise<DepositToEscrowResult> {
@@ -43,15 +49,17 @@ export async function depositToEscrow(
   
   try {
     const questIdBytes = questIdToBytes32(questId);
+    // Convert the user's entered amount to wei - this is the EXACT amount that will be deducted
     const amountWei = parseEther(amount);
     
-    // Call deposit function
+    // Call deposit function - the value field sends the exact amount to the escrow contract
+    // This amount will be deducted from the user's wallet
     const hash = await walletClient.writeContract({
       address: CONTRACT_ADDRESSES.QUEST_ESCROW,
       abi: QUEST_ESCROW_ABI,
       functionName: 'deposit',
       args: [questIdBytes, BigInt(numberOfWinners), BigInt(expiresAt), distributionType],
-      value: amountWei,
+      value: amountWei, // This is the exact amount the user entered, converted to wei
     });
     
     // Wait for transaction
@@ -176,6 +184,31 @@ export async function getQuestStatus(
     };
   } catch (error: any) {
     console.error('Error getting quest status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get the grace period for releasing funds (in seconds)
+ */
+export async function getGracePeriod(
+  publicClient: any
+): Promise<bigint> {
+  if (!isContractDeployed(CONTRACT_ADDRESSES.QUEST_ESCROW)) {
+    throw new Error('QuestEscrow contract is not deployed');
+  }
+  
+  try {
+    const gracePeriod = await publicClient.readContract({
+      address: CONTRACT_ADDRESSES.QUEST_ESCROW,
+      abi: QUEST_ESCROW_ABI,
+      functionName: 'RELEASE_GRACE_PERIOD',
+      args: [],
+    }) as bigint;
+    
+    return gracePeriod;
+  } catch (error: any) {
+    console.error('Error getting grace period:', error);
     throw error;
   }
 }

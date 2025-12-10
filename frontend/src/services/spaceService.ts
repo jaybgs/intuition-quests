@@ -69,6 +69,7 @@ export class SpaceService {
     name: string;
     description: string;
     logo?: string;
+    coverPhoto?: string;
     twitterUrl: string;
     ownerAddress: string;
     userType: 'project' | 'user';
@@ -90,6 +91,7 @@ export class SpaceService {
       slug,
       description: data.description.trim(),
       logo: data.logo,
+      coverPhoto: data.coverPhoto,
       twitterUrl: data.twitterUrl.trim(),
       ownerAddress: data.ownerAddress.toLowerCase(),
       userType: data.userType,

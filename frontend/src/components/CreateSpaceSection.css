@@ -145,7 +145,7 @@
 }
 
 .step-icon-payment {
-  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  background: var(--accent-primary);
   color: white;
   padding: 10px;
 }

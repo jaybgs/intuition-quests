@@ -20,6 +20,7 @@ interface QuestDetailProps {
   onBack: () => void;
   onNavigateToProfile?: () => void;
   isFromBuilder?: boolean;
+  onEdit?: (questId: string) => void;
 }
 
 type VerificationStatus = 'idle' | 'verifying' | 'verified' | 'failed' | 'cooldown';
@@ -29,7 +30,7 @@ interface StepVerificationState {
   cooldownEnd?: number;
 }
 
-export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilder = false }: QuestDetailProps) {
+export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilder = false, onEdit }: QuestDetailProps) {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
@@ -131,34 +132,35 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
     
     // Check if creator has pro subscription
-    if (quest.creatorAddress) {
-      try {
-        const { subscriptionService } = require('../services/subscriptionService');
-        const creatorTier = subscriptionService.getSubscription(quest.creatorAddress);
-        setCreatorIsPro(creatorTier === 'pro');
-      } catch (error) {
-        console.warn('Error checking creator subscription:', error);
-        setCreatorIsPro(false);
-      }
-    } else if (quest.creatorType !== 'community') {
-      // For project creators, check by project owner
-      if (quest.projectId) {
-        spaceService.getSpaceById(quest.projectId).then(space => {
-          if (space?.ownerAddress) {
-            try {
-              const { subscriptionService } = require('../services/subscriptionService');
+    const checkSubscription = async () => {
+      if (quest.creatorAddress) {
+        try {
+          const { subscriptionService } = await import('../services/subscriptionService');
+          const creatorTier = subscriptionService.getSubscription(quest.creatorAddress);
+          setCreatorIsPro(creatorTier === 'pro');
+        } catch (error) {
+          console.warn('Error checking creator subscription:', error);
+          setCreatorIsPro(false);
+        }
+      } else if (quest.creatorType !== 'community') {
+        // For project creators, check by project owner
+        if (quest.projectId) {
+          try {
+            const space = await spaceService.getSpaceById(quest.projectId);
+            if (space?.ownerAddress) {
+              const { subscriptionService } = await import('../services/subscriptionService');
               const creatorTier = subscriptionService.getSubscription(space.ownerAddress);
               setCreatorIsPro(creatorTier === 'pro');
-            } catch (error) {
-              console.warn('Error checking creator subscription:', error);
-              setCreatorIsPro(false);
             }
+          } catch (error) {
+            console.warn('Error checking creator subscription:', error);
+            setCreatorIsPro(false);
           }
-        }).catch(error => {
-          console.warn('Error fetching space:', error);
-        });
+        }
       }
-    }
+    };
+    
+    checkSubscription();
   }, [quest]);
 
   // Close dropdown when clicking outside
@@ -573,6 +575,22 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     setIsDeleting(true);
     try {
       const success = await questServiceSupabase.deleteQuest(quest.id);
+      
+      // Also delete from localStorage
+      if (quest.creatorAddress) {
+        const publishedQuestsKey = `published_quests_${quest.creatorAddress.toLowerCase()}`;
+        const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
+        if (storedPublishedQuests) {
+          try {
+            const parsedQuests = JSON.parse(storedPublishedQuests);
+            const updatedQuests = parsedQuests.filter((q: any) => q.id !== quest.id);
+            localStorage.setItem(publishedQuestsKey, JSON.stringify(updatedQuests));
+          } catch (error) {
+            console.error('Error removing quest from localStorage:', error);
+          }
+        }
+      }
+      
       if (success) {
         showToast('Quest deleted successfully', 'success');
         // Invalidate quests cache
@@ -1165,55 +1183,97 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         </button>
       </div>
 
-      {/* Delete Button - Only show when accessed from builder dashboard */}
+      {/* Edit and Delete Buttons - Only show when accessed from builder dashboard */}
       {isFromBuilder && quest && (
-        <button
-          className="quest-detail-delete-button"
-          onClick={() => setShowDeleteConfirm(true)}
-          disabled={isDeleting}
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            left: '20px',
-            padding: '12px 24px',
-            backgroundColor: '#ef4444',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: isDeleting ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: '600',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            zIndex: 1000,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#dc2626';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#ef4444';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          {isDeleting ? (
-            <>
-              <div className="claim-spinner" style={{ width: '16px', height: '16px' }}></div>
-              Deleting...
-            </>
-          ) : (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-              Delete Quest
-            </>
-          )}
-        </button>
+        <>
+          {/* Edit Button */}
+          <button
+            className="quest-detail-edit-button"
+            onClick={() => onEdit?.(quest.id)}
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              padding: '12px 24px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              zIndex: 1000,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#2563eb';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#3b82f6';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit Quest
+          </button>
+
+          {/* Delete Button */}
+          <button
+            className="quest-detail-delete-button"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={isDeleting}
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              left: '20px',
+              padding: '12px 24px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isDeleting ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              zIndex: 1000,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#dc2626';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#ef4444';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            {isDeleting ? (
+              <>
+                <div className="claim-spinner" style={{ width: '16px', height: '16px' }}></div>
+                Deleting...
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                Delete Quest
+              </>
+            )}
+          </button>
+        </>
       )}
 
       {/* Delete Confirmation Modal */}

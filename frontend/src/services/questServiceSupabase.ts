@@ -12,6 +12,7 @@ export class QuestServiceSupabase {
   async getAllQuests(filters?: {
     status?: 'active' | 'completed' | 'pending';
     projectId?: string;
+    spaceId?: string;
     limit?: number;
     offset?: number;
   }): Promise<Quest[]> {
@@ -31,6 +32,10 @@ export class QuestServiceSupabase {
 
       if (filters?.projectId) {
         query = query.eq('project_id', filters.projectId);
+      }
+
+      if (filters?.spaceId) {
+        query = query.eq('space_id', filters.spaceId);
       }
 
       if (filters?.limit) {
@@ -94,6 +99,37 @@ export class QuestServiceSupabase {
     }
 
     try {
+      // Ensure requirements is an array, not a string
+      let requirementsArray = quest.requirements || [];
+      if (typeof requirementsArray === 'string') {
+        try {
+          requirementsArray = JSON.parse(requirementsArray);
+        } catch (e) {
+          console.warn('Failed to parse requirements string, using empty array');
+          requirementsArray = [];
+        }
+      }
+      
+      // Ensure completedBy is an array
+      let completedByArray = quest.completedBy || [];
+      if (typeof completedByArray === 'string') {
+        try {
+          completedByArray = JSON.parse(completedByArray);
+        } catch (e) {
+          completedByArray = [];
+        }
+      }
+      
+      // Ensure winnerPrizes is an array
+      let winnerPrizesArray = quest.winnerPrizes || [];
+      if (typeof winnerPrizesArray === 'string') {
+        try {
+          winnerPrizesArray = JSON.parse(winnerPrizesArray);
+        } catch (e) {
+          winnerPrizesArray = [];
+        }
+      }
+
       const questData = {
         id: quest.id,
         title: quest.title,
@@ -109,17 +145,25 @@ export class QuestServiceSupabase {
         atom_id: quest.atomId || null,
         atom_transaction_hash: quest.atomTransactionHash || null,
         distribution_type: quest.distributionType || null,
-        number_of_winners: quest.numberOfWinners || null,
+        number_of_winners: quest.numberOfWinners ? (typeof quest.numberOfWinners === 'string' ? parseInt(quest.numberOfWinners, 10) : quest.numberOfWinners) : null,
         reward_deposit: quest.rewardDeposit || null,
         reward_token: quest.rewardToken || null,
         difficulty: quest.difficulty || null,
         estimated_time: quest.estimatedTime || null,
         expires_at: quest.expiresAt ? new Date(quest.expiresAt).toISOString() : null,
-        requirements: JSON.stringify(quest.requirements || []),
-        completed_by: JSON.stringify(quest.completedBy || []),
-        winner_prizes: JSON.stringify(quest.winnerPrizes || []),
+        // Store as JSONB directly (Supabase handles the conversion)
+        requirements: requirementsArray,
+        completed_by: completedByArray,
+        winner_prizes: winnerPrizesArray,
         image: quest.image || null,
       };
+
+      console.log('📤 Publishing quest to Supabase:', {
+        id: questData.id,
+        title: questData.title,
+        requirements_count: requirementsArray.length,
+        space_id: questData.space_id,
+      });
 
       const { data, error } = await supabase
         .from('published_quests')
@@ -128,13 +172,24 @@ export class QuestServiceSupabase {
         .single();
 
       if (error) {
-        console.error('Error publishing quest to Supabase:', error);
+        console.error('❌ Error publishing quest to Supabase:', {
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          questId: quest.id,
+        });
         return this.fallbackPublishQuest(quest);
       }
 
+      console.log('✅ Quest published successfully to Supabase:', data.id);
       return this.mapQuestFromDb(data);
-    } catch (error) {
-      console.error('Error publishing quest:', error);
+    } catch (error: any) {
+      console.error('❌ Exception publishing quest:', {
+        error: error.message,
+        stack: error.stack,
+        questId: quest.id,
+      });
       return this.fallbackPublishQuest(quest);
     }
   }

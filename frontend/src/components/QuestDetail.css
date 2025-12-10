@@ -42,7 +42,7 @@
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: var(--accent-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -685,7 +685,7 @@
 .social-popup-button {
   flex: 1;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: var(--accent-primary);
   border: none;
   border-radius: 12px;
   color: white;
@@ -696,6 +696,7 @@
 }
 
 .social-popup-button:hover {
+  background: #1d4ed8;
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
 }

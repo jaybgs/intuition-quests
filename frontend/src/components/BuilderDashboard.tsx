@@ -19,7 +19,7 @@ interface BuilderDashboardProps {
 export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   const { address } = useAccount();
   const [space, setSpace] = useState<Space | null>(null);
-  const [activeNav, setActiveNav] = useState<'dashboard' | 'quests' | 'settings' | 'analytics'>('dashboard');
+  const [activeNav, setActiveNav] = useState<'dashboard' | 'quests' | 'guide' | 'settings' | 'analytics'>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { quests } = useQuests();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -61,6 +61,30 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
     if (spaceId && address) {
       spaceService.getSpaceById(spaceId).then(loadedSpace => {
         if (loadedSpace) {
+          // Check if the space has ownerAddress
+          if (!loadedSpace.ownerAddress) {
+            console.error('Space does not have ownerAddress:', loadedSpace);
+            // Try to get user's first space instead
+            spaceService.getSpacesByOwner(address).then(userSpaces => {
+              if (userSpaces.length > 0) {
+                setSpace(userSpaces[0]);
+                setIsAuthorized(true);
+              } else {
+                setIsAuthorized(false);
+                if (onBack) {
+                  setTimeout(() => onBack(), 1000);
+                }
+              }
+            }).catch(error => {
+              console.error('Error loading user spaces:', error);
+              setIsAuthorized(false);
+              if (onBack) {
+                setTimeout(() => onBack(), 1000);
+              }
+            });
+            return;
+          }
+          
           // Check if the connected wallet is the owner of this space
           const isOwner = address.toLowerCase() === loadedSpace.ownerAddress.toLowerCase();
           setIsAuthorized(isOwner);
@@ -68,7 +92,10 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
           if (isOwner) {
             setSpace(loadedSpace);
           } else {
-            console.error('Unauthorized access: User is not the owner of this space');
+            console.error('Unauthorized access: User is not the owner of this space', {
+              userAddress: address.toLowerCase(),
+              spaceOwner: loadedSpace.ownerAddress.toLowerCase()
+            });
             // Try to get user's first space instead
             spaceService.getSpacesByOwner(address).then(userSpaces => {
               if (userSpaces.length > 0) {
@@ -291,6 +318,17 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
               </svg>
               <span>Quests</span>
             </button>
+            <button 
+              className={`builder-nav-item ${activeNav === 'guide' ? 'active' : ''}`}
+              onClick={() => handleNavClick('guide')}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <span>Guide</span>
+            </button>
             {isPro && (
               <button 
                 className={`builder-nav-item ${activeNav === 'analytics' ? 'active' : ''}`}
@@ -327,6 +365,83 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 console.log('Create quest clicked');
               }}
             />
+          ) : activeNav === 'guide' ? (
+            <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+              <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2rem' }}>Quest Creation Guide</h1>
+              
+              <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>How to Create a Quest</h2>
+                <div style={{ background: 'rgba(26, 31, 53, 0.3)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <ol style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)', lineHeight: '1.8' }}>
+                    <li style={{ marginBottom: '1rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Step 1: Details</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>Enter quest title, difficulty level, description, end date/time, and number of winners. Upload an optional quest image.</p>
+                    </li>
+                    <li style={{ marginBottom: '1rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Step 2: Actions</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>Add actions that participants must complete. Configure each action with required details (e.g., Twitter account to follow, link to visit).</p>
+                    </li>
+                    <li style={{ marginBottom: '1rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Step 3: Rewards</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>Set IQ points reward and prize distribution for winners. Specify individual prize amounts for each winner position.</p>
+                    </li>
+                    <li style={{ marginBottom: '1rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Step 4: Deposit</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>Deposit TRUST tokens to the escrow contract to fund the rewards. The exact amount you enter will be deducted from your wallet.</p>
+                    </li>
+                    <li style={{ marginBottom: '1rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Step 5: Preview & Publish</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>Review your quest details and publish it on-chain. The quest will be created as an atom and saved to Supabase.</p>
+                    </li>
+                  </ol>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Quest Rules & Restrictions</h2>
+                <div style={{ background: 'rgba(26, 31, 53, 0.3)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)', lineHeight: '1.8' }}>
+                    <li style={{ marginBottom: '0.75rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Editing Published Quests:</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>You can only edit quests that haven't expired and have no completions. Changes are saved to drafts. You must republish to update on-chain and Supabase.</p>
+                    </li>
+                    <li style={{ marginBottom: '0.75rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Free Plan Limits:</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>Free users can create quests with up to 5 winners. Upgrade to Pro for unlimited winners and advanced features.</p>
+                    </li>
+                    <li style={{ marginBottom: '0.75rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Deposit Requirements:</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>You must deposit TRUST tokens equal to the total prize amount before publishing. The deposit is locked in escrow until winners are selected.</p>
+                    </li>
+                    <li style={{ marginBottom: '0.75rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Grace Period:</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>If a quest expires without winners, you can reclaim your deposit after the grace period (shown on the deposit tab).</p>
+                    </li>
+                    <li style={{ marginBottom: '0.75rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Auto-Save:</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>Quest drafts are automatically saved when you move between steps. You can also manually save at any time.</p>
+                    </li>
+                    <li style={{ marginBottom: '0.75rem' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>Network Requirements:</strong>
+                      <p style={{ marginTop: '0.5rem', marginLeft: '0' }}>You must be connected to the Intuition Network to publish quests and make deposits. The app will prompt you to switch networks if needed.</p>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Tips for Success</h2>
+                <div style={{ background: 'rgba(26, 31, 53, 0.3)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)', lineHeight: '1.8' }}>
+                    <li style={{ marginBottom: '0.75rem' }}>Keep quest descriptions clear and actionable</li>
+                    <li style={{ marginBottom: '0.75rem' }}>Set realistic end dates to give participants enough time</li>
+                    <li style={{ marginBottom: '0.75rem' }}>Test your actions before publishing to ensure they work correctly</li>
+                    <li style={{ marginBottom: '0.75rem' }}>Balance prize amounts to attract participants while staying within budget</li>
+                    <li style={{ marginBottom: '0.75rem' }}>Use the preview step to review all details before publishing</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           ) : activeNav === 'analytics' && isPro ? (
             <BuilderAnalytics creatorAddress={address} />
           ) : activeNav === 'settings' && space ? (

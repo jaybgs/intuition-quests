@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -28,8 +34,9 @@ body {
   --text-primary: #ffffff;
   --text-secondary: #a0aec0;
   --text-muted: #718096;
-  --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
+  --accent-primary: #2563eb;
+  --accent-blue: var(--accent-primary);
+  --accent-purple: var(--accent-primary);
   --border-color: #2d3748;
   --hover-bg: #252b3d;
   /* Responsive base font size - scales with viewport */
@@ -337,7 +344,7 @@ body {
 }
 
 .signup-button {
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+  background: var(--accent-primary);
   border: none;
   color: white;
   padding: 10px 20px;
@@ -510,7 +517,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+  background: var(--accent-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -808,7 +815,7 @@ body {
 .quest-image {
   width: 100%;
   height: 180px;
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+  background: var(--accent-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -855,7 +862,7 @@ body {
 }
 
 .xp-badge {
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+  background: var(--accent-primary);
   color: var(--text-primary);
   padding: 6px 12px;
   border-radius: 20px;
@@ -1137,7 +1144,7 @@ body {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+  background: var(--accent-primary);
   border-radius: 20px;
   font-weight: 600;
 }
@@ -2253,7 +2260,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+  background: var(--accent-primary);
   border-radius: 2px 2px 0 0;
 }
 
@@ -2312,7 +2319,7 @@ body {
 
 .activity-xp {
   padding: 6px 12px;
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+  background: var(--accent-primary);
   color: var(--text-primary);
   border-radius: 20px;
   font-size: 12px;

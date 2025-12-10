@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { useAccount } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { showToast } from './Toast';
 import { spaceService } from '../services/spaceService';
+import { questServiceSupabase } from '../services/questServiceSupabase';
 import { DiscoverPageSkeleton } from './Skeleton';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import type { Space } from '../types';
@@ -27,7 +27,7 @@ const projects: Project[] = [
     id: '1',
     title: 'Project Alpha',
     description: 'Complete tasks to earn rewards and unlock exclusive features. Join thousands of users earning daily!',
-    gradientColors: ['#3b82f6', '#8b5cf6'],
+    gradientColors: ['#2563eb', '#2563eb'],
     questCount: 12,
     isHot: true,
   },
@@ -51,16 +51,16 @@ const projects: Project[] = [
 interface ProjectSlideshowProps {
   onQuestClick?: (questId: string) => void;
   onCreateSpace?: () => void;
-  onSpaceClick?: (spaceId: string) => void;
+  onSpaceClick?: (space: Space) => void;
 }
 
 export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: ProjectSlideshowProps) {
-  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [sortByVerified, setSortByVerified] = useState(false);
   const [sortByTrending, setSortByTrending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [questCounts, setQuestCounts] = useState<Record<string, number>>({});
   const { address, status } = useAccount();
   const queryClient = useQueryClient();
 
@@ -82,38 +82,95 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
 
   // Load spaces
   useEffect(() => {
+    let isMounted = true;
+    let intervalId: NodeJS.Timeout | null = null;
+    
     const loadSpaces = async () => {
+      // Only update state if component is still mounted and not during render
+      if (!isMounted) return;
+      
       try {
         // spaceService.getAllSpaces() is now async (Supabase)
         const allSpaces = await spaceService.getAllSpaces();
-        setSpaces(allSpaces);
+        // Use startTransition to mark this as a non-urgent update
+        // This prevents the "setState during render" warning
+        if (isMounted) {
+        startTransition(() => {
+          if (isMounted) {
+            setSpaces(allSpaces);
+          }
+        });
+        }
       } catch (error) {
         console.error('Error loading spaces:', error);
         // Fallback to empty array on error
-        setSpaces([]);
+        if (isMounted) {
+          startTransition(() => {
+            if (isMounted) {
+            setSpaces([]);
+            }
+          });
+        }
       }
     };
     
-    loadSpaces();
+    // Delay initial load to ensure we're not in render phase
+    const initialLoadTimer = setTimeout(() => {
+      if (isMounted) {
+      loadSpaces();
+      }
+    }, 100);
     
     // Listen for space creation events to refresh immediately
     const handleSpaceCreated = () => {
+      // Use setTimeout to ensure we're not in render phase
+      setTimeout(() => {
+        if (isMounted) {
       loadSpaces();
+        }
+      }, 0);
     };
     
     // Listen for quest published events to refresh quest counts
     const handleQuestPublished = () => {
-      // Force re-render to update quest counts
-      setSpaces(prev => [...prev]);
+      // Use setTimeout to ensure we're not in render phase
+      setTimeout(() => {
+        if (isMounted) {
+      startTransition(() => {
+        if (isMounted) {
+          setSpaces(prev => [...prev]);
+        }
+      });
+        }
+      }, 0);
     };
     
+    // Add event listeners after a small delay to avoid render phase issues
+    setTimeout(() => {
+      if (isMounted) {
     window.addEventListener('spaceCreated', handleSpaceCreated);
     window.addEventListener('questPublished', handleQuestPublished);
+      }
+    }, 0);
     
     // Reload spaces periodically in case they change
-    const interval = setInterval(loadSpaces, 3000); // Reduced to 3 seconds for faster updates
+    // Start interval after initial load
+    setTimeout(() => {
+      if (isMounted) {
+        intervalId = setInterval(() => {
+          if (isMounted) {
+            loadSpaces();
+          }
+        }, 3000);
+      }
+    }, 1000);
+    
     return () => {
-      clearInterval(interval);
+      isMounted = false;
+      clearTimeout(initialLoadTimer);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
       window.removeEventListener('spaceCreated', handleSpaceCreated);
       window.removeEventListener('questPublished', handleQuestPublished);
     };
@@ -175,54 +232,42 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
   // Use sorted spaces (no filtering, just sorting)
   const filteredSpaces = sortedSpaces;
 
-  // Get quest count for a space
-  const getQuestCount = (spaceId: string): number => {
-    try {
-      let count = 0;
+  // Fetch active quest counts for all spaces from Supabase
+  useEffect(() => {
+    const fetchQuestCounts = async () => {
+      if (spaces.length === 0) return;
       
-      // First, try to get quests from React Query cache
-      const questsData = queryClient.getQueryData<Quest[]>(['quests']);
-      if (questsData && Array.isArray(questsData)) {
-        questsData.forEach((quest: any) => {
-          // Count active quests that belong to this space (check both spaceId and projectId for compatibility)
-          if ((quest.status === 'active' || !quest.status) && 
-              (quest.spaceId === spaceId || quest.projectId === spaceId)) {
-            count++;
-          }
-        });
+      try {
+        const counts: Record<string, number> = {};
+        
+        // Fetch active quests for each space from Supabase
+        await Promise.all(
+          spaces.map(async (space) => {
+            try {
+              const activeQuests = await questServiceSupabase.getAllQuests({
+                spaceId: space.id,
+                status: 'active'
+              });
+              counts[space.id] = activeQuests.length;
+            } catch (error) {
+              console.error(`Error fetching quest count for space ${space.id}:`, error);
+              counts[space.id] = 0;
+            }
+          })
+        );
+        
+        setQuestCounts(counts);
+      } catch (error) {
+        console.error('Error fetching quest counts:', error);
       }
-      
-      // Also check localStorage as fallback
-      const keys = Object.keys(localStorage);
-      const publishedKeys = keys.filter(key => key.startsWith('published_quests_'));
-      
-      publishedKeys.forEach(key => {
-        try {
-          const stored = localStorage.getItem(key);
-          if (stored) {
-            const parsedQuests = JSON.parse(stored);
-            parsedQuests.forEach((quest: any) => {
-              // Count active quests that belong to this space (check both spaceId and projectId for compatibility)
-              // Only count if not already counted from React Query cache
-              if ((quest.status === 'active' || !quest.status) && 
-                  (quest.spaceId === spaceId || quest.projectId === spaceId)) {
-                // Check if this quest was already counted from React Query
-                const alreadyCounted = questsData?.some(q => q.id === quest.id);
-                if (!alreadyCounted) {
-                  count++;
-                }
-              }
-            });
-          }
-        } catch (error) {
-          // Ignore errors
-        }
-      });
-      
-      return count;
-    } catch (error) {
-      return 0;
-    }
+    };
+    
+    fetchQuestCounts();
+  }, [spaces]);
+  
+  // Get quest count for a space (from state)
+  const getQuestCount = (spaceId: string): number => {
+    return questCounts[spaceId] || 0;
   };
 
   // Get follower count for a space (mock for now)
@@ -384,18 +429,15 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                 <div
                   key={space.id}
                   className="space-card"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🖱️ Space card clicked directly, space:', space.name, 'id:', space.id);
-                    // Call onSpaceClick if provided, otherwise navigate directly
-                    if (onSpaceClick) {
-                      console.log('📞 Calling onSpaceClick handler');
-                      onSpaceClick(space.id);
-                    } else {
-                      console.log('⚠️ No onSpaceClick handler, navigating directly');
-                      const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                      navigate(`/space-${spaceSlug}`);
+                  data-space-id={space.id}
+                  data-space-name={space.name}
+                  onClick={() => onSpaceClick?.(space)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSpaceClick?.(space);
                     }
                   }}
                 >
@@ -423,7 +465,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                         {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
                       </div>
                       <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
-                        {questCount} active
+                        {questCount} {questCount === 1 ? 'active quest' : 'active quests'}
                       </div>
                     </div>
                     <div className="space-token">

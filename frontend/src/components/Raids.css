@@ -902,7 +902,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8b5cf6;
+  color: var(--accent-primary);
   margin-bottom: 24px;
   opacity: 0.8;
 }
@@ -926,7 +926,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: var(--accent-primary);
   border: none;
   border-radius: 12px;
   color: white;
@@ -934,12 +934,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
 }
 
 .raids-empty-create-button:hover {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
+  background: #1d4ed8;
+  box-shadow: 0 6px 24px rgba(37, 99, 235, 0.5);
   transform: translateY(-2px);
 }
 

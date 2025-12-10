@@ -8,6 +8,7 @@ export interface SpaceCreateInput {
   name: string;
   description: string;
   logo?: string;
+  coverPhoto?: string;
   twitterUrl: string;
   ownerAddress: string;
   userType: 'project' | 'user';
@@ -28,6 +29,7 @@ export interface Space {
   slug: string;
   description: string;
   logo?: string;
+  coverPhoto?: string;
   twitterUrl: string;
   ownerAddress: string;
   userType: 'project' | 'user';
@@ -167,6 +169,16 @@ export class SupabaseSpaceService {
       }
     }
 
+    // Only include cover photo if it's provided and not too large
+    if (input.coverPhoto) {
+      const coverPhotoSize = input.coverPhoto.length;
+      if (coverPhotoSize < 2000000) { // ~2MB base64 for cover photos
+        insertData.cover_photo = input.coverPhoto;
+      } else {
+        console.warn('Cover photo too large, skipping cover photo upload. Size:', coverPhotoSize, 'bytes');
+      }
+    }
+
     const { data, error } = await supabase
       .from('spaces')
       .insert(insertData)
@@ -283,6 +295,7 @@ export class SupabaseSpaceService {
       slug: row.slug,
       description: row.description,
       logo: row.logo || undefined,
+      coverPhoto: row.cover_photo || undefined,
       twitterUrl: row.twitter_url,
       ownerAddress: row.owner_address,
       userType: row.user_type?.toLowerCase() as 'project' | 'user',

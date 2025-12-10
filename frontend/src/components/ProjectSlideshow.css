@@ -459,9 +459,9 @@
 }
 
 .spaces-filter-button.active {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: rgba(139, 92, 246, 0.4);
-  color: #a78bfa;
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
 }
 
 .spaces-filter-button svg {
@@ -471,7 +471,7 @@
 
 .create-space-button {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: var(--accent-primary);
   border: none;
   border-radius: 12px;
   color: white;
@@ -479,12 +479,13 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
 }
 
 .create-space-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
+  background: #1d4ed8;
+  box-shadow: 0 6px 24px rgba(37, 99, 235, 0.5);
 }
 
 .create-space-button:active {
@@ -508,6 +509,20 @@
   transition: all 0.3s ease;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  z-index: 1;
+}
+
+.space-card:visited {
+  color: inherit;
+}
+
+.space-card:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 .space-card:hover {
@@ -553,7 +568,7 @@
   font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
-  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+  background: var(--accent-primary);
 }
 
 .space-verified-badge {

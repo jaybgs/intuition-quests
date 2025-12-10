@@ -133,7 +133,6 @@ function TrustBalanceDisplay({ address }: { address: string }) {
   const { data: balance, isLoading } = useBalance({
     address: address as `0x${string}`,
   });
-
   const formatBalance = (value: bigint | undefined, decimals: number = 18): string => {
     if (!value) return '0.00';
     const num = Number(value) / Math.pow(10, decimals);
@@ -147,7 +146,6 @@ function TrustBalanceDisplay({ address }: { address: string }) {
       return num.toFixed(4);
     }
   };
-
   return (
     <div className="trust-balance-display">
       <span className="trust-balance-amount">
@@ -180,11 +178,9 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
         setIsOpen(false);
       }
     };
-
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -325,7 +321,6 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
       showToast('No wallet connectors available. Please install a wallet extension.', 'error');
       return;
     }
-
     try {
       await connect({ connector: connectors[0] });
     } catch (error: any) {
@@ -370,27 +365,38 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     }
     return null;
   };
+
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(getInitialSpace());
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
   
   // Sync activeTab with initialTab when it changes (e.g., from URL navigation)
-  // But don't override if we're manually navigating to space-detail
+  // This ensures that when the URL changes, the tab switches accordingly
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) {
+      // If initialTab is space-detail, always set it (even if selectedSpace is not set yet)
+      // The space will be loaded by the spaceName useEffect
+      if (initialTab === 'space-detail') {
+        console.log('🔄 Setting activeTab to space-detail from route');
+        setActiveTab('space-detail');
+        return;
+      }
       // Don't override space-detail if we have a selectedSpace (manual navigation)
       // This prevents React Router from resetting the tab when route doesn't match
       if (activeTab === 'space-detail' && selectedSpace) {
         console.log('🔄 Keeping space-detail tab (manual navigation), ignoring initialTab:', initialTab);
         return;
       }
+      // For all other tabs, sync activeTab with initialTab
       console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current activeTab:', activeTab);
       setActiveTab(initialTab as any);
     }
   }, [initialTab, activeTab, selectedSpace]);
+
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(() => {
     const stored = localStorage.getItem('selectedSpaceId');
     return stored || null;
   });
+
   const { address, isConnected } = useAccount();
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -406,13 +412,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Sync activeTab with initialTab prop (for routing)
-  useEffect(() => {
-    if (initialTab && initialTab !== activeTab) {
-      console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'from', activeTab);
-      setActiveTab(initialTab as any);
-    }
-  }, [initialTab]);
+  // This useEffect is handled by the one below - removed to avoid conflicts
   
   // Restore space from localStorage when on space-detail tab
   useEffect(() => {
@@ -464,7 +464,6 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         }
       }
     };
-
     if (showMobileMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
@@ -475,48 +474,98 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
 
   // Handle space name from URL (only if we don't already have selectedSpace)
   useEffect(() => {
-    // First, try to restore from localStorage if we have a spaceId stored
+    console.log('🔍 Space lookup useEffect triggered - activeTab:', activeTab, 'initialTab:', initialTab, 'spaceName:', spaceName, 'selectedSpace:', selectedSpace?.name);
+
+    // Skip if we're not on space-detail tab
+    if (activeTab !== 'space-detail' && initialTab !== 'space-detail') {
+      console.log('🔍 Skipping space lookup - not on space-detail tab');
+      return;
+    }
+
+    // Ensure activeTab is set to space-detail if initialTab is space-detail
+    if (initialTab === 'space-detail' && activeTab !== 'space-detail') {
+      console.log('🔍 Setting activeTab to space-detail');
+      setActiveTab('space-detail');
+    }
+    
+    // Always check localStorage first - it's the most reliable source
+    // (set synchronously in onSpaceClick before navigation)
     const storedSpaceId = localStorage.getItem('selectedSpaceId');
     const storedSpace = localStorage.getItem('selectedSpace');
     
-    if (storedSpaceId && storedSpace && !selectedSpace && (activeTab === 'space-detail' || initialTab === 'space-detail')) {
+    if (storedSpaceId && storedSpace) {
       try {
         const space = JSON.parse(storedSpace);
-        console.log('📦 Restoring space from localStorage:', space);
-        setSelectedSpace(space);
-        setSelectedSpaceId(space.id);
-        setActiveTab('space-detail');
-        return; // Don't run the URL-based lookup if we restored from localStorage
+        
+        // If we have spaceName from URL, verify the stored space matches
+        if (spaceName) {
+          const spaceSlug = (space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')).toLowerCase();
+          const urlSlug = decodeURIComponent(spaceName).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const spaceNameNormalized = space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          
+          // Check if stored space matches URL
+          const matches = space.id === spaceName || 
+                         space.id === decodeURIComponent(spaceName) || 
+                         spaceSlug === urlSlug || 
+                         spaceNameNormalized === urlSlug;
+          
+          if (matches) {
+            // Stored space matches URL, use it
+            if (!selectedSpace || selectedSpace.id !== space.id) {
+              console.log('📦 Using stored space that matches URL:', space.name);
+              setSelectedSpace(space);
+              setSelectedSpaceId(space.id);
+              setActiveTab('space-detail');
+            }
+            return; // Don't do async lookup
+          }
+        } else {
+          // No spaceName in URL, but we have stored space - use it
+          if (!selectedSpace || selectedSpace.id !== space.id) {
+            console.log('📦 Restoring space from localStorage:', space.name);
+            setSelectedSpace(space);
+            setSelectedSpaceId(space.id);
+            setActiveTab('space-detail');
+          }
+          return; // Don't do async lookup
+        }
       } catch (e) {
         console.error('Error parsing stored space:', e);
       }
     }
     
-    // Only run if we have a spaceName, we're on space-detail tab, but don't have selectedSpace yet
-    if (spaceName && (activeTab === 'space-detail' || initialTab === 'space-detail') && !selectedSpace) {
+    // Only do async lookup if we have spaceName but no matching stored space
+    if (spaceName && (!selectedSpace || (selectedSpace.id !== spaceName && selectedSpace.id !== decodeURIComponent(spaceName)))) {
       console.log('🔍 Looking up space from URL, spaceName:', spaceName);
       // Find space by name and set selectedSpace
       const findSpaceByName = async () => {
         try {
           const spaces = await spaceService.getAllSpaces();
           console.log('📋 Available spaces:', spaces.length);
+          console.log('📋 Space names:', spaces.map(s => ({ id: s.id, name: s.name, slug: s.slug })));
+          
           // Try multiple matching strategies - normalize both sides
-          const normalizedSpaceName = spaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const normalizedSpaceName = decodeURIComponent(spaceName).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
           const space = spaces.find(s => {
+            if (!s) return false;
             const spaceSlug = (s.slug || s.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')).toLowerCase();
             const spaceNameNormalized = s.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const urlSpaceName = decodeURIComponent(spaceName).toLowerCase();
+            
             return (
-              s.slug?.toLowerCase() === spaceName.toLowerCase() ||
+              s.slug?.toLowerCase() === urlSpaceName ||
               s.slug?.toLowerCase() === normalizedSpaceName ||
-              spaceSlug === spaceName.toLowerCase() ||
+              spaceSlug === urlSpaceName ||
               spaceSlug === normalizedSpaceName ||
-              spaceNameNormalized === spaceName.toLowerCase() ||
+              spaceNameNormalized === urlSpaceName ||
               spaceNameNormalized === normalizedSpaceName ||
-              s.id === spaceName
+              s.id === spaceName ||
+              s.id === decodeURIComponent(spaceName)
             );
           });
+          
           if (space) {
-            console.log('✅ Found space:', space);
+            console.log('✅ Found space:', space.name, 'slug:', space.slug);
             setSelectedSpace(space);
             setSelectedSpaceId(space.id);
             localStorage.setItem('selectedSpaceId', space.id);
@@ -525,17 +574,31 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           } else {
             console.error('❌ Space not found for:', spaceName);
             console.log('📋 Available spaces:', spaces.map(s => ({ id: s.id, name: s.name, slug: s.slug })));
-            // Don't navigate away immediately - wait longer to see if space loads
+            console.log('🔍 Tried matching:', {
+              urlSpaceName: decodeURIComponent(spaceName).toLowerCase(),
+              normalizedSpaceName
+            });
+            showToast(`Space "${spaceName}" not found`, 'error');
+            // Only navigate back if we're not already on a space route
+            // Give it more time in case the space is still loading
             setTimeout(() => {
-              if (!selectedSpace) {
-                console.log('⏱️ Space still not found after timeout, navigating to discover');
-                navigateToTab('discover');
+              // Check if we're still on the space route before redirecting
+              if (window.location.pathname.startsWith('/space/')) {
+                const previousTab = localStorage.getItem('previousTab') || 'discover';
+                navigateToTab(previousTab);
               }
             }, 3000);
           }
         } catch (error) {
           console.error('❌ Error finding space:', error);
-          // Don't navigate away on error - might be a temporary issue
+          showToast('Error loading space', 'error');
+          // Only navigate back if we're still on the space route
+          setTimeout(() => {
+            if (window.location.pathname.startsWith('/space/')) {
+              const previousTab = localStorage.getItem('previousTab') || 'discover';
+              navigateToTab(previousTab);
+            }
+          }, 3000);
         }
       };
       findSpaceByName();
@@ -585,20 +648,66 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       // Set the space and navigate to space detail
       if (params.spaceId) {
         setSelectedSpaceId(params.spaceId);
-        // Try to get the space if we have spaceId but not the space object
-        spaceService.getSpaceById(params.spaceId).then(space => {
-          if (space) {
-            setSelectedSpace(space);
-            setSelectedSpaceId(space.id);
-            localStorage.setItem('selectedSpaceId', space.id);
-            localStorage.setItem('selectedSpace', JSON.stringify(space));
+        
+        // First check if we already have the space set (from onSpaceClick)
+        // This is the most reliable source since it's set synchronously
+        if (selectedSpace && selectedSpace.id === params.spaceId) {
+          // Space is already set, just navigate
+          console.log('✅ Using already set space:', selectedSpace.name);
+        } else {
+          // Try to get the space from localStorage (set by onSpaceClick)
+          const storedSpace = localStorage.getItem('selectedSpace');
+          if (storedSpace) {
+            try {
+              const space = JSON.parse(storedSpace);
+              if (space.id === params.spaceId) {
+                // Use stored space immediately
+                console.log('✅ Using stored space:', space.name);
+                setSelectedSpace(space);
+              } else {
+                // IDs don't match, fetch the correct space
+                spaceService.getSpaceById(params.spaceId).then(space => {
+                  if (space) {
+                    setSelectedSpace(space);
+                    setSelectedSpaceId(space.id);
+                    localStorage.setItem('selectedSpaceId', space.id);
+                    localStorage.setItem('selectedSpace', JSON.stringify(space));
+                  }
+                }).catch(() => {
+                  // If space fetch fails, still navigate
+                });
+              }
+            } catch (e) {
+              // If parsing fails, fetch
+              spaceService.getSpaceById(params.spaceId).then(space => {
+                if (space) {
+                  setSelectedSpace(space);
+                  setSelectedSpaceId(space.id);
+                  localStorage.setItem('selectedSpaceId', space.id);
+                  localStorage.setItem('selectedSpace', JSON.stringify(space));
+                }
+              }).catch(() => {
+                // If space fetch fails, still navigate
+              });
+            }
+          } else {
+            // No stored space, fetch it
+            spaceService.getSpaceById(params.spaceId).then(space => {
+              if (space) {
+                setSelectedSpace(space);
+                setSelectedSpaceId(space.id);
+                localStorage.setItem('selectedSpaceId', space.id);
+                localStorage.setItem('selectedSpace', JSON.stringify(space));
+              }
+            }).catch(() => {
+              // If space fetch fails, still navigate
+            });
           }
-        }).catch(() => {
-          // If space fetch fails, still navigate
-        });
+        }
       }
+      // Set activeTab BEFORE navigating to prevent route from resetting it
       setActiveTab('space-detail');
-      navigate(`/space-${createSlug(params.spaceName)}`);
+      navigate(`/space/${createSlug(params.spaceName)}`);
     } else if (params?.spaceId) {
       // Try to get space name first (async for Supabase)
       spaceService.getSpaceById(params.spaceId).then(space => {
@@ -606,14 +715,16 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           setSelectedSpace(space);
           setSelectedSpaceId(space.id);
           setActiveTab('space-detail');
-          navigate(`/space-${createSlug(space.name)}`);
+          navigate(`/space/${createSlug(space.name)}`);
         } else {
-          navigate(`/space-${params.spaceId}`);
+          navigate(`/space/${params.spaceId}`);
         }
       }).catch(() => {
-        navigate(`/space-${params.spaceId}`);
+        navigate(`/space/${params.spaceId}`);
       });
     } else if (routeMap[tab]) {
+      // Set activeTab BEFORE navigating to ensure tab switches immediately
+      setActiveTab(tab as any);
       navigate(routeMap[tab]);
     } else {
       setActiveTab(tab as any);
@@ -635,7 +746,6 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         }
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isAdminAuthenticated, adminLogout]);
@@ -719,7 +829,6 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         setHasCreatedSpaces(false);
         return;
       }
-
       try {
         const userSpaces = await spaceService.getSpacesByOwner(address);
         setHasCreatedSpaces(userSpaces.length > 0);
@@ -728,9 +837,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         setHasCreatedSpaces(false);
       }
     };
-
     checkUserSpaces();
-
     // Listen for space creation/deletion events to update the state
     const handleSpaceCreated = async () => {
       // Immediately set to true if we have an address (optimistic update)
@@ -740,14 +847,11 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       // Then verify by checking the database
       await checkUserSpaces();
     };
-
     const handleSpaceDeleted = () => {
       checkUserSpaces();
     };
-
     window.addEventListener('spaceCreated', handleSpaceCreated);
     window.addEventListener('spaceDeleted', handleSpaceDeleted);
-
     return () => {
       window.removeEventListener('spaceCreated', handleSpaceCreated);
       window.removeEventListener('spaceDeleted', handleSpaceDeleted);
@@ -886,13 +990,18 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             ))}
           </nav>
         </div>
+
         <div className="header-right">
           <div className="header-right-search header-desktop">
             <Search 
               placeholder="Search quests, projects, spaces..." 
               onSpaceSelect={(space) => {
                 setSelectedSpace(space);
-                navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name });
+                navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name || space.id });
+              }}
+              onQuestSelect={(questId) => {
+                setSelectedQuestId(questId);
+                navigateToTab('quest-detail');
               }}
               isAdmin={isAdminAuthenticated}
               onBuilderAccess={(space) => {
@@ -901,12 +1010,14 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               }}
             />
           </div>
+
           {/* Desktop TRUST Balance Display */}
           {isConnected && address && (
             <div className="header-balance-desktop">
               <TrustBalanceDisplay address={address} />
             </div>
           )}
+
           {isAdminAuthenticated && (
             <button
               onClick={() => {
@@ -930,10 +1041,12 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               Admin Logout
             </button>
           )}
+
           <LoginButton 
             onProfileClick={() => navigateToTab('dashboard')}
             onBuilderProfileClick={hasCreatedSpaces ? () => navigateToTab('builder-dashboard') : undefined}
           />
+
           {!isConnected && (
             <div className="header-right">
               <button 
@@ -982,6 +1095,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           </div>
         )}
       </header>
+
       <main className="app-main">
         {/* OAuth Callback Handler - Check URL path first (before other content) */}
         {(window.location.pathname.includes('/oauth/twitter/callback') ||
@@ -1004,6 +1118,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 }}
               />
             )}
+
             {activeTab === 'discover' && (
               <ProjectSlideshow 
                 onQuestClick={(questId) => {
@@ -1029,42 +1144,31 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                   });
                   setShowSubscriptionModal(true);
                 }}
-                onSpaceClick={async (spaceId) => {
+                onSpaceClick={(space) => {
                   try {
-                    console.log('🔄 Space card clicked, spaceId:', spaceId);
-                    const space = await spaceService.getSpaceById(spaceId);
-                    console.log('✅ Space loaded:', space);
+                    console.log('🔄 Space card clicked, space:', space.name);
                     
-                    if (space) {
-                      // Store in localStorage first for persistence
-                      localStorage.setItem('previousTab', 'discover');
-                      localStorage.setItem('selectedSpaceId', space.id);
-                      localStorage.setItem('selectedSpace', JSON.stringify(space));
-                      
-                      // Set space data immediately
-                      setSelectedSpace(space);
-                      setSelectedSpaceId(space.id);
-                      
-                      // Navigate to space detail - set active tab and don't navigate (route matching issue)
-                      // Just set the state and let the component render based on activeTab
-                      console.log('📍 Setting space detail view');
-                      
-                      // Set the active tab - this will trigger the space detail view to render
-                      setActiveTab('space-detail');
-                      
-                      // Update URL without navigating (to show in address bar)
-                      window.history.pushState({}, '', `/space-${space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`);
-                    } else {
-                      console.error('❌ Space not found:', spaceId);
-                      showToast('Space not found', 'error');
-                    }
+                    // Store in localStorage first for persistence
+                    localStorage.setItem('previousTab', 'discover');
+                    localStorage.setItem('selectedSpaceId', space.id);
+                    localStorage.setItem('selectedSpace', JSON.stringify(space));
+                    
+                    // Set space data immediately
+                    setSelectedSpace(space);
+                    setSelectedSpaceId(space.id);
+                    
+                    // Navigate to space detail using React Router
+                    const spaceSlug = space.slug || (space.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    console.log('📍 Navigating to space detail:', spaceSlug);
+                    navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name || space.id });
                   } catch (error) {
-                    console.error('❌ Error loading space:', error);
+                    console.error('❌ Error navigating to space:', error);
                     showToast('Failed to load space details', 'error');
                   }
                 }}
               />
             )}
+
             {activeTab === 'leaderboard' && <Leaderboard />}
             {activeTab === 'create' && <CreateQuest />}
             {activeTab === 'profile' && <UserProfile />}
@@ -1195,6 +1299,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           </>
         )}
       </main>
+
       <SignupModal 
         isOpen={showSignupModal}
         onClose={() => setShowSignupModal(false)}

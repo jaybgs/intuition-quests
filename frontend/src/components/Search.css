@@ -170,6 +170,13 @@
   font-family: 'Courier New', monospace;
 }
 
+.search-results-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .search-form {
     max-width: 100%;

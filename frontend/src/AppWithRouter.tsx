@@ -24,16 +24,16 @@ export default function AppWithRouter() {
   const getInitialTab = (): string => {
     const path = location.pathname;
     console.log('🔍 AppWithRouter: Current pathname:', path, 'params:', params);
-    
+
     // Handle dynamic routes
     if (path.startsWith('/quest-')) {
       return 'quest-detail';
     }
-    if (path.startsWith('/space-')) {
+    if (path.startsWith('/space/') || path.startsWith('/space-')) {
       console.log('🔍 AppWithRouter: Detected space route, returning space-detail');
       return 'space-detail';
     }
-    
+
     // Handle static routes
     const tab = routeToTab[path] || 'discover';
     console.log('🔍 AppWithRouter: Path', path, '-> Tab', tab);
@@ -57,6 +57,9 @@ export default function AppWithRouter() {
       return decodeURIComponent(params.spaceName);
     }
     const path = location.pathname;
+    if (path.startsWith('/space/')) {
+      return decodeURIComponent(path.replace('/space/', ''));
+    }
     if (path.startsWith('/space-')) {
       return decodeURIComponent(path.replace('/space-', ''));
     }
@@ -71,4 +74,3 @@ export default function AppWithRouter() {
     />
   );
 }
-

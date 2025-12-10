@@ -52,12 +52,9 @@ export const router = createBrowserRouter([
         element: <App initialTab="quest-detail" />,
       },
       {
-        path: 'space-:spaceName',
+        path: 'space/:spaceName',
         element: <App initialTab="space-detail" />,
       },
     ],
   },
 ]);
-
-
-

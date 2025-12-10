@@ -39,6 +39,8 @@ export class QuestDraftService {
    */
   async saveDraft(draftData: QuestDraftData): Promise<void> {
     if (!supabase) {
+      console.warn('⚠️ Supabase client not initialized. Saving draft to localStorage only.');
+      console.warn('   Missing environment variables: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
       // Fallback to localStorage if Supabase is not available
       this.saveDraftToLocalStorage(draftData);
       return;
@@ -74,16 +76,22 @@ export class QuestDraftService {
         );
 
       if (error) {
-        console.error('Error saving draft to Supabase:', error);
+        console.error('❌ Error saving draft to Supabase:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
         // Fallback to localStorage on error
         this.saveDraftToLocalStorage(draftData);
         throw error;
       }
 
+      console.log('✅ Draft saved to Supabase:', draftData.id);
       // Also save to localStorage as backup
       this.saveDraftToLocalStorage(draftData);
     } catch (error) {
-      console.error('Error in saveDraft:', error);
+      console.error('❌ Exception in saveDraft:', error);
       // Fallback to localStorage
       this.saveDraftToLocalStorage(draftData);
       throw error;
@@ -349,6 +357,7 @@ export class QuestDraftService {
 
 // Export singleton instance
 export const questDraftService = new QuestDraftService();
+
 
 
 

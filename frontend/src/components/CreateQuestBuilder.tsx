@@ -19,6 +19,82 @@ import { parseUnits, formatUnits, createPublicClient, http } from 'viem';
 import { intuitionChain } from '../config/wagmi';
 import './CreateQuestBuilder.css';
 
+// Quest Templates
+const QUEST_TEMPLATES = [
+  {
+    id: 'social-follow',
+    name: 'Social Follow',
+    description: 'Get users to follow your social media accounts',
+    icon: '📱',
+    actions: [
+      { id: 1, title: 'Follow on X' },
+      { id: 2, title: 'Follow on Discord' }
+    ],
+    defaultTitle: 'Follow Us on Social Media',
+    defaultDescription: 'Follow our social media accounts to stay updated!',
+    defaultDifficulty: 'beginner'
+  },
+  {
+    id: 'community-engagement',
+    name: 'Community Engagement',
+    description: 'Engage users with your community',
+    icon: '👥',
+    actions: [
+      { id: 1, title: 'Join Discord' },
+      { id: 2, title: 'Follow on X' }
+    ],
+    defaultTitle: 'Join Our Community',
+    defaultDescription: 'Join our community and connect with other members!',
+    defaultDifficulty: 'beginner'
+  },
+  {
+    id: 'read-docs',
+    name: 'Read Documentation',
+    description: 'Have users read important documents',
+    icon: '📚',
+    actions: [
+      { id: 19, title: 'Read docs' }
+    ],
+    defaultTitle: 'Read Our Documentation',
+    defaultDescription: 'Read our documentation to learn more about our project.',
+    defaultDifficulty: 'intermediate'
+  },
+  {
+    id: 'quiz',
+    name: 'Knowledge Quiz',
+    description: 'Test users knowledge with a quiz',
+    icon: '🧠',
+    actions: [
+      { id: 15, title: 'Quiz' }
+    ],
+    defaultTitle: 'Test Your Knowledge',
+    defaultDescription: 'Take our quiz to test your knowledge!',
+    defaultDifficulty: 'intermediate'
+  },
+  {
+    id: 'website-visit',
+    name: 'Website Visit',
+    description: 'Drive traffic to your website',
+    icon: '🌐',
+    actions: [
+      { id: 3, title: 'Visit website' }
+    ],
+    defaultTitle: 'Visit Our Website',
+    defaultDescription: 'Visit our website to learn more about us!',
+    defaultDifficulty: 'beginner'
+  },
+  {
+    id: 'custom',
+    name: 'Start from Scratch',
+    description: 'Create a custom quest from scratch',
+    icon: '✨',
+    actions: [],
+    defaultTitle: '',
+    defaultDescription: '',
+    defaultDifficulty: ''
+  }
+];
+
 // Poll Editor Component
 interface PollEditorProps {
   config: {
@@ -893,7 +969,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
   const { createQuest, isCreating } = useQuests();
   const queryClient = useQueryClient();
   const [isPublishing, setIsPublishing] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(draftId ? 1 : 0); // Start at step 0 (template selection) for new quests
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [description, setDescription] = useState('');
@@ -1603,6 +1680,9 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       }
       // Normal step navigation (Deposit tab is now enabled)
       setCurrentStep(currentStep - 1);
+    } else if (currentStep === 1 && !draftId) {
+      // Go back to template selection if on step 1 and no draft
+      setCurrentStep(0);
     }
   };
 
@@ -1746,9 +1826,10 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         </div>
       )}
 
-      {/* Progress Steps */}
-      <div className="create-quest-builder-steps">
-        {steps.filter(step => !step.hidden).map((step) => {
+      {/* Progress Steps - Hide on template selection */}
+      {currentStep > 0 && (
+        <div className="create-quest-builder-steps">
+          {steps.filter(step => !step.hidden).map((step) => {
           const isClickable = step.number <= currentStep + 1;
           return (
           <div
@@ -1762,10 +1843,116 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
           </div>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* Form Content */}
       <div className="create-quest-builder-form-card">
+        {/* Step 0: Template Selection */}
+        {currentStep === 0 && !draftId && (
+          <div className="create-quest-builder-form">
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 600, color: '#fff' }}>
+              Choose a Quest Template
+            </h2>
+            <p style={{ marginBottom: '2rem', color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+              Select a template to get started quickly, or start from scratch
+            </p>
+            
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: '1rem',
+              marginBottom: '2rem'
+            }}>
+              {QUEST_TEMPLATES.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => {
+                    setSelectedTemplate(template.id);
+                    if (template.id === 'custom') {
+                      setCurrentStep(1);
+                    } else {
+                      // Apply template
+                      setTitle(template.defaultTitle);
+                      setDescription(template.defaultDescription);
+                      setDifficulty(template.defaultDifficulty);
+                      setSelectedActions(template.actions);
+                      setCurrentStep(1);
+                      showToast(`Template "${template.name}" applied!`, 'success');
+                    }
+                  }}
+                  style={{
+                    padding: '1.5rem',
+                    backgroundColor: selectedTemplate === template.id 
+                      ? 'rgba(59, 130, 246, 0.2)' 
+                      : 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid ${selectedTemplate === template.id 
+                      ? 'rgba(59, 130, 246, 0.5)' 
+                      : 'rgba(255, 255, 255, 0.1)'}`,
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    textAlign: 'left',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedTemplate !== template.id) {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedTemplate !== template.id) {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    }
+                  }}
+                >
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                    {template.icon}
+                  </div>
+                  <h3 style={{ 
+                    margin: 0, 
+                    fontSize: '1rem', 
+                    fontWeight: 600, 
+                    color: '#fff' 
+                  }}>
+                    {template.name}
+                  </h3>
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '0.875rem', 
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    lineHeight: '1.4'
+                  }}>
+                    {template.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button
+                onClick={onBack}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {currentStep === 1 && (
           <div className="create-quest-builder-form">
 

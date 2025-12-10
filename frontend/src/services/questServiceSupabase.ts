@@ -95,6 +95,8 @@ export class QuestServiceSupabase {
    */
   async publishQuest(quest: Quest): Promise<Quest> {
     if (!supabase) {
+      console.warn('⚠️ Supabase client not initialized. Publishing quest to localStorage only.');
+      console.warn('   Missing environment variables: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
       return this.fallbackPublishQuest(quest);
     }
 

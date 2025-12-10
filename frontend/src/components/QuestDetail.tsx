@@ -53,6 +53,9 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   const [showFeedbackTooltip, setShowFeedbackTooltip] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReadDocsModal, setShowReadDocsModal] = useState(false);
+  const [currentReadDocsStep, setCurrentReadDocsStep] = useState<any>(null);
+  const [readDocuments, setReadDocuments] = useState<Record<string, Set<number>>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
 
 
@@ -232,6 +235,19 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                            verificationData.discordInvite ||
                            verificationData.inviteUrl;
               }
+              
+              // Check if this is a Read docs action
+              if (verificationData.readDocsConfig?.documents || req.type === 'Read docs') {
+                return {
+                  id: `step-${index + 1}`,
+                  title: taskTitle || `Read docs`,
+                  description: req.description || taskTitle,
+                  completed: false,
+                  link: formattedLink,
+                  isReadDocs: true,
+                  readDocsConfig: verificationData.readDocsConfig || { documents: [] },
+                };
+              }
             }
           } catch (e) {
             console.warn('Error parsing requirement verification data:', e);
@@ -323,6 +339,25 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                                verificationData.profileUrl ||
                                verificationData.discordInvite ||
                                verificationData.inviteUrl;
+                  }
+                  
+                  // Check if this is a Read docs action
+                  if (verificationData.readDocsConfig?.documents || req.type === 'Read docs') {
+                    // Format link if it exists (ensure it has protocol)
+                    let formattedLink = taskLink;
+                    if (taskLink && !taskLink.startsWith('http://') && !taskLink.startsWith('https://')) {
+                      formattedLink = `https://${taskLink}`;
+                    }
+                    
+                    return {
+                      id: `step-${index + 1}`,
+                      title: taskTitle || `Read docs`,
+                      description: req.description || taskTitle,
+                      completed: false,
+                      link: formattedLink,
+                      isReadDocs: true,
+                      readDocsConfig: verificationData.readDocsConfig || { documents: [] },
+                    };
                   }
                 }
               } catch (e) {
@@ -635,6 +670,13 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     const step = taskSteps.find(s => s.id === stepId);
     if (!step) return;
 
+    // Check if this is a Read docs action
+    if ((step as any).isReadDocs && (step as any).readDocsConfig) {
+      setCurrentReadDocsStep(step);
+      setShowReadDocsModal(true);
+      return;
+    }
+
     // Check if in cooldown
     const currentState = verificationStates[stepId];
     if (currentState?.status === 'cooldown' && currentState.cooldownEnd) {
@@ -705,6 +747,76 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         }, 30000);
       }
     }, 2000); // 2 second verification delay
+  };
+
+  // Load read documents from localStorage
+  useEffect(() => {
+    if (questId && address) {
+      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const converted: Record<string, Set<number>> = {};
+          Object.keys(parsed).forEach(key => {
+            converted[key] = new Set(parsed[key]);
+          });
+          setReadDocuments(converted);
+        } catch (e) {
+          console.error('Error loading read documents:', e);
+        }
+      }
+    }
+  }, [questId, address]);
+
+  // Save read documents to localStorage
+  useEffect(() => {
+    if (questId && address && Object.keys(readDocuments).length > 0) {
+      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
+      const toSave: Record<string, number[]> = {};
+      Object.keys(readDocuments).forEach(key => {
+        toSave[key] = Array.from(readDocuments[key]);
+      });
+      localStorage.setItem(storageKey, JSON.stringify(toSave));
+    }
+  }, [readDocuments, questId, address]);
+
+  // Handle marking a document as read
+  const handleMarkDocumentRead = (stepId: string, docIndex: number) => {
+    setReadDocuments(prev => {
+      const newState = { ...prev };
+      if (!newState[stepId]) {
+        newState[stepId] = new Set();
+      }
+      newState[stepId].add(docIndex);
+      
+      // Check if all documents are read
+      const step = taskSteps.find(s => s.id === stepId);
+      if (step && (step as any).readDocsConfig?.documents) {
+        const totalDocs = (step as any).readDocsConfig.documents.length;
+        const readCount = newState[stepId].size;
+        
+        if (readCount === totalDocs) {
+          // All documents read - mark as verified
+          setVerificationStates(prev => ({
+            ...prev,
+            [stepId]: { status: 'verified' }
+          }));
+          
+          if (quest) {
+            const updatedSteps = quest.steps?.map(s => 
+              s.id === stepId ? { ...s, completed: true } : s
+            );
+            setQuest({ ...quest, steps: updatedSteps });
+          }
+          
+          showToast('All documents read! Task verified.', 'success');
+          setShowReadDocsModal(false);
+        }
+      }
+      
+      return newState;
+    });
   };
 
   const handleFollow = () => {
@@ -864,6 +976,15 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   };
 
   const getTaskIcon = (step: any) => {
+    // Check if this is a Read docs action
+    if (step.isReadDocs) {
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+        </svg>
+      );
+    }
+    
     const title = (step.title || '').toLowerCase();
     const description = (step.description || '').toLowerCase();
     const combinedText = `${title} ${description}`;
@@ -1350,6 +1471,153 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Read Docs Modal */}
+      {showReadDocsModal && currentReadDocsStep && (
+        <div 
+          className="quest-detail-modal-overlay"
+          onClick={() => setShowReadDocsModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}
+        >
+          <div 
+            className="quest-detail-read-docs-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#fff' }}>
+                {currentReadDocsStep.title || 'Read Documents'}
+              </h2>
+              <button
+                onClick={() => setShowReadDocsModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  cursor: 'pointer',
+                  fontSize: '24px',
+                  padding: '0',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <p style={{ marginBottom: '20px', color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px' }}>
+              Please read all documents below. Mark each one as read when you're done.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {(currentReadDocsStep.readDocsConfig?.documents || []).map((doc: string, index: number) => {
+                const isRead = readDocuments[currentReadDocsStep.id]?.has(index) || false;
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      padding: '16px',
+                      backgroundColor: isRead ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                      border: `1px solid ${isRead ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
+                          Read docs {index + 1}
+                        </span>
+                        {isRead && (
+                          <img src="/verified.svg" alt="Read" width="16" height="16" />
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          padding: '12px',
+                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                          borderRadius: '8px',
+                          color: 'rgba(255, 255, 255, 0.9)',
+                          fontSize: '14px',
+                          lineHeight: '1.6',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                        }}
+                      >
+                        {doc || `Document ${index + 1} content`}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleMarkDocumentRead(currentReadDocsStep.id, index)}
+                      disabled={isRead}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: isRead ? 'rgba(16, 185, 129, 0.2)' : '#3b82f6',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: isRead ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        opacity: isRead ? 0.6 : 1,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isRead ? 'Read' : 'Mark as Read'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {currentReadDocsStep.readDocsConfig?.documents && 
+             readDocuments[currentReadDocsStep.id]?.size === currentReadDocsStep.readDocsConfig.documents.length && (
+              <div style={{
+                marginTop: '20px',
+                padding: '12px',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '8px',
+                color: '#10b981',
+                fontSize: '14px',
+                textAlign: 'center',
+              }}>
+                ✓ All documents read! Task verified.
+              </div>
+            )}
           </div>
         </div>
       )}

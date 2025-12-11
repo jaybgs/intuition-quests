@@ -239,6 +239,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
 
   const slideshowRef = useScrollAnimation();
   const spacesRef = useScrollAnimation();
+  const ecosystemRef = useScrollAnimation();
 
   if (isLoading) {
     return <DiscoverPageSkeleton />;
@@ -459,6 +460,92 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
               );
             })
           )}
+        </div>
+      </div>
+
+      {/* Ecosystem dApps Section */}
+      <div ref={ecosystemRef} className="ecosystem-dapps-section">
+        <div className="ecosystem-dapps-header">
+          <h2 className="ecosystem-dapps-title">Ecosystem dApps</h2>
+        </div>
+        <div className="ecosystem-dapps-grid">
+          <a
+            href="https://portal.intuition.systems"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">The Portal</h3>
+              <p className="ecosystem-dapp-description">
+                The flagship app of Intuition, and the first Intuition explorer.
+              </p>
+              <div className="ecosystem-dapp-link">
+                Visit App
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 17L17 7M7 7h10v10"/>
+                </svg>
+              </div>
+            </div>
+          </a>
+
+          <a
+            href="https://launchpad.intuition.systems"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">The Launchpad</h3>
+              <p className="ecosystem-dapp-description">
+                Complete quests and earn IQ points as you learn more about Intuition through structured experiences.
+              </p>
+              <div className="ecosystem-dapp-link">
+                Visit App
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 17L17 7M7 7h10v10"/>
+                </svg>
+              </div>
+            </div>
+          </a>
+
+          <a
+            href="https://upload.intuition.systems"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">Data Uploader</h3>
+              <p className="ecosystem-dapp-description">
+                Upload data en-masse to Intuition, and get rewarded for your contributions.
+              </p>
+              <div className="ecosystem-dapp-link">
+                Visit App
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 17L17 7M7 7h10v10"/>
+                </svg>
+              </div>
+            </div>
+          </a>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase';
+import { apiClient } from './apiClient';
 
 export interface QuestDraftData {
   id: string;
@@ -34,173 +35,173 @@ export interface QuestDraftListItem {
  */
 export class QuestDraftService {
   /**
-   * Save or update a quest draft
-   * Uses upsert to handle both create and update operations
+   * Save or update a quest draft.
+   * Try backend API first (shared across devices), then Supabase, then localStorage.
    */
   async saveDraft(draftData: QuestDraftData): Promise<void> {
-    if (!supabase) {
-      console.warn('⚠️ Supabase client not initialized. Saving draft to localStorage only.');
-      console.warn('   Missing environment variables: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
-      // Fallback to localStorage if Supabase is not available
+    try {
+      await apiClient.post('/quest-drafts', draftData);
+      // Keep a local backup so the user doesn't lose progress offline
       this.saveDraftToLocalStorage(draftData);
       return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('quest_drafts')
-        .upsert(
-          {
-            id: draftData.id,
-            user_address: draftData.user_address,
-            space_id: draftData.space_id || null,
-            title: draftData.title || null,
-            difficulty: draftData.difficulty || null,
-            description: draftData.description || null,
-            image_preview: draftData.image_preview || null,
-            end_date: draftData.end_date || null,
-            end_time: draftData.end_time || null,
-            selected_actions: draftData.selected_actions || null,
-            number_of_winners: draftData.number_of_winners || null,
-            winner_prizes: draftData.winner_prizes || null,
-            iq_points: draftData.iq_points || null,
-            reward_deposit: draftData.reward_deposit || null,
-            reward_token: draftData.reward_token || null,
-            distribution_type: draftData.distribution_type || null,
-            current_step: draftData.current_step || 1,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'id', // Use id as the conflict resolution key
-          }
-        );
-
-      if (error) {
-        console.error('❌ Error saving draft to Supabase:', {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        // Fallback to localStorage on error
-        this.saveDraftToLocalStorage(draftData);
-        throw error;
-      }
-
-      console.log('✅ Draft saved to Supabase:', draftData.id);
-      // Also save to localStorage as backup
-      this.saveDraftToLocalStorage(draftData);
     } catch (error) {
-      console.error('❌ Exception in saveDraft:', error);
-      // Fallback to localStorage
-      this.saveDraftToLocalStorage(draftData);
-      throw error;
+      console.warn('⚠️ Backend draft save failed, trying Supabase/localStorage', error);
     }
+
+    if (supabase) {
+      try {
+        const { error: supabaseError } = await supabase
+          .from('quest_drafts')
+          .upsert(
+            {
+              id: draftData.id,
+              user_address: draftData.user_address,
+              space_id: draftData.space_id || null,
+              title: draftData.title || null,
+              difficulty: draftData.difficulty || null,
+              description: draftData.description || null,
+              image_preview: draftData.image_preview || null,
+              end_date: draftData.end_date || null,
+              end_time: draftData.end_time || null,
+              selected_actions: draftData.selected_actions || null,
+              number_of_winners: draftData.number_of_winners || null,
+              winner_prizes: draftData.winner_prizes || null,
+              iq_points: draftData.iq_points || null,
+              reward_deposit: draftData.reward_deposit || null,
+              reward_token: draftData.reward_token || null,
+              distribution_type: draftData.distribution_type || null,
+              current_step: draftData.current_step || 1,
+              updated_at: new Date().toISOString(),
+            },
+            {
+              onConflict: 'id', // Use id as the conflict resolution key
+            }
+          );
+
+        if (supabaseError) {
+          console.error('❌ Error saving draft to Supabase:', supabaseError);
+        } else {
+          this.saveDraftToLocalStorage(draftData);
+          return;
+        }
+      } catch (supabaseError) {
+        console.error('❌ Exception saving draft to Supabase:', supabaseError);
+      }
+    } else {
+      console.warn('⚠️ Supabase client not initialized. Skipping Supabase save.');
+    }
+
+    // Last resort: local only
+    this.saveDraftToLocalStorage(draftData);
   }
 
   /**
    * Get a draft by ID
    */
   async getDraftById(draftId: string, userAddress: string): Promise<QuestDraftData | null> {
-    if (!supabase) {
-      return this.getDraftFromLocalStorage(draftId, userAddress);
-    }
-
     try {
-      const { data, error } = await supabase
-        .from('quest_drafts')
-        .select('*')
-        .eq('id', draftId)
-        .eq('user_address', userAddress.toLowerCase())
-        .single();
-
-      if (error) {
-        console.error('Error fetching draft from Supabase:', error);
-        return this.getDraftFromLocalStorage(draftId, userAddress);
+      const response = await apiClient.get(`/quest-drafts/${draftId}`);
+      if (response.data?.draft) {
+        return this.mapDraftFromDb(response.data.draft);
       }
-
-      if (!data) {
-        return this.getDraftFromLocalStorage(draftId, userAddress);
-      }
-
-      // Map database fields to frontend format
-      return this.mapDraftFromDb(data);
     } catch (error) {
-      console.error('Error in getDraftById:', error);
-      return this.getDraftFromLocalStorage(draftId, userAddress);
+      console.warn('⚠️ Backend draft fetch failed, trying Supabase/localStorage', error);
     }
+
+    if (supabase) {
+      try {
+        const { data, error: supabaseError } = await supabase
+          .from('quest_drafts')
+          .select('*')
+          .eq('id', draftId)
+          .eq('user_address', userAddress.toLowerCase())
+          .single();
+
+        if (!supabaseError && data) {
+          return this.mapDraftFromDb(data);
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Supabase draft fetch failed, using localStorage', supabaseError);
+      }
+    }
+
+    return this.getDraftFromLocalStorage(draftId, userAddress);
   }
 
   /**
    * Get all drafts for a user
    */
   async getAllDrafts(userAddress: string, spaceId?: string): Promise<QuestDraftListItem[]> {
-    if (!supabase) {
-      return this.getAllDraftsFromLocalStorage(userAddress, spaceId);
-    }
-
     try {
-      let query = supabase
-        .from('quest_drafts')
-        .select('id, title, current_step, space_id, updated_at')
-        .eq('user_address', userAddress.toLowerCase())
-        .order('updated_at', { ascending: false });
-
-      if (spaceId) {
-        query = query.or(`space_id.eq.${spaceId},space_id.is.null`);
+      const response = await apiClient.get('/quest-drafts', { params: { spaceId } });
+      if (response.data?.drafts) {
+        return response.data.drafts;
       }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching drafts from Supabase:', error);
-        return this.getAllDraftsFromLocalStorage(userAddress, spaceId);
-      }
-
-      return (data || []).map((draft: any) => ({
-        id: draft.id,
-        title: draft.title || 'Untitled Quest',
-        updatedAt: new Date(draft.updated_at).getTime(),
-        currentStep: draft.current_step || 1,
-        spaceId: draft.space_id || null,
-      }));
     } catch (error) {
-      console.error('Error in getAllDrafts:', error);
-      return this.getAllDraftsFromLocalStorage(userAddress, spaceId);
+      console.warn('⚠️ Backend draft list fetch failed, trying Supabase/localStorage', error);
     }
+
+    if (supabase) {
+      try {
+        let query = supabase
+          .from('quest_drafts')
+          .select('id, title, current_step, space_id, updated_at')
+          .eq('user_address', userAddress.toLowerCase())
+          .order('updated_at', { ascending: false });
+
+        if (spaceId) {
+          query = query.or(`space_id.eq.${spaceId},space_id.is.null`);
+        }
+
+        const { data, error: supabaseError } = await query;
+
+        if (!supabaseError && data) {
+          return (data || []).map((draft: any) => ({
+            id: draft.id,
+            title: draft.title || 'Untitled Quest',
+            updatedAt: new Date(draft.updated_at).getTime(),
+            currentStep: draft.current_step || 1,
+            spaceId: draft.space_id || null,
+          }));
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Supabase draft list fetch failed, using localStorage', supabaseError);
+      }
+    }
+
+    return this.getAllDraftsFromLocalStorage(userAddress, spaceId);
   }
 
   /**
    * Delete a draft
    */
   async deleteDraft(draftId: string, userAddress: string): Promise<void> {
-    if (!supabase) {
+    try {
+      await apiClient.delete(`/quest-drafts/${draftId}`);
       this.deleteDraftFromLocalStorage(draftId, userAddress);
       return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('quest_drafts')
-        .delete()
-        .eq('id', draftId)
-        .eq('user_address', userAddress.toLowerCase());
-
-      if (error) {
-        console.error('Error deleting draft from Supabase:', error);
-        // Still try to delete from localStorage
-        this.deleteDraftFromLocalStorage(draftId, userAddress);
-        throw error;
-      }
-
-      // Also delete from localStorage
-      this.deleteDraftFromLocalStorage(draftId, userAddress);
     } catch (error) {
-      console.error('Error in deleteDraft:', error);
-      // Fallback to localStorage
-      this.deleteDraftFromLocalStorage(draftId, userAddress);
-      throw error;
+      console.warn('⚠️ Backend draft delete failed, trying Supabase/localStorage', error);
     }
+
+    if (supabase) {
+      try {
+        const { error: supabaseError } = await supabase
+          .from('quest_drafts')
+          .delete()
+          .eq('id', draftId)
+          .eq('user_address', userAddress.toLowerCase());
+
+        if (!supabaseError) {
+          this.deleteDraftFromLocalStorage(draftId, userAddress);
+          return;
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Supabase draft delete failed, removing local copy', supabaseError);
+      }
+    }
+
+    this.deleteDraftFromLocalStorage(draftId, userAddress);
   }
 
   /**

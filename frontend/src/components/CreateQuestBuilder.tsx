@@ -13,6 +13,7 @@ import {
   getGracePeriod,
 } from '../services/questEscrowService';
 import { questDraftService } from '../services/questDraftService';
+import { questServiceBackend } from '../services/questServiceBackend';
 import { createQuestAtom } from '../services/questAtomService';
 import { parseEther } from 'viem';
 import { parseUnits, formatUnits, createPublicClient, http } from 'viem';
@@ -1041,10 +1042,27 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
   const [winnerPrizes, setWinnerPrizes] = useState<string[]>([]);
   const [iqPoints, setIqPoints] = useState<string>('');
   const [rewardDeposit, setRewardDeposit] = useState<string>('');
+  const [originalRewardDeposit, setOriginalRewardDeposit] = useState<string | null>(null);
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositStatus, setDepositStatus] = useState<'none' | 'approved' | 'deposited'>('none');
   const [rewardToken, setRewardToken] = useState<'TRUST'>('TRUST');
   const [gracePeriod, setGracePeriod] = useState<bigint | null>(null);
+
+  // Restore deposit status for this draft from localStorage
+  useEffect(() => {
+    const key = `quest_deposit_status_${questDraftId}`;
+    const stored = localStorage.getItem(key);
+    if (stored === 'deposited') {
+      setDepositStatus('deposited');
+    }
+  }, [questDraftId]);
+
+  // Capture the initial reward deposit to detect changes during edits
+  useEffect(() => {
+    if (originalRewardDeposit === null && rewardDeposit) {
+      setOriginalRewardDeposit(rewardDeposit);
+    }
+  }, [originalRewardDeposit, rewardDeposit]);
 
   // Calculate sum of winner prizes
   const calculateWinnerPrizesSum = (): number => {
@@ -1321,6 +1339,13 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
   }, [numberOfWinners]);
 
   const handleSave = async (showToastNotification: boolean = true) => {
+    // When editing a published quest, don't create/update drafts
+    if (isEditingPublishedQuest) {
+      if (showToastNotification) {
+        showToast('Edits to published quests are not saved as drafts.', 'info');
+      }
+      return;
+    }
     if (!address) {
       if (showToastNotification) {
         showToast('Please connect your wallet to save', 'warning');
@@ -1462,11 +1487,24 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       }
 
       // Create quest atom
-      const questIdForAtom = questDraftId || `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const questIdForAtom = (isEditingPublishedQuest && originalQuestId)
+        ? originalQuestId
+        : questDraftId || `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // If editing a published quest, ensure atom name is unique by incrementing suffix
+      let atomQuestTitle = title.trim();
+      let nextEditSuffix: number | null = null;
+      if (isEditingPublishedQuest && originalQuestId) {
+        const editCountKey = `quest_edit_publish_count_${originalQuestId}`;
+        const storedCount = parseInt(localStorage.getItem(editCountKey) || '1', 10);
+        const currentCount = Number.isNaN(storedCount) ? 1 : storedCount;
+        nextEditSuffix = currentCount + 1; // First edit -> 2, second -> 3, etc.
+        atomQuestTitle = `${title.trim()}${nextEditSuffix}`;
+      }
+
       const atomResult = await createQuestAtom(
         {
           questId: questIdForAtom,
-          questTitle: title.trim(),
+          questTitle: atomQuestTitle,
           spaceAtomId,
         },
         walletClient,
@@ -1477,6 +1515,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       atomTransactionHash = atomResult.transactionHash;
       tripleId = undefined; // No triple creation for quest publishing
       tripleTransactionHash = undefined;
+
+      // Persist new edit count only after successful atom creation
+      if (isEditingPublishedQuest && originalQuestId && nextEditSuffix) {
+        const editCountKey = `quest_edit_publish_count_${originalQuestId}`;
+        localStorage.setItem(editCountKey, nextEditSuffix.toString());
+      }
 
       // Step 3: Convert image to base64 if present
       let imageBase64: string | undefined;
@@ -1525,7 +1569,9 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       
       // Note: tripleId is now undefined since we only create an atom (claim), not a triple
       const questData = {
-        id: `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: (isEditingPublishedQuest && originalQuestId)
+          ? originalQuestId
+          : `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         title: title.trim(),
         description: description.trim(),
         projectId,
@@ -1555,38 +1601,70 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         endTime,
       };
 
-      // Save to published quests - both Supabase and localStorage (fallback)
+      // Publish to Supabase (must succeed)
+      console.log('📤 Publishing quest to Supabase backend...', {
+        questId: questData.id,
+        title: questData.title,
+        spaceId: questData.spaceId,
+      });
+      const { questServiceSupabase } = await import('../services/questServiceSupabase');
+      const publishedQuest = await questServiceSupabase.publishQuest(questData);
+      console.log('✅ Quest published successfully to Supabase:', {
+        id: publishedQuest.id,
+        title: publishedQuest.title,
+      });
+
+      // Publish to backend API (must succeed)
+      const backendRequirements = (questData.requirements || []).map((req) => {
+        let verificationData: any = {};
+        if (req.verification) {
+          if (typeof req.verification === 'string') {
+            try {
+              verificationData = JSON.parse(req.verification);
+            } catch {
+              verificationData = { verification: req.verification };
+            }
+          } else {
+            verificationData = req.verification;
+          }
+        }
+        return {
+          type: (req.type || '').toString(),
+          description: req.description || '',
+          verificationData,
+        };
+      });
+
+      const backendExpiresAt =
+        endDate && endTime ? new Date(`${endDate}T${endTime}`) : undefined;
+
+      try {
+        await questServiceBackend.createQuest(
+          projectId,
+          projectName,
+          questData.title,
+          questData.description,
+          questData.xpReward || questData.iqPoints || 100,
+          backendRequirements as any,
+          undefined,
+          undefined,
+          backendExpiresAt,
+          questData.twitterLink
+        );
+        console.log('✅ Quest published to backend API');
+      } catch (backendError: any) {
+        const status = backendError?.response?.status;
+        if (status === 401) {
+          throw new Error('Backend auth expired. Please reconnect your wallet to refresh authentication, then publish again.');
+        }
+        throw backendError;
+      }
+
+      // Only after both succeed, persist locally as fallback
       const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
       const existingPublished = JSON.parse(localStorage.getItem(publishedQuestsKey) || '[]');
       existingPublished.push(questData);
       localStorage.setItem(publishedQuestsKey, JSON.stringify(existingPublished));
-
-      // Also publish to Supabase
-      try {
-        console.log('📤 Publishing quest to Supabase backend...', {
-          questId: questData.id,
-          title: questData.title,
-          spaceId: questData.spaceId,
-        });
-        const { questServiceSupabase } = await import('../services/questServiceSupabase');
-        const publishedQuest = await questServiceSupabase.publishQuest(questData);
-        console.log('✅ Quest published successfully to Supabase:', {
-          id: publishedQuest.id,
-          title: publishedQuest.title,
-        });
-      } catch (error: any) {
-        console.error('❌ Failed to publish quest to Supabase:', {
-          error: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-          questId: questData.id,
-        });
-        showToast(
-          `Quest published locally but failed to sync to database: ${error.message || 'Unknown error'}. Please check your Supabase configuration.`, 
-          'warning'
-        );
-      }
 
       // Dispatch event to refresh quest counts in space cards
       window.dispatchEvent(new CustomEvent('questPublished', { detail: { spaceId, questData } }));
@@ -1598,32 +1676,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       queryClient.refetchQueries({ queryKey: ['quests'] });
 
-      // Remove draft if it exists - from both Supabase and localStorage
-      if (questDraftId && address) {
-        try {
-          // Delete from Supabase
-          await questDraftService.deleteDraft(questDraftId, address);
-        } catch (error) {
-          console.warn('Failed to delete draft from Supabase:', error);
-        }
-        
-        // Also remove from localStorage (fallback)
-        const draftKey = `quest_draft_${questDraftId}_${address.toLowerCase()}`;
-        localStorage.removeItem(draftKey);
-        
-        // Also remove from drafts list
-        const draftsListKey = `quest_drafts_${address.toLowerCase()}`;
-        const savedDrafts = localStorage.getItem(draftsListKey);
-        if (savedDrafts) {
-          try {
-            const draftsList: any[] = JSON.parse(savedDrafts);
-            const updatedDrafts = draftsList.filter(d => d.id !== questDraftId);
-            localStorage.setItem(draftsListKey, JSON.stringify(updatedDrafts));
-          } catch (error) {
-            console.error('Error removing draft from list:', error);
-          }
-        }
-      }
+      // Keep draft in Supabase/localStorage even after publish (no deletion)
 
       showToast('Quest published successfully!', 'success');
       onNext?.();
@@ -1652,7 +1705,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       }
     }
     
-    // Validate Rewards step (step 3) - deposit validation disabled
+    // Validate Rewards step (step 3) - enforce deposit/prizes before moving on
     if (currentStep === 3) {
       // Check if all fields are filled
       const numWinners = parseInt(numberOfWinners, 10) || 0;
@@ -1662,7 +1715,26 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         showToast('Please fill in all winner prize amounts before proceeding.', 'warning');
         return;
       }
-      // Deposit validation disabled - will be reintegrated later
+      const depositAmount = parseFloat(rewardDeposit || '0');
+      if (!rewardDeposit || isNaN(depositAmount) || depositAmount <= 0) {
+        showToast('Please enter a deposit amount before proceeding.', 'warning');
+        return;
+      }
+      if (!isWinnerPrizesSumValid()) {
+        showToast('Total prizes must match the deposit amount before proceeding.', 'warning');
+        return;
+      }
+    }
+
+    // Validate Deposit step (step 4) - must have completed a deposit
+    if (currentStep === 4) {
+      const rewardDepositChanged = originalRewardDeposit === null
+        ? true
+        : parseFloat(rewardDeposit || '0') !== parseFloat(originalRewardDeposit || '0');
+      if (rewardDepositChanged && depositStatus !== 'deposited') {
+        showToast('Please complete the deposit before proceeding.', 'warning');
+        return;
+      }
     }
     
     // Validate Actions step (step 2) - check if all actions requiring configuration are configured
@@ -1800,6 +1872,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       );
 
       setDepositStatus('deposited');
+      // Persist deposit status locally to keep the button disabled on reload
+      localStorage.setItem(`quest_deposit_status_${questDraftId}`, 'deposited');
       showToast(`Deposit successful! ${rewardDeposit} TRUST deposited.`, 'success');
     } catch (error: any) {
       console.error('Deposit error:', error);
@@ -1824,12 +1898,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     if (stepNumber <= currentStep + 1 && stepNumber >= 1) {
       const maxStep = 5;
       if (stepNumber <= maxStep) {
-        // If trying to go to step 5 from step 3, allow it (skipping step 4)
-        if (stepNumber === 5 && currentStep >= 3) {
-          setCurrentStep(5);
-        } else if (stepNumber !== 4) {
-          setCurrentStep(stepNumber);
-        }
+        setCurrentStep(stepNumber);
       }
     }
   };
@@ -3614,14 +3683,14 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                   type="button"
                   className="create-quest-builder-button"
                   onClick={handleDeposit}
-                  disabled={isDepositing || !rewardDeposit || parseFloat(rewardDeposit) <= 0 || !address || !walletClient || !publicClient}
+            disabled={isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0}
                   style={{
                     width: '100%',
                     padding: '1rem',
                     fontSize: '1rem',
                     fontWeight: 600,
-                    opacity: (isDepositing || !rewardDeposit || parseFloat(rewardDeposit) <= 0 || !address || !walletClient || !publicClient) ? 0.5 : 1,
-                    cursor: (isDepositing || !rewardDeposit || parseFloat(rewardDeposit) <= 0 || !address || !walletClient || !publicClient) ? 'not-allowed' : 'pointer'
+                    opacity: (isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0) ? 0.5 : 1,
+                    cursor: (isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0) ? 'not-allowed' : 'pointer'
                   }}
                 >
                   {isDepositing ? (
@@ -3633,7 +3702,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                     </>
                   ) : depositStatus === 'deposited' ? (
                     <>
-                      <img src="/verified.svg" alt="Verified" width="16" height="16" style={{ display: 'inline-block', marginRight: '8px' }} />
+                  <img src="/verified.svg" alt="Verified" width="16" height="16" style={{ display: 'inline-block', marginRight: '8px' }} />
                       Deposited
                     </>
                   ) : (
@@ -3785,7 +3854,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                 (currentStep === 1 && (!title.trim() || !difficulty || !description.trim() || !endDate || !endTime || !numberOfWinners || parseInt(numberOfWinners, 10) < 1)) ||
                 (currentStep === 2 && selectedActions.some(action => requiresConfiguration(action.title) && !isActionConfigured(action))) ||
                 (currentStep === 3 && (!iqPoints || !numberOfWinners || parseInt(numberOfWinners, 10) < 1 || winnerPrizes.some((prize, idx) => idx < parseInt(numberOfWinners, 10) && !prize.trim()))) ||
-                (currentStep === 4 && (!rewardDeposit || parseFloat(rewardDeposit) <= 0))
+              (currentStep === 4 && (() => {
+                const rewardDepositChanged = originalRewardDeposit === null
+                  ? true
+                  : parseFloat(rewardDeposit || '0') !== parseFloat(originalRewardDeposit || '0');
+                return rewardDepositChanged && depositStatus !== 'deposited';
+              })())
               }
             >
               {isPublishing ? 'Publishing...' : currentStep === 5 ? 'Publish' : 'Next'}

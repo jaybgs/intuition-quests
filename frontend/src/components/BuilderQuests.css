@@ -161,6 +161,7 @@
   box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
               0 4px 14px rgba(0, 0, 0, 0.3),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
 .builder-quests-draft-card:hover {
@@ -171,6 +172,72 @@
               0 7px 22px rgba(0, 0, 0, 0.4),
               inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
+
+.builder-quests-draft-menu {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}
+
+.builder-quests-draft-menu-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.builder-quests-draft-menu-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.builder-quests-draft-menu-dot {
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+}
+
+.builder-quests-draft-menu-dropdown {
+  position: absolute;
+  bottom: 44px;
+  right: 0;
+  background: rgba(18, 22, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  min-width: 140px;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.builder-quests-draft-menu-item {
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.builder-quests-draft-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.builder-quests-draft-menu-item.danger {
+  color: #f87171;
+}
+
 
 .builder-quests-draft-header {
   display: flex;

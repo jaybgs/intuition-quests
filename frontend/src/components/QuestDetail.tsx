@@ -551,6 +551,38 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   }, [address, questId]);
 
+  // Load read documents from localStorage
+  useEffect(() => {
+    if (questId && address) {
+      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const converted: Record<string, Set<number>> = {};
+          Object.keys(parsed).forEach(key => {
+            converted[key] = new Set(parsed[key]);
+          });
+          setReadDocuments(converted);
+        } catch (e) {
+          console.error('Error loading read documents:', e);
+        }
+      }
+    }
+  }, [questId, address]);
+
+  // Save read documents to localStorage
+  useEffect(() => {
+    if (questId && address && Object.keys(readDocuments).length > 0) {
+      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
+      const toSave: Record<string, number[]> = {};
+      Object.keys(readDocuments).forEach(key => {
+        toSave[key] = Array.from(readDocuments[key]);
+      });
+      localStorage.setItem(storageKey, JSON.stringify(toSave));
+    }
+  }, [readDocuments, questId, address]);
+
   if (isLoading) {
     return (
       <div className="quest-detail-container">
@@ -748,38 +780,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       }
     }, 2000); // 2 second verification delay
   };
-
-  // Load read documents from localStorage
-  useEffect(() => {
-    if (questId && address) {
-      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          const converted: Record<string, Set<number>> = {};
-          Object.keys(parsed).forEach(key => {
-            converted[key] = new Set(parsed[key]);
-          });
-          setReadDocuments(converted);
-        } catch (e) {
-          console.error('Error loading read documents:', e);
-        }
-      }
-    }
-  }, [questId, address]);
-
-  // Save read documents to localStorage
-  useEffect(() => {
-    if (questId && address && Object.keys(readDocuments).length > 0) {
-      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
-      const toSave: Record<string, number[]> = {};
-      Object.keys(readDocuments).forEach(key => {
-        toSave[key] = Array.from(readDocuments[key]);
-      });
-      localStorage.setItem(storageKey, JSON.stringify(toSave));
-    }
-  }, [readDocuments, questId, address]);
 
   // Handle marking a document as read
   const handleMarkDocumentRead = (stepId: string, docIndex: number) => {

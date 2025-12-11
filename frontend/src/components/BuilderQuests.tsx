@@ -32,6 +32,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
   const [activeTab, setActiveTab] = useState<'drafts' | 'published' | 'winners'>('drafts');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
+  const [openDraftMenuId, setOpenDraftMenuId] = useState<string | null>(null);
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<QuestDraft[]>([]);
   const [publishedQuests, setPublishedQuests] = useState<Quest[]>([]);
@@ -63,6 +64,27 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
 
     loadDrafts();
   }, [address, spaceId, showCreateQuest]);
+
+  const handleDeleteDraft = async (draftId: string) => {
+    if (!address) {
+      showToast('Connect your wallet to delete drafts.', 'warning');
+      return;
+    }
+
+    try {
+      await questDraftService.deleteDraft(draftId, address);
+      setDrafts((prev) => prev.filter((d) => d.id !== draftId));
+      if (selectedDraftId === draftId) {
+        setSelectedDraftId(null);
+      }
+      showToast('Draft deleted.', 'success');
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      showToast('Failed to delete draft. Please try again.', 'error');
+    } finally {
+      setOpenDraftMenuId(null);
+    }
+  };
 
   // Load published quests from backend and localStorage
   useEffect(() => {
@@ -600,6 +622,33 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
                 <p className="builder-quests-draft-date">
                   Last updated: {new Date(draft.updatedAt).toLocaleDateString()}
                 </p>
+                <div className="builder-quests-draft-menu">
+                  <button
+                    className="builder-quests-draft-menu-button"
+                    aria-label="Draft actions"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenDraftMenuId((prev) => (prev === draft.id ? null : draft.id));
+                    }}
+                  >
+                    <span className="builder-quests-draft-menu-dot" />
+                    <span className="builder-quests-draft-menu-dot" />
+                    <span className="builder-quests-draft-menu-dot" />
+                  </button>
+                  {openDraftMenuId === draft.id && (
+                    <div
+                      className="builder-quests-draft-menu-dropdown"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        className="builder-quests-draft-menu-item danger"
+                        onClick={() => handleDeleteDraft(draft.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
             <div

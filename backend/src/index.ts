@@ -11,6 +11,7 @@ import leaderboardRoutes from './routes/leaderboard.js';
 import authRoutes from './routes/auth.js';
 import oauthRoutes from './routes/oauth.js';
 import spaceRoutes from './routes/spaces.js';
+import questDraftRoutes from './routes/questDrafts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,6 +67,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/oauth', oauthRoutes);
 app.use('/api/quests', questRoutes);
+app.use('/api/quest-drafts', questDraftRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/spaces', spaceRoutes);

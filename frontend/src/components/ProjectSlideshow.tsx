@@ -96,12 +96,14 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     let isMounted = true;
     let intervalId: NodeJS.Timeout | null = null;
     
-    const loadSpaces = async () => {
+    const loadSpaces = async (showLoading = false) => {
       // Only update state if component is still mounted and not during render
       if (!isMounted) return;
       
       try {
-        setIsSpacesLoading(true);
+        if (showLoading) {
+          setIsSpacesLoading(true);
+        }
         // spaceService.getAllSpaces() is now async (Supabase)
         const allSpaces = await spaceService.getAllSpaces();
         // Use startTransition to mark this as a non-urgent update
@@ -110,7 +112,9 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
         startTransition(() => {
           if (isMounted) {
             setSpaces(allSpaces);
-            setIsSpacesLoading(false);
+            if (showLoading) {
+              setIsSpacesLoading(false);
+            }
           }
         });
         }
@@ -121,7 +125,9 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
           startTransition(() => {
             if (isMounted) {
             setSpaces([]);
-            setIsSpacesLoading(false);
+            if (showLoading) {
+              setIsSpacesLoading(false);
+            }
             }
           });
         }
@@ -131,7 +137,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     // Delay initial load to ensure we're not in render phase
     const initialLoadTimer = setTimeout(() => {
       if (isMounted) {
-      loadSpaces();
+      loadSpaces(true);
       }
     }, 100);
     
@@ -140,7 +146,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
       // Use setTimeout to ensure we're not in render phase
       setTimeout(() => {
         if (isMounted) {
-      loadSpaces();
+      loadSpaces(false);
         }
       }, 0);
     };
@@ -173,9 +179,9 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
       if (isMounted) {
         intervalId = setInterval(() => {
           if (isMounted) {
-            loadSpaces();
+            loadSpaces(false);
           }
-        }, 3000);
+        }, 30000);
       }
     }, 1000);
     

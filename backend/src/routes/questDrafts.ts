@@ -94,4 +94,3 @@ router.delete('/:id', authenticateWallet, async (req: AuthRequest, res) => {
 
 export default router;
 
-

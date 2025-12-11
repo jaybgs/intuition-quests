@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: intuition-quests-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT is automatically set by Render, don't override
+      - key: JWT_SECRET
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RPC_URL
+        value: https://rpc.intuition.systems
+      - key: TRUST_TOKEN_ADDRESS
+        value: 0x0000000000000000000000000000000000000000
+

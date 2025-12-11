@@ -476,74 +476,98 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
             className="ecosystem-dapp-card"
           >
             <div className="ecosystem-dapp-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
+              <img src="/intuition-portal-logo.svg" alt="The Portal" />
             </div>
             <div className="ecosystem-dapp-content">
               <h3 className="ecosystem-dapp-name">The Portal</h3>
               <p className="ecosystem-dapp-description">
-                The flagship app of Intuition, and the first Intuition explorer.
+                The flagship app of Intuition, and the first Intuition explorer. Discover and explore the decentralized knowledge graph, browse claims, and interact with the Intuition protocol.
               </p>
-              <div className="ecosystem-dapp-link">
-                Visit App
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M7 17L17 7M7 7h10v10"/>
-                </svg>
-              </div>
             </div>
           </a>
 
           <a
-            href="https://launchpad.intuition.systems"
+            href="https://tns.intuition.box"
             target="_blank"
             rel="noopener noreferrer"
             className="ecosystem-dapp-card"
           >
             <div className="ecosystem-dapp-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
+              <img src="/tns logo.svg" alt="Trust Name Service" />
             </div>
             <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">The Launchpad</h3>
+              <h3 className="ecosystem-dapp-name">Trust Name Service</h3>
               <p className="ecosystem-dapp-description">
-                Complete quests and earn IQ points as you learn more about Intuition through structured experiences.
+                Decentralized naming service for the Intuition ecosystem. Register human-readable names for your wallet addresses and identities on the Intuition network.
               </p>
-              <div className="ecosystem-dapp-link">
-                Visit App
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M7 17L17 7M7 7h10v10"/>
-                </svg>
-              </div>
             </div>
           </a>
 
           <a
-            href="https://upload.intuition.systems"
+            href="https://inturank.intuition.box"
             target="_blank"
             rel="noopener noreferrer"
             className="ecosystem-dapp-card"
           >
             <div className="ecosystem-dapp-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
+              <img src="/inturank-logo.svg" alt="IntuRank" />
             </div>
             <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Data Uploader</h3>
+              <h3 className="ecosystem-dapp-name">IntuRank</h3>
               <p className="ecosystem-dapp-description">
-                Upload data en-masse to Intuition, and get rewarded for your contributions.
+                Rank and discover top projects, users, and content in the Intuition ecosystem. Track reputation scores, engagement metrics, and leaderboards across the network.
               </p>
-              <div className="ecosystem-dapp-link">
-                Visit App
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M7 17L17 7M7 7h10v10"/>
-                </svg>
-              </div>
+            </div>
+          </a>
+
+          <a
+            href="https://tribememe.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/tribememe-logo.svg" alt="TribeMeme" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">TribeMeme</h3>
+              <p className="ecosystem-dapp-description">
+                Community-driven meme platform built on Intuition. Create, share, and discover memes while leveraging the reputation system to surface the best content.
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="https://intuitionbets.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/intuition-bets.svg" alt="Intuition Bets" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">Intuition Bets</h3>
+              <p className="ecosystem-dapp-description">
+                Prediction market and betting platform powered by the Intuition knowledge graph. Place bets on outcomes and predictions with verifiable data sources.
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="https://oraclelend.intuition.box"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
+              <p className="ecosystem-dapp-description">
+                Decentralized lending protocol powered by Intuition's reputation system and knowledge graph. Access lending and borrowing services with reputation-based risk assessment.
+              </p>
             </div>
           </a>
         </div>

@@ -593,6 +593,10 @@
   box-sizing: border-box;
   overflow: hidden;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .create-quest-builder-button.save {
@@ -2240,14 +2244,83 @@
   .create-quest-builder-button {
     width: 100%;
   }
+}
 
-  .create-quest-builder-actions-container {
-    flex-direction: column;
-    height: auto;
+/* Template Grid Responsive Styles */
+.create-quest-builder-templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .create-quest-builder-templates-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-quest-builder-templates-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .create-quest-builder-templates-grid button {
+    padding: 1rem !important;
+    min-height: auto;
+  }
+  
+  .create-quest-builder-templates-grid button h3 {
+    font-size: 0.9rem !important;
+  }
+  
+  .create-quest-builder-templates-grid button p {
+    font-size: 0.8rem !important;
+  }
+  
+  .create-quest-builder-templates-grid button > div:first-child {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Deposit Tab Mobile Styles */
+@media (max-width: 768px) {
+  .create-quest-builder-deposit-container {
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    align-items: center;
   }
 
-  .create-quest-builder-actions-preview {
+  .create-quest-builder-deposit-button-wrapper {
+    flex: none !important;
     width: 100%;
+    max-width: 300px;
+    order: 2; /* Move button down */
+  }
+
+  .create-quest-builder-deposit-summary-wrapper {
+    flex: none !important;
+    width: 100%;
+    max-width: 100%;
+    order: 1; /* Show summary first */
+    display: flex;
+    justify-content: center;
+  }
+
+  .create-quest-builder-deposit-summary-wrapper > .create-quest-builder-field {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .create-quest-builder-deposit-summary-rectangle {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 

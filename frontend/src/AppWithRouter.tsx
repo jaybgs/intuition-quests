@@ -11,6 +11,7 @@ export default function AppWithRouter() {
   const routeToTab: Record<string, string> = {
     '/home': 'discover',
     '/community': 'community',
+    '/spaces': 'spaces',
     '/rewards': 'rewards',
     '/bounties': 'bounties',
     '/raids': 'raids',

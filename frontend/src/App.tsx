@@ -25,8 +25,10 @@ import { SpaceBuilder } from './components/SpaceBuilder';
 import { SpaceDetailView } from './components/SpaceDetailView';
 import { BuilderDashboard } from './components/BuilderDashboard';
 import { SubscriptionModal } from './components/SubscriptionModal';
+import { Spaces } from './components/Spaces';
 import { AdminLogin } from './components/AdminLogin';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { FAQButton } from './components/FAQButton';
 import { spaceService } from './services/spaceService';
 import { questServiceBackend } from './services/questServiceBackend';
 import type { Space } from './types';
@@ -617,6 +619,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     const routeMap: Record<string, string> = {
       'discover': '/home',
       'community': '/community',
+      'spaces': '/spaces',
       'rewards': '/rewards',
       'bounties': '/bounties',
       'raids': '/raids',
@@ -880,6 +883,18 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           <circle cx="9" cy="7" r="4"/>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      )
+    },
+    { 
+      label: 'Spaces',
+      tab: 'spaces',
+      path: '/spaces',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <line x1="3" y1="9" x2="21" y2="9"/>
+          <line x1="9" y1="21" x2="9" y2="9"/>
         </svg>
       )
     },
@@ -1166,6 +1181,9 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     showToast('Failed to load space details', 'error');
                   }
                 }}
+                onSeeMoreSpaces={() => {
+                  navigateToTab('spaces');
+                }}
               />
             )}
 
@@ -1300,6 +1318,41 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 onBack={() => navigateToTab('discover')}
               />
             )}
+            {activeTab === 'spaces' && (
+              <Spaces
+                onSpaceClick={(space) => {
+                  try {
+                    localStorage.setItem('previousTab', 'spaces');
+                    localStorage.setItem('selectedSpaceId', space.id);
+                    localStorage.setItem('selectedSpace', JSON.stringify(space));
+                    setSelectedSpace(space);
+                    setSelectedSpaceId(space.id);
+                    navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name || space.id });
+                  } catch (error) {
+                    console.error('Error navigating to space:', error);
+                    showToast('Failed to load space details', 'error');
+                  }
+                }}
+                onCreateSpace={() => {
+                  if (address) {
+                    spaceService.getSpacesByOwner(address).then(existingSpaces => {
+                      if (existingSpaces.length > 0) {
+                        showToast('You can only create one space. Redirecting to your existing space...', 'warning');
+                        setSelectedSpaceId(existingSpaces[0].id);
+                        navigateToTab('builder-dashboard');
+                        return;
+                      }
+                    });
+                  }
+                  localStorage.setItem('spaceBuilderSource', 'spaces');
+                  localStorage.setItem('previousTab', 'spaces');
+                  setPendingSpaceCreation(() => () => {
+                    navigateToTab('space-builder');
+                  });
+                  setShowSubscriptionModal(true);
+                }}
+              />
+            )}
           </>
         )}
       </main>
@@ -1349,6 +1402,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         />
       )}
       <ToastContainer />
+      <FAQButton />
     </div>
     </div>
   );

@@ -269,30 +269,101 @@
   backdrop-filter: blur(36px);
   -webkit-backdrop-filter: blur(36px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  gap: 16px;
+  cursor: default;
+}
+
+.space-card-skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .space-card-skeleton .skeleton-space-logo {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+}
+
+.space-card-skeleton .skeleton-verified-badge {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
 }
 
+.space-card-skeleton-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .space-card-skeleton .skeleton-space-name {
-  width: 100px;
+  width: 60%;
   height: 20px;
   border-radius: 4px;
 }
 
-.space-card-skeleton .skeleton-space-members {
+.space-card-skeleton-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.space-card-skeleton .skeleton-space-stat {
   width: 80px;
   height: 16px;
   border-radius: 4px;
+}
+
+.space-card-skeleton .skeleton-space-token {
+  width: 100px;
+  height: 18px;
+  border-radius: 4px;
+}
+
+/* DApp Card Skeleton */
+.dapp-card-skeleton {
+  background: rgba(26, 31, 53, 0.2);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: default;
+}
+
+.dapp-card-skeleton .skeleton-dapp-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+}
+
+.dapp-card-skeleton-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dapp-card-skeleton .skeleton-dapp-name {
+  width: 50%;
+  height: 22px;
+  border-radius: 4px;
+}
+
+.dapp-card-skeleton .skeleton-dapp-description {
+  width: 100%;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.dapp-card-skeleton .skeleton-dapp-description-short {
+  width: 75%;
 }
 
 /* Rewards Page Skeleton */

@@ -498,6 +498,176 @@
   gap: 24px;
 }
 
+.spaces-see-more {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.spaces-see-more-button {
+  background: rgba(59, 130, 246, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 14px 28px;
+  color: #93c5fd;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.spaces-see-more-button:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.spaces-see-more-button svg {
+  transition: transform 0.3s ease;
+}
+
+.spaces-see-more-button:hover svg {
+  transform: translateX(4px);
+}
+
+/* Ecosystem dApps Section */
+.ecosystem-dapps-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 40px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ecosystem-dapps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ecosystem-dapps-title {
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.ecosystem-dapps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.ecosystem-dapp-card {
+  background: rgba(26, 31, 53, 0.2);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  z-index: 1;
+}
+
+.ecosystem-dapp-card:visited {
+  color: inherit;
+}
+
+.ecosystem-dapp-card:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.ecosystem-dapp-card:hover {
+  background: rgba(37, 43, 61, 0.25);
+  backdrop-filter: blur(45px);
+  -webkit-backdrop-filter: blur(45px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ecosystem-dapp-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #93c5fd;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ecosystem-dapp-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.ecosystem-dapp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.ecosystem-dapp-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.ecosystem-dapp-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.ecosystem-dapp-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  margin-top: auto;
+}
+
+.ecosystem-dapp-link svg {
+  transition: transform 0.3s ease;
+}
+
+.ecosystem-dapp-card:hover .ecosystem-dapp-link svg {
+  transform: translate(4px, -4px);
+}
+
 .space-card {
   background: rgba(26, 31, 53, 0.2);
   backdrop-filter: blur(36px);
@@ -711,6 +881,61 @@
 
   .spaces-grid {
     grid-template-columns: 1fr;
+  }
+
+  .spaces-see-more {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .spaces-see-more-button {
+    background: rgba(59, 130, 246, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px 24px;
+    color: #93c5fd;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .spaces-see-more-button:hover {
+    background: rgba(59, 130, 246, 0.3);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .ecosystem-dapps-section {
+    margin-top: 32px;
+  }
+
+  .ecosystem-dapps-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .ecosystem-dapp-card {
+    padding: 20px;
+  }
+
+  .ecosystem-dapp-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .ecosystem-dapp-name {
+    font-size: 1.125rem;
+  }
+
+  .ecosystem-dapp-description {
+    font-size: 0.8125rem;
   }
 }
 

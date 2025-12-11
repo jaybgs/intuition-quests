@@ -1903,7 +1903,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
               gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
               gap: '1rem',
               marginBottom: '2rem'
-            }}>
+            }} className="create-quest-builder-templates-grid">
               {QUEST_TEMPLATES.map((template) => {
                 const isProOnly = template.id !== 'custom';
                 const isDisabled = isProOnly && !isPro;
@@ -3607,9 +3607,9 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         {/* Step 4: Deposit */}
         {currentStep === 4 && (
           <div className="create-quest-builder-form">
-            <div style={{ display: 'flex', gap: '2rem' }}>
+            <div className="create-quest-builder-deposit-container" style={{ display: 'flex', gap: '2rem' }}>
               {/* Left side - Deposit Button */}
-              <div style={{ flex: '0 0 200px' }}>
+              <div className="create-quest-builder-deposit-button-wrapper" style={{ flex: '0 0 200px' }}>
                 <button
                   type="button"
                   className="create-quest-builder-button"
@@ -3648,13 +3648,13 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
               </div>
 
               {/* Right side - Deposit Summary */}
-              <div style={{ flex: 1 }}>
+              <div className="create-quest-builder-deposit-summary-wrapper" style={{ flex: 1 }}>
                 <div className="create-quest-builder-field">
                   <label className="create-quest-builder-label">
                     Deposit Summary
                   </label>
                   <p className="create-quest-builder-hint">Review and confirm your deposit</p>
-                  <div style={{ 
+                  <div className="create-quest-builder-deposit-summary-rectangle" style={{ 
                     padding: '1.5rem', 
                     background: 'rgba(26, 31, 53, 0.3)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -3739,7 +3739,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                     )}
                     {iqPoints && (
                       <span className="create-quest-builder-preview-badge" style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8' }}>
-                        {iqPoints} IQ
+                        {iqPoints} IQ{rewardDeposit && parseFloat(rewardDeposit) > 0 ? ` + ${rewardDeposit} ${rewardToken || 'TRUST'}` : ''}
                       </span>
                     )}
                   </div>

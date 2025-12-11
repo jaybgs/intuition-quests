@@ -57,10 +57,6 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
     };
     loadFollowData();
   }, [address, space.id]);
-  
-  // Get token status
-  const tokenStatus = localStorage.getItem(`space_token_status_${space.id}`) || 'Undisclosed';
-  const tokenSymbol = localStorage.getItem(`space_token_symbol_${space.id}`) || undefined;
 
   // Handle follow/unfollow with optimistic update
   const handleFollow = async () => {
@@ -288,20 +284,6 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                   </div>
                   <div className="space-detail-stat-value">{followerCount.toLocaleString()}</div>
                 </div>
-                <div className="space-detail-stat-item">
-                  <div className="space-detail-stat-header">
-                    <span className="space-detail-stat-label">Token</span>
-                    <button className="space-detail-stat-info" title="Token information">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 16v-4M12 8h.01"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="space-detail-stat-value">
-                    {tokenSymbol ? tokenSymbol : tokenStatus}
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -349,20 +331,6 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                   <span className="space-detail-stat-badge">#{followerCount > 999 ? '999+' : followerCount}</span>
                 </div>
                 <div className="space-detail-stat-value">{followerCount.toLocaleString()}</div>
-              </div>
-              <div className="space-detail-stat-item">
-                <div className="space-detail-stat-header">
-                  <span className="space-detail-stat-label">Token</span>
-                  <button className="space-detail-stat-info" title="Token information">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M12 16v-4M12 8h.01"/>
-                    </svg>
-                  </button>
-                </div>
-                <div className="space-detail-stat-value">
-                  {tokenSymbol ? tokenSymbol : tokenStatus}
-                </div>
               </div>
             </div>
           </div>

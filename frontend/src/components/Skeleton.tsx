@@ -77,9 +77,31 @@ export function StatsCardSkeleton() {
 export function SpaceCardSkeleton() {
   return (
     <div className="space-card-skeleton">
-      <Skeleton className="skeleton-space-logo" />
-      <Skeleton className="skeleton-space-name" />
-      <Skeleton className="skeleton-space-members" />
+      <div className="space-card-skeleton-header">
+        <Skeleton className="skeleton-space-logo" />
+        <Skeleton className="skeleton-verified-badge" />
+      </div>
+      <div className="space-card-skeleton-content">
+        <Skeleton className="skeleton-space-name" />
+        <div className="space-card-skeleton-stats">
+          <Skeleton className="skeleton-space-stat" />
+          <Skeleton className="skeleton-space-stat" />
+        </div>
+        <Skeleton className="skeleton-space-token" />
+      </div>
+    </div>
+  );
+}
+
+export function DAppCardSkeleton() {
+  return (
+    <div className="dapp-card-skeleton">
+      <Skeleton className="skeleton-dapp-icon" />
+      <div className="dapp-card-skeleton-content">
+        <Skeleton className="skeleton-dapp-name" />
+        <Skeleton className="skeleton-dapp-description" />
+        <Skeleton className="skeleton-dapp-description skeleton-dapp-description-short" />
+      </div>
     </div>
   );
 }

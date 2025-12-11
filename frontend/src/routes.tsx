@@ -16,6 +16,10 @@ export const router = createBrowserRouter([
     element: <AppWithRouter />,
   },
   {
+    path: '/spaces',
+    element: <AppWithRouter />,
+  },
+  {
     path: '/rewards',
     element: <AppWithRouter />,
   },

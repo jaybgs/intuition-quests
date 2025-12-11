@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from './Toast';
 import { spaceService } from '../services/spaceService';
 import { questServiceSupabase } from '../services/questServiceSupabase';
-import { DiscoverPageSkeleton } from './Skeleton';
+import { DiscoverPageSkeleton, SpaceCardSkeleton, DAppCardSkeleton } from './Skeleton';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import type { Space } from '../types';
 import type { Quest } from '../types';
@@ -52,14 +52,17 @@ interface ProjectSlideshowProps {
   onQuestClick?: (questId: string) => void;
   onCreateSpace?: () => void;
   onSpaceClick?: (space: Space) => void;
+  onSeeMoreSpaces?: () => void;
 }
 
-export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: ProjectSlideshowProps) {
+export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, onSeeMoreSpaces }: ProjectSlideshowProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [sortByVerified, setSortByVerified] = useState(false);
-  const [sortByTrending, setSortByTrending] = useState(false);
+  const [sortByFollowing, setSortByFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSpacesLoading, setIsSpacesLoading] = useState(true);
+  const [isDAppsLoading, setIsDAppsLoading] = useState(true);
   const [questCounts, setQuestCounts] = useState<Record<string, number>>({});
   const { address, status } = useAccount();
   const queryClient = useQueryClient();
@@ -69,6 +72,14 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // DApps loading (brief delay for smooth transition)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsDAppsLoading(false);
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -90,6 +101,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
       if (!isMounted) return;
       
       try {
+        setIsSpacesLoading(true);
         // spaceService.getAllSpaces() is now async (Supabase)
         const allSpaces = await spaceService.getAllSpaces();
         // Use startTransition to mark this as a non-urgent update
@@ -98,6 +110,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
         startTransition(() => {
           if (isMounted) {
             setSpaces(allSpaces);
+            setIsSpacesLoading(false);
           }
         });
         }
@@ -108,6 +121,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
           startTransition(() => {
             if (isMounted) {
             setSpaces([]);
+            setIsSpacesLoading(false);
             }
           });
         }
@@ -201,12 +215,21 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
 
   const currentProject = projects[currentIndex];
 
+  // Check if user is following a space
+  const isFollowingSpace = (spaceId: string): boolean => {
+    if (!address) return false;
+    const following = JSON.parse(localStorage.getItem(`user_following_${address}`) || '[]');
+    return following.includes(spaceId);
+  };
+
   // Sort spaces based on active sort options
   const sortedSpaces = [...spaces].sort((a, b) => {
     const aVerified = a.userType === 'project';
     const bVerified = b.userType === 'project';
     const aFollowers = parseInt(localStorage.getItem(`space_followers_${a.id}`) || '0');
     const bFollowers = parseInt(localStorage.getItem(`space_followers_${b.id}`) || '0');
+    const aFollowing = isFollowingSpace(a.id);
+    const bFollowing = isFollowingSpace(b.id);
     
     // Priority 1: If sorting by verified, verified spaces come first
     if (sortByVerified) {
@@ -214,23 +237,32 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
       if (!aVerified && bVerified) return 1;
     }
     
-    // Priority 2: If sorting by trending, spaces with more followers come first
-    // This applies when:
-    // - Only trending is active, OR
-    // - Both are active and we're comparing within the same verified group
-    if (sortByTrending) {
-      const followerDiff = bFollowers - aFollowers;
-      if (followerDiff !== 0) {
-        return followerDiff;
-      }
+    // Priority 2: If sorting by following, followed spaces come first
+    if (sortByFollowing) {
+      if (aFollowing && !bFollowing) return -1;
+      if (!aFollowing && bFollowing) return 1;
     }
     
     // Default: maintain original order
     return 0;
   });
 
-  // Use sorted spaces (no filtering, just sorting)
-  const filteredSpaces = sortedSpaces;
+  // Limit spaces based on screen size (8 desktop, 5 mobile)
+  const maxSpacesDesktop = 8;
+  const maxSpacesMobile = 5;
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const maxSpaces = isMobile ? maxSpacesMobile : maxSpacesDesktop;
+  const displayedSpaces = sortedSpaces.slice(0, maxSpaces);
+  const hasMoreSpaces = sortedSpaces.length > maxSpaces;
 
   // Fetch active quest counts for all spaces from Supabase
   useEffect(() => {
@@ -386,15 +418,15 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
               Verified
             </button>
             <button
-              className={`spaces-filter-button ${sortByTrending ? 'active' : ''}`}
-              onClick={() => setSortByTrending(!sortByTrending)}
+              className={`spaces-filter-button ${sortByFollowing ? 'active' : ''}`}
+              onClick={() => setSortByFollowing(!sortByFollowing)}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" y1="3" x2="21" y2="3"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="21" x2="21" y2="21"/>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="8.5" cy="7" r="4"/>
+                <path d="M20 8v6M23 11h-6"/>
               </svg>
-              Trending
+              Following
             </button>
           </div>
           <button
@@ -409,12 +441,18 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
         </div>
 
         <div className="spaces-grid">
-          {filteredSpaces.length === 0 ? (
+          {isSpacesLoading ? (
+            <>
+              {[...Array(maxSpaces)].map((_, index) => (
+                <SpaceCardSkeleton key={`skeleton-${index}`} />
+              ))}
+            </>
+          ) : displayedSpaces.length === 0 ? (
             <div className="spaces-empty">
               <p>No spaces found. Create your first space to get started!</p>
             </div>
           ) : (
-            filteredSpaces.map((space) => {
+            displayedSpaces.map((space) => {
               const questCount = getQuestCount(space.id);
               const followerCount = getFollowerCount(space.id);
               const tokenInfo = getTokenStatus(space.id);
@@ -491,6 +529,140 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                 </div>
               );
             })
+          )}
+        </div>
+        {hasMoreSpaces && (
+          <div className="spaces-see-more">
+            <button
+              className="spaces-see-more-button"
+              onClick={() => onSeeMoreSpaces?.()}
+            >
+              See More
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Ecosystem dApps Section */}
+      <div className="ecosystem-dapps-section">
+        <div className="ecosystem-dapps-header">
+          <h2 className="ecosystem-dapps-title">Ecosystem dApps</h2>
+        </div>
+
+        <div className="ecosystem-dapps-grid">
+          {isDAppsLoading ? (
+            <>
+              {[...Array(6)].map((_, index) => (
+                <DAppCardSkeleton key={`dapp-skeleton-${index}`} />
+              ))}
+            </>
+          ) : (
+            <>
+          <a
+            href="https://portal.intuition.systems/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
+              <p className="ecosystem-dapp-description">
+                Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="https://tns.intuition.box/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/tns logo.svg" alt="Trust Name Services" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
+              <p className="ecosystem-dapp-description">
+                Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="https://inturank.intuition.box/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/inturank-logo.svg" alt="IntuRank" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">IntuRank</h3>
+              <p className="ecosystem-dapp-description">
+                Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="https://tribememe.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/tribememe-logo.svg" alt="Tribememe" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">Tribememe</h3>
+              <p className="ecosystem-dapp-description">
+                A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="https://intuitionbets.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/intuition-bets.svg" alt="IntuitionBets" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
+              <p className="ecosystem-dapp-description">
+                Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
+              </p>
+            </div>
+          </a>
+
+          <a
+            href="https://oraclelend.intuition.box/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ecosystem-dapp-card"
+          >
+            <div className="ecosystem-dapp-icon">
+              <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
+            </div>
+            <div className="ecosystem-dapp-content">
+              <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
+              <p className="ecosystem-dapp-description">
+                Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
+              </p>
+            </div>
+          </a>
+            </>
           )}
         </div>
       </div>

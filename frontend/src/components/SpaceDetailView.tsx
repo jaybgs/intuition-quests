@@ -62,7 +62,7 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
   const tokenStatus = localStorage.getItem(`space_token_status_${space.id}`) || 'Undisclosed';
   const tokenSymbol = localStorage.getItem(`space_token_symbol_${space.id}`) || undefined;
 
-  // Handle follow/unfollow
+  // Handle follow/unfollow with optimistic update
   const handleFollow = async () => {
     if (!address) {
       showToast('Please connect your wallet to follow spaces', 'warning');
@@ -71,30 +71,37 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
 
     setIsLoadingFollow(true);
     try {
+      // Optimistic update
+      setIsFollowing((prev) => !prev);
+
       if (isFollowing) {
         const success = await followService.unfollowSpace(address, space.id);
         if (success) {
-          setIsFollowing(false);
           const newCount = await followService.getFollowerCount(space.id);
           setFollowerCount(newCount);
           showToast('Unfollowed space', 'success');
         } else {
+          // Revert
+          setIsFollowing(true);
           showToast('Failed to unfollow space', 'error');
         }
       } else {
         const success = await followService.followSpace(address, space.id);
         if (success) {
-          setIsFollowing(true);
           const newCount = await followService.getFollowerCount(space.id);
           setFollowerCount(newCount);
           showToast('Followed space', 'success');
         } else {
+          // Revert
+          setIsFollowing(false);
           showToast('Failed to follow space', 'error');
         }
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
       showToast('An error occurred', 'error');
+      // Revert on error
+      setIsFollowing((prev) => !prev);
     } finally {
       setIsLoadingFollow(false);
     }
@@ -302,7 +309,19 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
             <div className="space-detail-quests-section">
               <h2 className="space-detail-quests-title">Quests</h2>
               {questsLoading ? (
-                <div className="space-detail-loading">Loading quests...</div>
+                <div className="space-detail-quests-skeletons">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="space-detail-quest-skeleton">
+                      <div className="space-detail-quest-skeleton-title" />
+                      <div className="space-detail-quest-skeleton-text" />
+                      <div className="space-detail-quest-skeleton-text" style={{ width: '70%' }} />
+                      <div className="space-detail-quest-skeleton-footer">
+                        <div className="space-detail-quest-skeleton-chip" />
+                        <div className="space-detail-quest-skeleton-chip" style={{ width: '60px' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : spaceQuests.length === 0 ? (
                 <div className="space-detail-empty-quests">
                   <p>No quests available for this space yet.</p>

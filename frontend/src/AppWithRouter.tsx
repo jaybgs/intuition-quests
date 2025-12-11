@@ -26,7 +26,8 @@ export default function AppWithRouter() {
     console.log('🔍 AppWithRouter: Current pathname:', path, 'params:', params);
 
     // Handle dynamic routes
-    if (path.startsWith('/quest-')) {
+    if (path.startsWith('/quest/') || path.startsWith('/quest-')) {
+      console.log('🔍 AppWithRouter: Detected quest route, returning quest-detail');
       return 'quest-detail';
     }
     if (path.startsWith('/space/') || path.startsWith('/space-')) {
@@ -46,6 +47,9 @@ export default function AppWithRouter() {
       return decodeURIComponent(params.questName);
     }
     const path = location.pathname;
+    if (path.startsWith('/quest/')) {
+      return decodeURIComponent(path.replace('/quest/', ''));
+    }
     if (path.startsWith('/quest-')) {
       return decodeURIComponent(path.replace('/quest-', ''));
     }

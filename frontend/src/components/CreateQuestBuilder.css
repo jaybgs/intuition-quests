@@ -2189,14 +2189,17 @@
 @media (max-width: 768px) {
   .create-quest-builder-container {
     gap: 16px;
+    padding: 12px;
   }
 
   .create-quest-builder-title {
-    font-size: 24px;
+    font-size: clamp(20px, 5vw, 24px);
   }
 
   .create-quest-builder-steps {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
     padding-bottom: 8px;
   }
 

@@ -3044,4 +3044,115 @@ body {
     font-size: 12px !important;
     white-space: nowrap;
   }
+
+  /* Global Mobile Optimizations */
+  
+  /* Better touch targets - minimum 44x44px for accessibility */
+  button, a, input[type="button"], input[type="submit"], .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Improved spacing on mobile */
+  .app-content {
+    padding: 8px 12px;
+  }
+
+  /* Better font scaling on mobile */
+  h1 {
+    font-size: clamp(24px, 5vw, 32px);
+  }
+
+  h2 {
+    font-size: clamp(20px, 4vw, 28px);
+  }
+
+  h3 {
+    font-size: clamp(18px, 3.5vw, 24px);
+  }
+
+  /* Improved form inputs on mobile */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+
+  /* Better scroll behavior */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent text selection on buttons during tap */
+  button {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  /* Better modal/dialog spacing */
+  .modal, .popup, [role="dialog"] {
+    padding: 20px 16px;
+    margin: 16px;
+    max-width: calc(100vw - 32px);
+  }
+
+  /* Improved card spacing */
+  .card, [class*="card"] {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Better grid layouts on mobile */
+  [class*="grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Improved navigation */
+  nav, [role="navigation"] {
+    padding: 8px 12px;
+  }
+
+  nav button, nav a {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  /* Better table responsiveness */
+  table {
+    font-size: 14px;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Improved dropdowns */
+  select {
+    background-size: 20px;
+    padding-right: 40px;
+  }
+
+  /* Better image responsiveness */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Improved loading states */
+  [class*="loading"], [class*="skeleton"] {
+    min-height: 44px;
+  }
+
+  /* Better focus states for accessibility */
+  *:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+  }
 }

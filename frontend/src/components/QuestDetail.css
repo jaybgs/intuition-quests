@@ -877,26 +877,28 @@
 
 @media (max-width: 480px) {
   .quest-detail-top-header {
-    padding: 10px 12px;
+    padding: 12px 16px;
   }
 
   .quest-detail-page-title {
-    font-size: 18px;
+    font-size: clamp(18px, 4vw, 24px);
   }
 
   .quest-detail-task-item,
   .quest-detail-task-item-exact {
-    padding: 12px;
-    gap: 10px;
+    padding: 16px;
+    gap: 12px;
+    min-height: 60px; /* Better touch target */
   }
 
   .quest-detail-creator-name {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .quest-detail-follow-btn {
-    padding: 4px 8px;
-    font-size: 11px;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 36px; /* Better touch target */
   }
 
   .quest-detail-task-text-exact {

@@ -103,6 +103,204 @@
   gap: 24px;
 }
 
+/* Search Container */
+.all-quests-search-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.all-quests-search-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.all-quests-search-icon {
+  position: absolute;
+  left: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+
+.all-quests-search-input {
+  width: 100%;
+  padding: 12px 16px 12px 48px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.all-quests-search-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  background: rgba(26, 31, 53, 0.5);
+}
+
+.all-quests-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.all-quests-search-clear {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.all-quests-search-clear:hover {
+  color: var(--text-primary);
+}
+
+.all-quests-filter-toggle {
+  padding: 12px 20px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.all-quests-filter-toggle:hover {
+  background: rgba(37, 43, 61, 0.5);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.all-quests-filter-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Advanced Filters */
+.all-quests-advanced-filters {
+  padding: 24px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.all-quests-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.all-quests-filter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.all-quests-filter-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.all-quests-filter-select {
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.all-quests-filter-select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.all-quests-filter-select option {
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text-primary);
+}
+
+/* Reward Range */
+.all-quests-reward-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.all-quests-reward-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.all-quests-reward-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.all-quests-reward-separator {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.all-quests-clear-filters {
+  padding: 12px 24px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  align-self: flex-start;
+}
+
+.all-quests-clear-filters:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Results Count */
+.all-quests-results-count {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .all-quests-container {
     padding: 16px;
@@ -125,6 +323,36 @@
 
   .all-quests-loading {
     grid-template-columns: 1fr;
+  }
+
+  .all-quests-search-container {
+    flex-direction: column;
+  }
+
+  .all-quests-filter-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .all-quests-advanced-filters {
+    padding: 16px;
+  }
+
+  .all-quests-filter-buttons {
+    flex-direction: column;
+  }
+
+  .all-quests-filter-button {
+    width: 100%;
+  }
+
+  .all-quests-reward-range {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .all-quests-reward-separator {
+    display: none;
   }
 }
 

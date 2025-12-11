@@ -969,7 +969,9 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
   const { createQuest, isCreating } = useQuests();
   const queryClient = useQueryClient();
   const [isPublishing, setIsPublishing] = useState(false);
-  const [currentStep, setCurrentStep] = useState(draftId ? 1 : 0); // Start at step 0 (template selection) for new quests
+  // Start at step 0 (template selection) for new quests, but only for Pro users
+  // Free users skip templates and go straight to step 1
+  const [currentStep, setCurrentStep] = useState(draftId ? 1 : (isPro ? 0 : 1));
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -1327,9 +1329,22 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     }
 
     try {
+      // Generate draft ID if it doesn't exist
+      const draftIdToSave = questDraftId || `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      if (!questDraftId) {
+        setQuestDraftId(draftIdToSave);
+      }
+
+      console.log('💾 Saving quest draft to backend...', {
+        draftId: draftIdToSave,
+        step: currentStep,
+        hasTitle: !!title,
+        hasActions: selectedActions.length > 0,
+      });
+
       // Save to backend (Supabase) - this handles both create and update
       await questDraftService.saveDraft({
-        id: questDraftId,
+        id: draftIdToSave,
         user_address: address.toLowerCase(),
         space_id: spaceId || null,
         title: title || null,
@@ -1349,14 +1364,20 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         current_step: currentStep,
       });
 
+      console.log('✅ Quest draft saved successfully to backend');
+
       if (showToastNotification) {
         showToast('Quest draft saved successfully!', 'success');
       }
       onSave?.();
-    } catch (error) {
-      console.error('Error saving draft:', error);
+    } catch (error: any) {
+      console.error('❌ Error saving draft:', {
+        error: error.message,
+        stack: error.stack,
+        draftId: questDraftId,
+      });
       if (showToastNotification) {
-        showToast('Failed to save draft', 'error');
+        showToast(`Failed to save draft: ${error.message || 'Unknown error'}`, 'error');
       }
     }
   };
@@ -1542,12 +1563,29 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
 
       // Also publish to Supabase
       try {
+        console.log('📤 Publishing quest to Supabase backend...', {
+          questId: questData.id,
+          title: questData.title,
+          spaceId: questData.spaceId,
+        });
         const { questServiceSupabase } = await import('../services/questServiceSupabase');
         const publishedQuest = await questServiceSupabase.publishQuest(questData);
-        console.log('✅ Quest published to Supabase:', publishedQuest);
-      } catch (error) {
-        console.error('❌ Failed to publish quest to Supabase:', error);
-        showToast('Quest published locally but failed to sync to database. Please try again later.', 'warning');
+        console.log('✅ Quest published successfully to Supabase:', {
+          id: publishedQuest.id,
+          title: publishedQuest.title,
+        });
+      } catch (error: any) {
+        console.error('❌ Failed to publish quest to Supabase:', {
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          questId: questData.id,
+        });
+        showToast(
+          `Quest published locally but failed to sync to database: ${error.message || 'Unknown error'}. Please check your Supabase configuration.`, 
+          'warning'
+        );
       }
 
       // Dispatch event to refresh quest counts in space cards
@@ -1855,7 +1893,9 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
               Choose a Quest Template
             </h2>
             <p style={{ marginBottom: '2rem', color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
-              Select a template to get started quickly, or start from scratch
+              {isPro 
+                ? 'Select a template to get started quickly, or start from scratch'
+                : 'Templates are available for Pro users. Upgrade to access pre-built quest templates.'}
             </p>
             
             <div style={{
@@ -1864,10 +1904,18 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
               gap: '1rem',
               marginBottom: '2rem'
             }}>
-              {QUEST_TEMPLATES.map((template) => (
+              {QUEST_TEMPLATES.map((template) => {
+                const isProOnly = template.id !== 'custom';
+                const isDisabled = isProOnly && !isPro;
+                
+                return (
                 <button
                   key={template.id}
                   onClick={() => {
+                    if (isDisabled) {
+                      setShowSubscribePopup(true);
+                      return;
+                    }
                     setSelectedTemplate(template.id);
                     if (template.id === 'custom') {
                       setCurrentStep(1);
@@ -1881,35 +1929,53 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                       showToast(`Template "${template.name}" applied!`, 'success');
                     }
                   }}
+                  disabled={isDisabled}
                   style={{
                     padding: '1.5rem',
-                    backgroundColor: selectedTemplate === template.id 
+                    backgroundColor: isDisabled 
+                      ? 'rgba(255, 255, 255, 0.02)'
+                      : selectedTemplate === template.id 
                       ? 'rgba(59, 130, 246, 0.2)' 
                       : 'rgba(255, 255, 255, 0.05)',
-                    border: `1px solid ${selectedTemplate === template.id 
+                    border: `1px solid ${isDisabled
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : selectedTemplate === template.id 
                       ? 'rgba(59, 130, 246, 0.5)' 
                       : 'rgba(255, 255, 255, 0.1)'}`,
                     borderRadius: '12px',
-                    cursor: 'pointer',
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
                     transition: 'all 0.2s',
                     textAlign: 'left',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.75rem',
+                    opacity: isDisabled ? 0.5 : 1,
+                    position: 'relative',
                   }}
                   onMouseEnter={(e) => {
-                    if (selectedTemplate !== template.id) {
+                    if (!isDisabled && selectedTemplate !== template.id) {
                       e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
                       e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (selectedTemplate !== template.id) {
+                    if (!isDisabled && selectedTemplate !== template.id) {
                       e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
                       e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                     }
                   }}
                 >
+                  {isProOnly && (
+                    <span className="pro-badge" style={{ 
+                      position: 'absolute', 
+                      top: '8px', 
+                      right: '8px',
+                      fontSize: '10px',
+                      padding: '2px 6px'
+                    }}>
+                      Pro
+                    </span>
+                  )}
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
                     {template.icon}
                   </div>
@@ -1917,20 +1983,21 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                     margin: 0, 
                     fontSize: '1rem', 
                     fontWeight: 600, 
-                    color: '#fff' 
+                    color: isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#fff' 
                   }}>
                     {template.name}
                   </h3>
                   <p style={{ 
                     margin: 0, 
                     fontSize: '0.875rem', 
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    color: isDisabled ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.6)',
                     lineHeight: '1.4'
                   }}>
                     {template.description}
                   </p>
                 </button>
-              ))}
+              );
+              })}
             </div>
             
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
@@ -1967,11 +2034,6 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                   className={`create-quest-builder-distribution-option ${distributionType === 'fcfs' ? 'active' : ''}`}
                   onClick={() => setDistributionType('fcfs')}
                 >
-                  <div className="create-quest-builder-distribution-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                    </svg>
-                  </div>
                   <div className="create-quest-builder-distribution-content">
                     <h4 className="create-quest-builder-distribution-title">First Come First Served (FCFS)</h4>
                     <p className="create-quest-builder-distribution-desc">Rewards are distributed to the first users who complete the quest</p>
@@ -1982,12 +2044,6 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                   className={`create-quest-builder-distribution-option ${distributionType === 'raffle' ? 'active' : ''}`}
                   onClick={() => setDistributionType('raffle')}
                 >
-                  <div className="create-quest-builder-distribution-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M12 6v6l4 2"/>
-                    </svg>
-                  </div>
                   <div className="create-quest-builder-distribution-content">
                     <h4 className="create-quest-builder-distribution-title">Raffle</h4>
                     <p className="create-quest-builder-distribution-desc">Winners are randomly selected from all users who complete the quest</p>

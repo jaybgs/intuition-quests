@@ -475,6 +475,57 @@
   transform: translateX(-2px);
 }
 
+/* Quests skeletons */
+.space-detail-quests-skeletons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.space-detail-quest-skeleton {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 180px;
+  animation: space-detail-pulse 1.5s ease-in-out infinite;
+}
+
+.space-detail-quest-skeleton-title {
+  width: 60%;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.space-detail-quest-skeleton-text {
+  width: 90%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.space-detail-quest-skeleton-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.space-detail-quest-skeleton-chip {
+  flex: 0 0 80px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+@keyframes space-detail-pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
 /* Mobile Responsive */
 @media (max-width: 968px) {
   .space-detail-content-wrapper {

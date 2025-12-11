@@ -44,6 +44,10 @@ export const router = createBrowserRouter([
     element: <AppWithRouter />,
   },
   {
+    path: '/quest/:questName',
+    element: <AppWithRouter />,
+  },
+  {
     path: '/quest-:questName',
     element: <AppWithRouter />,
   },

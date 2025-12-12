@@ -147,7 +147,7 @@ export function OAuthCallback() {
               localStorage.setItem(`oauth_result_${platform}`, JSON.stringify(result));
               setTimeout(() => {
                 try {
-                  window.close();
+                window.close();
                 } catch (closeErr) {
                   console.warn('Could not close window automatically:', closeErr);
                 }
@@ -159,7 +159,7 @@ export function OAuthCallback() {
             localStorage.setItem(`oauth_result_${platform}`, JSON.stringify(result));
             setTimeout(() => {
               try {
-                window.close();
+              window.close();
               } catch (closeErr) {
                 console.warn('Could not close window automatically:', closeErr);
               }
@@ -230,7 +230,7 @@ export function OAuthCallback() {
                 localStorage.setItem(`oauth_result_${platform}`, JSON.stringify(result));
                 setTimeout(() => {
                   try {
-                    window.close();
+                  window.close();
                   } catch (closeErr) {
                     console.warn('Could not close window automatically:', closeErr);
                   }
@@ -240,7 +240,7 @@ export function OAuthCallback() {
               localStorage.setItem(`oauth_result_${platform}`, JSON.stringify(result));
               setTimeout(() => {
                 try {
-                  window.close();
+                window.close();
                 } catch (closeErr) {
                   console.warn('Could not close window automatically:', closeErr);
                 }

@@ -1589,38 +1589,11 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         endTime,
       };
 
-      // Save to published quests - both Supabase and localStorage (fallback)
+      // Save to published quests - localStorage for immediate UI updates
       const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
       const existingPublished = JSON.parse(localStorage.getItem(publishedQuestsKey) || '[]');
       existingPublished.push(questData);
       localStorage.setItem(publishedQuestsKey, JSON.stringify(existingPublished));
-
-      // Also publish to Supabase
-      try {
-        console.log('📤 Publishing quest to Supabase backend...', {
-          questId: questData.id,
-          title: questData.title,
-          spaceId: questData.spaceId,
-        });
-        const { questServiceSupabase } = await import('../services/questServiceSupabase');
-        const publishedQuest = await questServiceSupabase.publishQuest(questData);
-        console.log('✅ Quest published successfully to Supabase:', {
-          id: publishedQuest.id,
-          title: publishedQuest.title,
-        });
-      } catch (error: any) {
-        console.error('❌ Failed to publish quest to Supabase:', {
-          error: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-          questId: questData.id,
-        });
-        showToast(
-          `Quest published locally but failed to sync to database: ${error.message || 'Unknown error'}. Please check your Supabase configuration.`, 
-          'warning'
-        );
-      }
 
       // Dispatch event to refresh quest counts in space cards
       window.dispatchEvent(new CustomEvent('questPublished', { detail: { spaceId, questData } }));

@@ -103,22 +103,22 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
       
       try {
         if (showLoading && !hasLoadedOnce) {
-          setIsSpacesLoading(true);
+        setIsSpacesLoading(true);
         }
         // spaceService.getAllSpaces() uses Supabase only
         const allSpaces = await spaceService.getAllSpaces();
         // Use startTransition to mark this as a non-urgent update
         // This prevents the "setState during render" warning
         if (isMounted) {
-          startTransition(() => {
-            if (isMounted) {
-              setSpaces(allSpaces);
+        startTransition(() => {
+          if (isMounted) {
+            setSpaces(allSpaces);
               if (showLoading && !hasLoadedOnce) {
-                setIsSpacesLoading(false);
+            setIsSpacesLoading(false);
                 hasLoadedOnce = true;
               }
-            }
-          });
+          }
+        });
         }
       } catch (error) {
         console.error('Error loading spaces from Supabase:', error);
@@ -126,9 +126,9 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
         if (isMounted) {
           startTransition(() => {
             if (isMounted) {
-              setSpaces([]);
+            setSpaces([]);
               if (showLoading && !hasLoadedOnce) {
-                setIsSpacesLoading(false);
+            setIsSpacesLoading(false);
                 hasLoadedOnce = true;
               }
             }
@@ -159,11 +159,11 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
       // Use setTimeout to ensure we're not in render phase
       setTimeout(() => {
         if (isMounted) {
-          startTransition(() => {
-            if (isMounted) {
-              setSpaces(prev => [...prev]);
-            }
-          });
+      startTransition(() => {
+        if (isMounted) {
+          setSpaces(prev => [...prev]);
+        }
+      });
         }
       }, 0);
     };
@@ -171,8 +171,8 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     // Add event listeners after a small delay to avoid render phase issues
     setTimeout(() => {
       if (isMounted) {
-        window.addEventListener('spaceCreated', handleSpaceCreated);
-        window.addEventListener('questPublished', handleQuestPublished);
+    window.addEventListener('spaceCreated', handleSpaceCreated);
+    window.addEventListener('questPublished', handleQuestPublished);
       }
     }, 0);
     

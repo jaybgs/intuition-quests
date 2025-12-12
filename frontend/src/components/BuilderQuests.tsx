@@ -191,7 +191,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
 
             userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             setPublishedQuests(userQuests);
-          } catch (error) {
+            } catch (error) {
             console.error('Error reloading published quests from Supabase:', error);
           } finally {
             setIsLoadingPublished(false);

@@ -33,6 +33,7 @@ import { spaceService } from './services/spaceService';
 import { questServiceSupabase } from './services/questServiceSupabase';
 import type { Space } from './types';
 import { useAdmin } from './hooks/useAdmin';
+import { useAuth } from './hooks/useAuth';
 import { wagmiConfig } from './config/wagmi';
 import { getDiceBearAvatar } from './utils/avatar';
 import './App.css';
@@ -261,6 +262,34 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
   const { connectors, connect, isPending, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
+  const { authenticate, isAuthenticated, isAuthenticating } = useAuth();
+  const hasAttemptedAuth = useRef(false);
+
+  // Auto-authenticate when wallet connects (only once)
+  useEffect(() => {
+    if (isConnected && address && chainId === 1155 && !isAuthenticated && !isAuthenticating && !hasAttemptedAuth.current) {
+      // Check if we have a valid token already
+      const existingToken = localStorage.getItem('auth_token');
+      if (!existingToken) {
+        hasAttemptedAuth.current = true;
+        console.log('🔐 Auto-authenticating wallet...');
+        authenticate().then(success => {
+          if (success) {
+            console.log('✅ Wallet authenticated successfully');
+          } else {
+            console.warn('⚠️ Wallet authentication failed - some features may be limited');
+            // Reset so user can try again if needed
+            hasAttemptedAuth.current = false;
+          }
+        });
+      }
+    }
+    
+    // Reset when disconnected
+    if (!isConnected) {
+      hasAttemptedAuth.current = false;
+    }
+  }, [isConnected, address, chainId, isAuthenticated, isAuthenticating, authenticate]);
 
   useEffect(() => {
     if (connectError) {
@@ -795,15 +824,15 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     if (params?.questName) {
       // Set activeTab BEFORE navigating to prevent route from resetting it
       setActiveTab('quest-detail');
-      navigate(`/quest-${createSlug(params.questName)}`);
+      navigate(`/quest/${createSlug(params.questName)}`);
     } else if (params?.questId) {
       // Set selectedQuestId immediately (synchronously) before async operations
       setSelectedQuestId(params.questId);
       // Store quest ID in localStorage for persistence
       localStorage.setItem('selectedQuestId', params.questId);
       
-      // Navigate immediately with questId to prevent route sync issues
-      navigate(`/quest-${params.questId}`);
+      // Navigate immediately with questId to prevent route sync issues - use /quest/ format
+      navigate(`/quest/${params.questId}`);
       
       // Set activeTab AFTER navigating to prevent route from resetting it
       setActiveTab('quest-detail');
@@ -815,7 +844,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           // Only update URL if it's different from current
           const currentPath = window.location.pathname;
           if (!currentPath.includes(questSlug)) {
-            navigate(`/quest-${questSlug}`, { replace: true });
+            navigate(`/quest/${questSlug}`, { replace: true });
           }
         }
       }).catch(() => {
@@ -1402,19 +1431,25 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 }}
               />
             )}
-            {activeTab === 'quest-detail' && (selectedQuestId || questName) && (
-              <QuestDetail 
-                questId={selectedQuestId || questName || ''}
-                onBack={() => {
-                  const previousTab = localStorage.getItem('previousTab') || 'discover';
-                  navigateToTab(previousTab);
-                }}
-                onNavigateToProfile={() => {
-                  // Navigate to user profile if needed
-                  // Profile navigation can be implemented here
-                }}
-              />
-            )}
+            {(() => {
+              if (activeTab !== 'quest-detail') return null;
+              const qId = selectedQuestId || questName;
+              if (!qId) return null;
+              return (
+                <QuestDetail
+                  key={`quest-detail-${qId}`}
+                  questId={qId}
+                  onBack={() => {
+                    const previousTab = localStorage.getItem('previousTab') || 'discover';
+                    navigateToTab(previousTab);
+                  }}
+                  onNavigateToProfile={() => {
+                    // Navigate to user profile if needed
+                    // Profile navigation can be implemented here
+                  }}
+                />
+              );
+            })()}
             {activeTab === 'space-builder' && (
               <SpaceBuilder 
                 onSpaceCreated={(spaceId) => {
@@ -1439,15 +1474,23 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               
               if (isSpaceDetailTab && selectedSpace) {
                 return (
-                  <SpaceDetailView 
+                  <SpaceDetailView
+                    key={`space-detail-${selectedSpace.id}`}
                     space={selectedSpace}
                     onBack={() => {
                       const previousTab = localStorage.getItem('previousTab') || 'discover';
                       navigateToTab(previousTab);
                     }}
                     onQuestClick={(questId) => {
+                      console.log('🎯 SpaceDetailView onQuestClick:', questId);
+                      // Store current space-detail as previous tab for back navigation
+                      localStorage.setItem('previousTab', 'space-detail');
+                      // Set quest ID first
                       setSelectedQuestId(questId);
-                      navigateToTab('quest-detail', { questId });
+                      localStorage.setItem('selectedQuestId', questId);
+                      // Then navigate - use /quest/ format for proper routing
+                      setActiveTab('quest-detail');
+                      navigate(`/quest/${questId}`);
                     }}
                     onBuilderAccess={(spaceId) => {
                       setSelectedSpaceId(spaceId);

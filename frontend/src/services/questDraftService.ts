@@ -38,25 +38,36 @@ export class QuestDraftService {
   /**
    * Save or update a quest draft.
    * Try backend API first (shared across devices), then Supabase, then localStorage.
+   * Returns info about where the draft was saved.
    */
-  async saveDraft(draftData: QuestDraftData): Promise<void> {
+  async saveDraft(draftData: QuestDraftData): Promise<{ savedTo: 'backend' | 'supabase' | 'localStorage' }> {
+    // Always save to localStorage as backup first
+    this.saveDraftToLocalStorage(draftData);
+    
+    // Try backend API first
     try {
       await apiClient.post('/quest-drafts', draftData);
-      // Keep a local backup so the user doesn't lose progress offline
-      this.saveDraftToLocalStorage(draftData);
-      return;
-    } catch (error) {
-      console.warn('⚠️ Backend draft save failed, trying Supabase/localStorage', error);
+      console.log('✅ Draft saved to backend API');
+      return { savedTo: 'backend' };
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 401) {
+        console.warn('⚠️ Backend draft save failed (401 Unauthorized) - auth token may be missing or expired');
+      } else {
+        console.warn('⚠️ Backend draft save failed, trying Supabase', error?.message || error);
+      }
     }
 
+    // Try Supabase directly
     if (supabase) {
       try {
+        const now = new Date().toISOString();
         const { error: supabaseError } = await supabase
           .from('quest_drafts')
           .upsert(
             {
               id: draftData.id,
-              user_address: draftData.user_address,
+              user_address: draftData.user_address.toLowerCase(),
               space_id: draftData.space_id || null,
               title: draftData.title || null,
               difficulty: draftData.difficulty || null,
@@ -73,28 +84,31 @@ export class QuestDraftService {
               distribution_type: draftData.distribution_type || null,
               current_step: draftData.current_step || 1,
               deposit_status: draftData.deposit_status || null,
-              updated_at: new Date().toISOString(),
+              created_at: now, // Will be ignored on update if column has default
+              updated_at: now,
             },
             {
-              onConflict: 'id', // Use id as the conflict resolution key
+              onConflict: 'id',
+              ignoreDuplicates: false,
             }
           );
 
         if (supabaseError) {
-          console.error('❌ Error saving draft to Supabase:', supabaseError);
+          console.error('❌ Error saving draft to Supabase:', supabaseError.message, supabaseError.details);
         } else {
-          this.saveDraftToLocalStorage(draftData);
-          return;
+          console.log('✅ Draft saved to Supabase');
+          return { savedTo: 'supabase' };
         }
-      } catch (supabaseError) {
-        console.error('❌ Exception saving draft to Supabase:', supabaseError);
+      } catch (supabaseError: any) {
+        console.error('❌ Exception saving draft to Supabase:', supabaseError?.message || supabaseError);
       }
     } else {
       console.warn('⚠️ Supabase client not initialized. Skipping Supabase save.');
     }
 
-    // Last resort: local only
-    this.saveDraftToLocalStorage(draftData);
+    // Last resort: local only (already saved above)
+    console.log('📦 Draft saved to localStorage only (backend/Supabase unavailable)');
+    return { savedTo: 'localStorage' };
   }
 
   /**

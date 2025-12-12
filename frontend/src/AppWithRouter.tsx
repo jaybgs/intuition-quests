@@ -44,29 +44,47 @@ export default function AppWithRouter() {
 
   // Get quest/space name from URL
   const getQuestName = (): string | null => {
+    const path = location.pathname;
+    // Handle /quest/* routes
+    if (path.startsWith('/quest/')) {
+      const questPart = path.replace('/quest/', '');
+      console.log('🔍 AppWithRouter: Extracted quest name from /quest/:', questPart);
+      return decodeURIComponent(questPart);
+    }
+    if (path.startsWith('/quest-')) {
+      const questPart = path.replace('/quest-', '');
+      console.log('🔍 AppWithRouter: Extracted quest name from /quest-:', questPart);
+      return decodeURIComponent(questPart);
+    }
     if (params.questName) {
       return decodeURIComponent(params.questName);
     }
-    const path = location.pathname;
-    if (path.startsWith('/quest/')) {
-      return decodeURIComponent(path.replace('/quest/', ''));
-    }
-    if (path.startsWith('/quest-')) {
-      return decodeURIComponent(path.replace('/quest-', ''));
+    if (params['*'] && location.pathname.includes('/quest')) {
+      console.log('🔍 AppWithRouter: Extracted quest name from wildcard:', params['*']);
+      return decodeURIComponent(params['*']);
     }
     return null;
   };
 
   const getSpaceName = (): string | null => {
+    const path = location.pathname;
+    // Handle /space/* routes
+    if (path.startsWith('/space/')) {
+      const spacePart = path.replace('/space/', '');
+      console.log('🔍 AppWithRouter: Extracted space name from /space/:', spacePart);
+      return decodeURIComponent(spacePart);
+    }
+    if (path.startsWith('/space-')) {
+      const spacePart = path.replace('/space-', '');
+      console.log('🔍 AppWithRouter: Extracted space name from /space-:', spacePart);
+      return decodeURIComponent(spacePart);
+    }
     if (params.spaceName) {
       return decodeURIComponent(params.spaceName);
     }
-    const path = location.pathname;
-    if (path.startsWith('/space/')) {
-      return decodeURIComponent(path.replace('/space/', ''));
-    }
-    if (path.startsWith('/space-')) {
-      return decodeURIComponent(path.replace('/space-', ''));
+    if (params['*'] && location.pathname.includes('/space')) {
+      console.log('🔍 AppWithRouter: Extracted space name from wildcard:', params['*']);
+      return decodeURIComponent(params['*']);
     }
     return null;
   };

@@ -8,6 +8,7 @@ const oauthExchangeSchema = z.object({
   platform: z.enum(['twitter', 'discord', 'github', 'google']),
   code: z.string(),
   redirectUri: z.string(),
+  codeVerifier: z.string().optional(), // For Twitter PKCE
 });
 
 // OAuth Client Secrets (should be in environment variables)
@@ -31,7 +32,7 @@ const OAUTH_CLIENT_IDS: Record<string, string> = {
 router.post('/exchange', async (req: Request, res: Response) => {
   try {
     const validated = oauthExchangeSchema.parse(req.body);
-    const { platform, code, redirectUri } = validated;
+    const { platform, code, redirectUri, codeVerifier } = validated;
 
     const clientId = OAUTH_CLIENT_IDS[platform];
     const clientSecret = OAUTH_SECRETS[platform];
@@ -49,6 +50,13 @@ router.post('/exchange', async (req: Request, res: Response) => {
     // Exchange code for access token
     switch (platform) {
       case 'twitter': {
+        if (!codeVerifier) {
+          return res.status(400).json({
+            success: false,
+            error: 'Twitter OAuth requires code_verifier for PKCE',
+          });
+        }
+        
         const tokenResponse = await axios.post(
           'https://api.twitter.com/2/oauth2/token',
           new URLSearchParams({
@@ -56,7 +64,7 @@ router.post('/exchange', async (req: Request, res: Response) => {
             grant_type: 'authorization_code',
             client_id: clientId,
             redirect_uri: redirectUri,
-            code_verifier: 'challenge', // Should use PKCE in production
+            code_verifier: codeVerifier, // Use provided PKCE code verifier
           }),
           {
             headers: {

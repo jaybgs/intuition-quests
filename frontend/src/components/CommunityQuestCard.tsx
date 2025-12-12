@@ -42,12 +42,28 @@ export function CommunityQuestCard({ quest, onClick }: CommunityQuestCardProps) 
   // Get creator profile picture
   const creatorProfilePic = getStoredProfilePic(creatorAddress);
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🎯 Quest card clicked:', quest.id, quest.title);
+    onClick();
+  };
+
   return (
     <div 
       className={`community-quest-card ${isHovered ? 'hovered' : ''} ${isCompleted ? 'completed' : ''}`}
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick(e as any);
+        }
+      }}
+      aria-label={`Quest: ${quest.title}. ${quest.iqPoints ?? quest.xpReward ?? 100} IQ points`}
     >
       <div className="quest-content">
         <div className="quest-header">

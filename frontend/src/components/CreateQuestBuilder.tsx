@@ -1366,7 +1366,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         setQuestDraftId(draftIdToSave);
       }
 
-      console.log('💾 Saving quest draft to backend...', {
+      console.log('💾 Saving quest draft...', {
         draftId: draftIdToSave,
         step: currentStep,
         hasTitle: !!title,
@@ -1374,7 +1374,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       });
 
       // Save to backend (Supabase) - this handles both create and update
-      await questDraftService.saveDraft({
+      const result = await questDraftService.saveDraft({
         id: draftIdToSave,
         user_address: address.toLowerCase(),
         space_id: spaceId || null,
@@ -1396,10 +1396,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         deposit_status: depositStatus || null,
       });
 
-      console.log('✅ Quest draft saved successfully to backend');
-
       if (showToastNotification) {
-        showToast('Quest draft saved successfully!', 'success');
+        if (result.savedTo === 'backend' || result.savedTo === 'supabase') {
+          showToast('Draft saved!', 'success');
+        } else {
+          showToast('Draft saved locally (sync unavailable)', 'warning');
+        }
       }
       onSave?.();
     } catch (error: any) {

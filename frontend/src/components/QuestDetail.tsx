@@ -551,6 +551,38 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   }, [address, questId]);
 
+  // Load read documents from localStorage - MUST BE BEFORE EARLY RETURNS
+  useEffect(() => {
+    if (questId && address) {
+      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const converted: Record<string, Set<number>> = {};
+          Object.keys(parsed).forEach(key => {
+            converted[key] = new Set(parsed[key]);
+          });
+          setReadDocuments(converted);
+        } catch (e) {
+          console.error('Error loading read documents:', e);
+        }
+      }
+    }
+  }, [questId, address]);
+
+  // Save read documents to localStorage - MUST BE BEFORE EARLY RETURNS
+  useEffect(() => {
+    if (questId && address && Object.keys(readDocuments).length > 0) {
+      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
+      const toSave: Record<string, number[]> = {};
+      Object.keys(readDocuments).forEach(key => {
+        toSave[key] = Array.from(readDocuments[key]);
+      });
+      localStorage.setItem(storageKey, JSON.stringify(toSave));
+    }
+  }, [readDocuments, questId, address]);
+
   if (isLoading) {
     return (
       <div className="quest-detail-container">
@@ -749,38 +781,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }, 2000); // 2 second verification delay
   };
 
-  // Load read documents from localStorage
-  useEffect(() => {
-    if (questId && address) {
-      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          const converted: Record<string, Set<number>> = {};
-          Object.keys(parsed).forEach(key => {
-            converted[key] = new Set(parsed[key]);
-          });
-          setReadDocuments(converted);
-        } catch (e) {
-          console.error('Error loading read documents:', e);
-        }
-      }
-    }
-  }, [questId, address]);
-
-  // Save read documents to localStorage
-  useEffect(() => {
-    if (questId && address && Object.keys(readDocuments).length > 0) {
-      const storageKey = `read_docs_${questId}_${address.toLowerCase()}`;
-      const toSave: Record<string, number[]> = {};
-      Object.keys(readDocuments).forEach(key => {
-        toSave[key] = Array.from(readDocuments[key]);
-      });
-      localStorage.setItem(storageKey, JSON.stringify(toSave));
-    }
-  }, [readDocuments, questId, address]);
-
   // Handle marking a document as read
   const handleMarkDocumentRead = (stepId: string, docIndex: number) => {
     setReadDocuments(prev => {
@@ -830,6 +830,13 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   const handleClaimIQ = async () => {
     // Prevent quest creator from joining their own quest (unspoken rule)
     if (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase()) {
+      return;
+    }
+
+    // Check if quest has expired
+    const isExpired = quest.expiresAt ? Date.now() > quest.expiresAt : false;
+    if (isExpired) {
+      showToast('This quest has ended', 'warning');
       return;
     }
 
@@ -1038,6 +1045,9 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     step.completed || (verificationStates[step.id]?.status === 'verified')
   ).length;
   const progressPercentage = taskSteps.length > 0 ? (completedTasksCount / taskSteps.length) * 100 : 0;
+  
+  // Check if quest has expired
+  const isQuestExpired = quest.expiresAt ? Date.now() > quest.expiresAt : false;
 
   // Get creator logo/initial
   const creatorInitials = quest.creatorType === 'community' && quest.creatorAddress
@@ -1077,10 +1087,24 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
               </button>
             </div>
           </div>
-          {/* Show participant count (quest participants) - always show */}
-          <span className="quest-detail-follower-count">{participantCount >= 1000 ? `${(participantCount / 1000).toFixed(1)}K` : participantCount.toString()}</span>
         </div>
         <div className="quest-detail-header-right">
+          {/* Twitter icon with space creator's X link - always show if we have a URL */}
+          {(spaceTwitterUrl || quest.twitterLink) && (
+            <a 
+              href={spaceTwitterUrl || quest.twitterLink || '#'} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="quest-detail-header-icon-btn quest-detail-twitter-icon"
+              title="Twitter"
+              style={{ zIndex: 10005, position: 'relative' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </a>
+          )}
+          
           {/* Message icon with feedback tooltip */}
           <div 
             className="quest-detail-header-icon-wrapper"
@@ -1096,21 +1120,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
               <div className="quest-detail-tooltip">Feedback</div>
             )}
           </div>
-          
-          {/* Twitter icon with space creator's X link - always show if we have a URL */}
-          {(spaceTwitterUrl || quest.twitterLink) && (
-            <a 
-              href={spaceTwitterUrl || quest.twitterLink || '#'} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="quest-detail-header-icon-btn"
-              title="Twitter"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-            </a>
-          )}
           
           {/* 3 dots dropdown menu */}
           <div className="quest-detail-dropdown-wrapper" ref={dropdownRef}>
@@ -1154,18 +1163,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       <div className="quest-detail-title-section">
         <h1 className="quest-detail-page-title">{quest.title}'s Tasks</h1>
         <div className="quest-detail-metadata-row">
-          <div className="quest-detail-participants-avatars">
-            {/* Mock avatars - in real app would show actual participant avatars */}
-            {Array.from({ length: Math.min(participantCount, 5) }).map((_, i) => (
-              <div key={i} className="quest-detail-participant-avatar">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </div>
-            ))}
-          </div>
-          <span className="quest-detail-participant-count">{participantCount > 0 ? (participantCount >= 1000 ? `${(participantCount / 1000).toFixed(1)}K` : participantCount.toString()) : participantCount.toString()}</span>
           {quest.createdAt && (
             <span className="quest-detail-date">{formatDate(quest.createdAt)}</span>
           )}
@@ -1188,7 +1185,9 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           const cooldownSeconds = verificationState.cooldownEnd 
             ? Math.max(0, Math.ceil((verificationState.cooldownEnd - Date.now()) / 1000))
             : 0;
-          const isDisabled = isVerifying || isCooldown;
+          // Check if quest has expired
+          const isExpired = quest.expiresAt ? Date.now() > quest.expiresAt : false;
+          const isDisabled = isVerifying || isCooldown || isExpired;
           const isCompleted = step.completed || isVerified;
 
           return (
@@ -1241,7 +1240,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                   }
                 }}
                 disabled={isDisabled}
-                title={isCooldown ? `Verify again in ${cooldownSeconds}s` : isVerified ? 'Verified' : 'Verify task'}
+                title={isExpired ? 'Quest has ended' : isCooldown ? `Verify again in ${cooldownSeconds}s` : isVerified ? 'Verified' : 'Verify task'}
               >
                 {isVerified ? (
                   <img src="/verified.svg" alt="Verified" width="16" height="16" />
@@ -1264,14 +1263,18 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       {/* Claim Button - Below Tasks, Right Aligned */}
       <div className="quest-detail-claim-button-container">
         <button
-          className={`quest-detail-claim-button-inline ${!allTasksCompleted || isClaimed || (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase()) ? 'disabled' : ''}`}
+          className={`quest-detail-claim-button-inline ${!allTasksCompleted || isClaimed || isQuestExpired || (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase()) ? 'disabled' : ''}`}
           onClick={handleClaimIQ}
-          disabled={!allTasksCompleted || isClaimed || isCompleting || isCheckingClaim || !address || (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase())}
+          disabled={!allTasksCompleted || isClaimed || isCompleting || isCheckingClaim || !address || isQuestExpired || (address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase())}
         >
           {isCheckingClaim ? (
             <>
               <div className="claim-spinner"></div>
               Checking...
+            </>
+          ) : isQuestExpired ? (
+            <>
+              Quest Ended
             </>
           ) : isClaimed ? (
             <>

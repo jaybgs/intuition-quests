@@ -46,9 +46,38 @@ VITE_API_URL=https://trust-quests.onrender.com/api
 
 # OAuth Client IDs (optional)
 # Get these from the respective OAuth providers
+# If not provided, OAuth will fall back to demo mode (prompt for username/email)
+
+# Twitter/X OAuth
+# 1. Go to https://developer.twitter.com/en/portal/dashboard
+# 2. Create a new app or use an existing one
+# 3. Go to "Keys and tokens" tab
+# 4. Copy the "Client ID" (not the API Key)
+# 5. Set callback URL: http://localhost:5173/oauth/twitter/callback (dev) or your production URL
 VITE_TWITTER_CLIENT_ID=
+
+# Discord OAuth
+# 1. Go to https://discord.com/developers/applications
+# 2. Create a new application or select an existing one
+# 3. Go to "OAuth2" section
+# 4. Copy the "Client ID"
+# 5. Add redirect URI: http://localhost:5173/oauth/discord/callback (dev) or your production URL
 VITE_DISCORD_CLIENT_ID=
+
+# GitHub OAuth
+# 1. Go to https://github.com/settings/developers
+# 2. Click "New OAuth App"
+# 3. Fill in application details
+# 4. Set Authorization callback URL: http://localhost:5173/oauth/github/callback (dev) or your production URL
+# 5. Copy the "Client ID"
 VITE_GITHUB_CLIENT_ID=
+
+# Google OAuth
+# 1. Go to https://console.cloud.google.com/apis/credentials
+# 2. Create a new OAuth 2.0 Client ID
+# 3. Set application type to "Web application"
+# 4. Add authorized redirect URI: http://localhost:5173/oauth/google/callback (dev) or your production URL
+# 5. Copy the "Client ID"
 VITE_GOOGLE_CLIENT_ID=
 
 # Privy App ID (optional, if using Privy for authentication)

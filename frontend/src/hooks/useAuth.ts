@@ -1,5 +1,5 @@
 import { useAccount, useSignMessage } from 'wagmi';
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { apiClient } from '../services/apiClient';
 import { generateAuthToken } from '../utils/auth';
 
@@ -7,10 +7,23 @@ export function useAuth() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('auth_token');
+    }
+    return null;
+  });
 
-  const authenticate = async (): Promise<boolean> => {
+  const authenticate = useCallback(async (): Promise<boolean> => {
     if (!address || !isConnected) {
       return false;
+    }
+
+    // Check if already authenticated
+    const existingToken = localStorage.getItem('auth_token');
+    if (existingToken) {
+      setAuthToken(existingToken);
+      return true;
     }
 
     setIsAuthenticating(true);
@@ -31,6 +44,7 @@ export function useAuth() {
 
       // Store token
       localStorage.setItem('auth_token', token);
+      setAuthToken(token);
 
       return true;
     } catch (error: any) {
@@ -40,20 +54,19 @@ export function useAuth() {
     } finally {
       setIsAuthenticating(false);
     }
-  };
+  }, [address, isConnected, signMessageAsync]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
-  };
+    setAuthToken(null);
+  }, []);
 
-  const isAuthenticated = () => {
-    return !!localStorage.getItem('auth_token');
-  };
+  const isAuthenticated = useMemo(() => !!authToken, [authToken]);
 
   return {
     authenticate,
     logout,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated,
     isAuthenticating,
   };
 }

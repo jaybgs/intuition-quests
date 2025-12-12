@@ -1,11 +1,17 @@
 import { supabase } from '../config/supabase.js';
 import { QuestService } from './questService.js';
+import { XPService } from './xpService.js';
+import { UserService } from './userService.js';
 
 export class CompletionService {
   private questService: QuestService;
+  private xpService: XPService;
+  private userService: UserService;
 
   constructor() {
     this.questService = new QuestService();
+    this.xpService = new XPService();
+    this.userService = new UserService();
   }
 
   async completeQuest(questId: string, userAddress: string) {
@@ -21,14 +27,21 @@ export class CompletionService {
       throw new Error('Quest already completed by this user');
     }
 
-    // Add completion
+    // Get or create user
+    const user = await this.userService.getOrCreateUser(userAddress);
+    
+    // Add completion to quest
     await this.questService.addQuestCompletion(questId, userAddress);
+
+    // Update user XP
+    await this.xpService.addXP(user.id, quest.xpReward || quest.iqPoints || 100);
 
     return {
       questId,
       userAddress,
       completedAt: new Date().toISOString(),
-      xpEarned: quest.xpReward,
+      xpEarned: quest.xpReward || quest.iqPoints || 100,
+      claimId: undefined, // TODO: Add trust contract integration
     };
   }
 

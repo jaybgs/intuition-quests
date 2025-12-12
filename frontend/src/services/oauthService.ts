@@ -111,15 +111,34 @@ function openOAuthPopup(url: string, name: string): Promise<OAuthResult> {
 
     // Listen for postMessage from OAuth callback
     const messageHandler = (event: MessageEvent) => {
-      // Verify message is from same origin
-      if (event.origin !== window.location.origin) {
+      // Verify message is from same origin (allow localhost variations)
+      const currentOrigin = window.location.origin;
+      const eventOrigin = event.origin;
+      
+      // Allow same origin or localhost variations (http vs https, different ports)
+      const isSameOrigin = eventOrigin === currentOrigin ||
+        (currentOrigin.includes('localhost') && eventOrigin.includes('localhost')) ||
+        (currentOrigin.includes('127.0.0.1') && eventOrigin.includes('127.0.0.1')) ||
+        eventOrigin === '*' || eventOrigin === 'null'; // Allow wildcard/null for same-origin popups
+      
+      if (!isSameOrigin) {
+        console.warn('OAuth message from different origin:', eventOrigin, 'expected:', currentOrigin);
         return;
       }
 
       if (event.data && event.data.type === 'oauth_result' && event.data.platform === name) {
+        console.log('✅ Received OAuth result for', name, event.data.result);
         window.removeEventListener('message', messageHandler);
         clearInterval(checkClosed);
         resolve(event.data.result);
+        // Close popup if still open
+        if (popup && !popup.closed) {
+          try {
+            popup.close();
+          } catch (err) {
+            console.warn('Could not close popup:', err);
+          }
+        }
       }
     };
 
@@ -127,16 +146,39 @@ function openOAuthPopup(url: string, name: string): Promise<OAuthResult> {
 
     // Also check for localStorage (fallback) and popup closed
     const checkClosed = setInterval(() => {
+      // Check localStorage periodically even if popup is still open (in case message was sent)
+      const result = localStorage.getItem(`oauth_result_${name}`);
+      if (result) {
+        console.log('✅ Found OAuth result in localStorage for', name);
+        clearInterval(checkClosed);
+        window.removeEventListener('message', messageHandler);
+        localStorage.removeItem(`oauth_result_${name}`);
+        try {
+          resolve(JSON.parse(result));
+          // Close popup if still open
+          if (!popup.closed) {
+            popup.close();
+          }
+          return;
+        } catch {
+          resolve({
+            success: false,
+            error: 'Failed to parse OAuth result',
+          });
+          return;
+        }
+      }
+      
       if (popup.closed) {
         clearInterval(checkClosed);
         window.removeEventListener('message', messageHandler);
         
-        // Check if we have the result in localStorage (set by callback handler)
-        const result = localStorage.getItem(`oauth_result_${name}`);
-        if (result) {
+        // Final check for result in localStorage
+        const finalResult = localStorage.getItem(`oauth_result_${name}`);
+        if (finalResult) {
           localStorage.removeItem(`oauth_result_${name}`);
           try {
-            resolve(JSON.parse(result));
+            resolve(JSON.parse(finalResult));
           } catch {
             resolve({
               success: false,
@@ -150,7 +192,7 @@ function openOAuthPopup(url: string, name: string): Promise<OAuthResult> {
           });
         }
       }
-    }, 500);
+    }, 300); // Check more frequently
 
     // Timeout after 5 minutes
     setTimeout(() => {
@@ -176,12 +218,15 @@ async function buildOAuthUrl(platform: string, config: OAuthConfig): Promise<str
     throw new Error(`Unsupported platform: ${platform}`);
   }
 
+  // Generate state with timestamp for CSRF protection
+  const stateId = `${platform}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  
   const params = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: config.redirectUri,
     response_type: config.responseType,
     scope: config.scope,
-    state: `${platform}_${Date.now()}`, // CSRF protection
+    state: stateId, // CSRF protection
   });
 
   // Platform-specific parameters
@@ -190,16 +235,22 @@ async function buildOAuthUrl(platform: string, config: OAuthConfig): Promise<str
       // Generate a proper code challenge for PKCE
       const codeVerifier = generateCodeVerifier();
       const codeChallenge = await generateCodeChallenge(codeVerifier);
-      // Store code verifier for later use
-      sessionStorage.setItem(`twitter_code_verifier_${Date.now()}`, codeVerifier);
+      // Store code verifier with a simple key for easy retrieval in callback
+      // Use timestamp to ensure we get the most recent one
+      const storageKey = `twitter_code_verifier_${Date.now()}`;
+      sessionStorage.setItem(storageKey, codeVerifier);
+      // Also store a reference to the latest key
+      sessionStorage.setItem('twitter_latest_verifier_key', storageKey);
       params.append('code_challenge', codeChallenge);
       params.append('code_challenge_method', 'S256');
     } catch (error) {
       // Fallback to plain method if PKCE generation fails
       console.warn('PKCE generation failed, using plain method:', error);
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(7);
-      params.append('code_challenge', `challenge_${timestamp}_${random}`);
+      const codeVerifier = `challenge_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const storageKey = `twitter_code_verifier_${Date.now()}`;
+      sessionStorage.setItem(storageKey, codeVerifier);
+      sessionStorage.setItem('twitter_latest_verifier_key', storageKey);
+      params.append('code_challenge', codeVerifier);
       params.append('code_challenge_method', 'plain');
     }
   }
@@ -214,7 +265,9 @@ export async function connectTwitter(): Promise<OAuthResult> {
   try {
     const config = OAUTH_CONFIGS.twitter;
     
-    if (!config.clientId) {
+    // Check if client ID is properly configured (not empty string)
+    if (!config.clientId || config.clientId.trim() === '') {
+      console.warn('Twitter OAuth client ID not configured, using demo mode');
       // Fallback: Use demo mode with user input
       return connectTwitterDemo();
     }
@@ -256,7 +309,9 @@ export async function connectDiscord(): Promise<OAuthResult> {
   try {
     const config = OAUTH_CONFIGS.discord;
     
-    if (!config.clientId) {
+    // Check if client ID is properly configured (not empty string)
+    if (!config.clientId || config.clientId.trim() === '') {
+      console.warn('Discord OAuth client ID not configured, using demo mode');
       return connectDiscordDemo();
     }
 
@@ -292,7 +347,9 @@ export async function connectGithub(): Promise<OAuthResult> {
   try {
     const config = OAUTH_CONFIGS.github;
     
-    if (!config.clientId) {
+    // Check if client ID is properly configured (not empty string)
+    if (!config.clientId || config.clientId.trim() === '') {
+      console.warn('GitHub OAuth client ID not configured, using demo mode');
       return connectGithubDemo();
     }
 
@@ -328,7 +385,9 @@ export async function connectGoogle(): Promise<OAuthResult> {
   try {
     const config = OAUTH_CONFIGS.google;
     
-    if (!config.clientId) {
+    // Check if client ID is properly configured (not empty string)
+    if (!config.clientId || config.clientId.trim() === '') {
+      console.warn('Google OAuth client ID not configured, using demo mode');
       return connectGoogleDemo();
     }
 

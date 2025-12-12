@@ -1383,12 +1383,18 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             {activeTab === 'profile' && <UserProfile />}
             {activeTab === 'dashboard' && <UserDashboard onEditProfile={() => {
               console.log('onEditProfile called, setting activeTab to edit-profile');
+              console.log('Current activeTab before:', activeTab);
               setActiveTab('edit-profile');
+              console.log('Set activeTab to edit-profile');
             }} />}
-            {activeTab === 'edit-profile' && <EditProfile onBack={() => {
-              setActiveTab('dashboard');
-              navigate('/dashboard');
-            }} />}
+            {activeTab === 'edit-profile' && (() => {
+              console.log('Rendering EditProfile component');
+              return <EditProfile onBack={() => {
+                console.log('EditProfile onBack called');
+                setActiveTab('dashboard');
+                navigate('/dashboard');
+              }} />;
+            })()}
             {activeTab === 'community' && (
               <Community 
                 onSeeMoreLeaderboard={() => setActiveTab('full-leaderboard')}

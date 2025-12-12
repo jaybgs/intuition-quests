@@ -267,7 +267,8 @@ export async function connectTwitter(): Promise<OAuthResult> {
     
     // Check if client ID is properly configured (not empty string)
     if (!config.clientId || config.clientId.trim() === '') {
-      console.warn('Twitter OAuth client ID not configured, using demo mode');
+      console.warn('❌ Twitter OAuth client ID not configured, using demo mode');
+      console.warn('💡 To fix: Add VITE_TWITTER_CLIENT_ID to your frontend/.env file');
       // Fallback: Use demo mode with user input
       return connectTwitterDemo();
     }
@@ -311,7 +312,8 @@ export async function connectDiscord(): Promise<OAuthResult> {
     
     // Check if client ID is properly configured (not empty string)
     if (!config.clientId || config.clientId.trim() === '') {
-      console.warn('Discord OAuth client ID not configured, using demo mode');
+      console.warn('❌ Discord OAuth client ID not configured, using demo mode');
+      console.warn('💡 To fix: Add VITE_DISCORD_CLIENT_ID to your frontend/.env file');
       return connectDiscordDemo();
     }
 
@@ -349,7 +351,8 @@ export async function connectGithub(): Promise<OAuthResult> {
     
     // Check if client ID is properly configured (not empty string)
     if (!config.clientId || config.clientId.trim() === '') {
-      console.warn('GitHub OAuth client ID not configured, using demo mode');
+      console.warn('❌ GitHub OAuth client ID not configured, using demo mode');
+      console.warn('💡 To fix: Add VITE_GITHUB_CLIENT_ID to your frontend/.env file');
       return connectGithubDemo();
     }
 
@@ -387,7 +390,8 @@ export async function connectGoogle(): Promise<OAuthResult> {
     
     // Check if client ID is properly configured (not empty string)
     if (!config.clientId || config.clientId.trim() === '') {
-      console.warn('Google OAuth client ID not configured, using demo mode');
+      console.warn('❌ Google OAuth client ID not configured, using demo mode');
+      console.warn('💡 To fix: Add VITE_GOOGLE_CLIENT_ID to your frontend/.env file');
       return connectGoogleDemo();
     }
 

@@ -439,6 +439,8 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
     });
   };
 
+  console.log('UserDashboard rendering, onEditProfile available:', !!onEditProfile);
+
   return (
     <div className="user-dashboard">
       {/* Edit Profile Button - Outside Rectangle */}
@@ -446,7 +448,12 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
         <button
           onClick={() => {
             console.log('Edit Profile button clicked');
-            onEditProfile();
+            console.log('onEditProfile function:', onEditProfile);
+            if (onEditProfile) {
+              onEditProfile();
+            } else {
+              console.error('onEditProfile is undefined!');
+            }
           }}
           className="edit-profile-button-galxe"
         >

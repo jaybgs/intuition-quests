@@ -613,33 +613,33 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         setSelectedQuestId(decodedQuestName);
       } else {
         // Otherwise, try to find the quest by name/slug
-        const findQuestByName = async () => {
-          try {
+      const findQuestByName = async () => {
+        try {
             const quests = await questServiceSupabase.getAllQuests();
             const quest = quests.find((q: any) => {
               const questSlug = q.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
               const urlSlug = decodedQuestName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
               return q.id === decodedQuestName || 
                      q.id === questName || 
-                     q.title.toLowerCase().replace(/\s+/g, '-') === questName.toLowerCase() ||
+            q.title.toLowerCase().replace(/\s+/g, '-') === questName.toLowerCase() ||
                      questSlug === urlSlug;
             });
-            if (quest) {
+          if (quest) {
               console.log('🔍 Found quest from URL:', quest.id, quest.title);
-              setSelectedQuestId(quest.id);
+            setSelectedQuestId(quest.id);
             } else {
               console.warn('🔍 Quest not found for questName:', questName);
               // If quest not found by name, try using questName as ID anyway
               setSelectedQuestId(decodedQuestName);
-            }
-          } catch (error) {
-            console.error('Error finding quest:', error);
+          }
+        } catch (error) {
+          console.error('Error finding quest:', error);
             // On error, still try to use questName as ID
             setSelectedQuestId(decodedQuestName);
-          }
-        };
-        findQuestByName();
-      }
+        }
+      };
+      findQuestByName();
+    }
     }
   }, [questName, activeTab, initialTab, selectedQuestId]);
 
@@ -1436,18 +1436,18 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               const qId = selectedQuestId || questName;
               if (!qId) return null;
               return (
-                <QuestDetail
+              <QuestDetail 
                   key={`quest-detail-${qId}`}
                   questId={qId}
-                  onBack={() => {
+                onBack={() => {
                     const previousTab = localStorage.getItem('previousTab') || 'discover';
-                    navigateToTab(previousTab);
-                  }}
-                  onNavigateToProfile={() => {
-                    // Navigate to user profile if needed
-                    // Profile navigation can be implemented here
-                  }}
-                />
+                  navigateToTab(previousTab);
+                }}
+                onNavigateToProfile={() => {
+                  // Navigate to user profile if needed
+                  // Profile navigation can be implemented here
+                }}
+              />
               );
             })()}
             {activeTab === 'space-builder' && (
@@ -1474,7 +1474,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               
               if (isSpaceDetailTab && selectedSpace) {
                 return (
-                  <SpaceDetailView
+                  <SpaceDetailView 
                     key={`space-detail-${selectedSpace.id}`}
                     space={selectedSpace}
                     onBack={() => {

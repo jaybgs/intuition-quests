@@ -42,7 +42,7 @@ export class QuestDraftService {
    */
   async saveDraft(draftData: QuestDraftData): Promise<{ savedTo: 'backend' | 'supabase' | 'localStorage' }> {
     // Always save to localStorage as backup first
-    this.saveDraftToLocalStorage(draftData);
+      this.saveDraftToLocalStorage(draftData);
     
     // Try backend API first
     try {
@@ -63,35 +63,35 @@ export class QuestDraftService {
       try {
         const now = new Date().toISOString();
         const { error: supabaseError } = await supabase
-          .from('quest_drafts')
-          .upsert(
-            {
-              id: draftData.id,
+        .from('quest_drafts')
+        .upsert(
+          {
+            id: draftData.id,
               user_address: draftData.user_address.toLowerCase(),
-              space_id: draftData.space_id || null,
-              title: draftData.title || null,
-              difficulty: draftData.difficulty || null,
-              description: draftData.description || null,
-              image_preview: draftData.image_preview || null,
-              end_date: draftData.end_date || null,
-              end_time: draftData.end_time || null,
-              selected_actions: draftData.selected_actions || null,
-              number_of_winners: draftData.number_of_winners || null,
-              winner_prizes: draftData.winner_prizes || null,
-              iq_points: draftData.iq_points || null,
-              reward_deposit: draftData.reward_deposit || null,
-              reward_token: draftData.reward_token || null,
-              distribution_type: draftData.distribution_type || null,
-              current_step: draftData.current_step || 1,
+            space_id: draftData.space_id || null,
+            title: draftData.title || null,
+            difficulty: draftData.difficulty || null,
+            description: draftData.description || null,
+            image_preview: draftData.image_preview || null,
+            end_date: draftData.end_date || null,
+            end_time: draftData.end_time || null,
+            selected_actions: draftData.selected_actions || null,
+            number_of_winners: draftData.number_of_winners || null,
+            winner_prizes: draftData.winner_prizes || null,
+            iq_points: draftData.iq_points || null,
+            reward_deposit: draftData.reward_deposit || null,
+            reward_token: draftData.reward_token || null,
+            distribution_type: draftData.distribution_type || null,
+            current_step: draftData.current_step || 1,
               deposit_status: draftData.deposit_status || null,
               created_at: now, // Will be ignored on update if column has default
               updated_at: now,
-            },
-            {
+          },
+          {
               onConflict: 'id',
               ignoreDuplicates: false,
-            }
-          );
+          }
+        );
 
         if (supabaseError) {
           console.error('❌ Error saving draft to Supabase:', supabaseError.message, supabaseError.details);
@@ -125,13 +125,13 @@ export class QuestDraftService {
     }
 
     if (supabase) {
-      try {
+    try {
         const { data, error: supabaseError } = await supabase
-          .from('quest_drafts')
-          .select('*')
-          .eq('id', draftId)
-          .eq('user_address', userAddress.toLowerCase())
-          .single();
+        .from('quest_drafts')
+        .select('*')
+        .eq('id', draftId)
+        .eq('user_address', userAddress.toLowerCase())
+        .single();
 
         if (!supabaseError && data) {
           return this.mapDraftFromDb(data);
@@ -141,7 +141,7 @@ export class QuestDraftService {
       }
     }
 
-    return this.getDraftFromLocalStorage(draftId, userAddress);
+        return this.getDraftFromLocalStorage(draftId, userAddress);
   }
 
   /**
@@ -158,34 +158,34 @@ export class QuestDraftService {
     }
 
     if (supabase) {
-      try {
-        let query = supabase
-          .from('quest_drafts')
-          .select('id, title, current_step, space_id, updated_at')
-          .eq('user_address', userAddress.toLowerCase())
-          .order('updated_at', { ascending: false });
+    try {
+      let query = supabase
+        .from('quest_drafts')
+        .select('id, title, current_step, space_id, updated_at')
+        .eq('user_address', userAddress.toLowerCase())
+        .order('updated_at', { ascending: false });
 
-        if (spaceId) {
-          query = query.or(`space_id.eq.${spaceId},space_id.is.null`);
-        }
+      if (spaceId) {
+        query = query.or(`space_id.eq.${spaceId},space_id.is.null`);
+      }
 
         const { data, error: supabaseError } = await query;
 
         if (!supabaseError && data) {
-          return (data || []).map((draft: any) => ({
-            id: draft.id,
-            title: draft.title || 'Untitled Quest',
-            updatedAt: new Date(draft.updated_at).getTime(),
-            currentStep: draft.current_step || 1,
-            spaceId: draft.space_id || null,
-          }));
+      return (data || []).map((draft: any) => ({
+        id: draft.id,
+        title: draft.title || 'Untitled Quest',
+        updatedAt: new Date(draft.updated_at).getTime(),
+        currentStep: draft.current_step || 1,
+        spaceId: draft.space_id || null,
+      }));
         }
       } catch (supabaseError) {
         console.warn('⚠️ Supabase draft list fetch failed, using localStorage', supabaseError);
       }
     }
 
-    return this.getAllDraftsFromLocalStorage(userAddress, spaceId);
+      return this.getAllDraftsFromLocalStorage(userAddress, spaceId);
   }
 
   /**
@@ -201,23 +201,23 @@ export class QuestDraftService {
     }
 
     if (supabase) {
-      try {
+    try {
         const { error: supabaseError } = await supabase
-          .from('quest_drafts')
-          .delete()
-          .eq('id', draftId)
-          .eq('user_address', userAddress.toLowerCase());
+        .from('quest_drafts')
+        .delete()
+        .eq('id', draftId)
+        .eq('user_address', userAddress.toLowerCase());
 
         if (!supabaseError) {
-          this.deleteDraftFromLocalStorage(draftId, userAddress);
+        this.deleteDraftFromLocalStorage(draftId, userAddress);
           return;
-        }
+      }
       } catch (supabaseError) {
         console.warn('⚠️ Supabase draft delete failed, removing local copy', supabaseError);
       }
     }
 
-    this.deleteDraftFromLocalStorage(draftId, userAddress);
+      this.deleteDraftFromLocalStorage(draftId, userAddress);
   }
 
   /**

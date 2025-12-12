@@ -220,7 +220,7 @@ async function buildOAuthUrl(platform: string, config: OAuthConfig): Promise<str
 
   // Generate state with timestamp for CSRF protection
   const stateId = `${platform}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-  
+
   const params = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: config.redirectUri,

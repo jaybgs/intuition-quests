@@ -1319,7 +1319,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
               if (depositInfo.totalAmount > 0n) {
                 setDepositStatus('deposited');
               }
-            } catch (error) {
+        } catch (error) {
               // If contract not deployed or other error, keep current status
               console.warn('Could not check deposit status from blockchain:', error);
             }
@@ -1870,7 +1870,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     if (stepNumber <= currentStep + 1 && stepNumber >= 1) {
       const maxStep = 5;
       if (stepNumber <= maxStep) {
-        setCurrentStep(stepNumber);
+          setCurrentStep(stepNumber);
       }
     }
   };

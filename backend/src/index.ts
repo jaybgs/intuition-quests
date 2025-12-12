@@ -24,8 +24,10 @@ const PORT = process.env.PORT || 3001;
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     const allowedOrigins = [
-      'https://www.trustquests.com',
-      'https://trustquests.com',
+      'https://yourdomain.com',           // Replace with your actual domain
+      'https://www.yourdomain.com',       // If using www subdomain
+      'https://trustquests.com',          // Keep existing if still using
+      'https://www.trustquests.com',      // Keep existing if still using
       'http://localhost:5173',
       'http://localhost:3000',
       'http://127.0.0.1:5173',

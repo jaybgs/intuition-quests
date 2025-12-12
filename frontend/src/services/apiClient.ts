@@ -29,10 +29,6 @@ class ApiClient {
         if (error.response?.status === 401) {
           // Handle unauthorized - clear token
           this.clearAuthToken();
-          // Dispatch event to trigger re-authentication if wallet is connected
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('auth:token-expired'));
-          }
         }
         return Promise.reject(error);
       }

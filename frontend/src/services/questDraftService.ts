@@ -19,6 +19,7 @@ export interface QuestDraftData {
   reward_token?: string | null;
   distribution_type?: string | null;
   current_step?: number | null;
+  deposit_status?: 'none' | 'approved' | 'deposited' | null;
 }
 
 export interface QuestDraftListItem {
@@ -71,6 +72,7 @@ export class QuestDraftService {
               reward_token: draftData.reward_token || null,
               distribution_type: draftData.distribution_type || null,
               current_step: draftData.current_step || 1,
+              deposit_status: draftData.deposit_status || null,
               updated_at: new Date().toISOString(),
             },
             {
@@ -226,6 +228,7 @@ export class QuestDraftService {
       reward_token: dbDraft.reward_token,
       distribution_type: dbDraft.distribution_type,
       current_step: dbDraft.current_step,
+      deposit_status: dbDraft.deposit_status || null,
     };
   }
 
@@ -252,6 +255,7 @@ export class QuestDraftService {
         rewardToken: draftData.reward_token,
         distributionType: draftData.distribution_type,
         currentStep: draftData.current_step || 1,
+        depositStatus: draftData.deposit_status || null,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
@@ -310,6 +314,7 @@ export class QuestDraftService {
         reward_token: draft.rewardToken || null,
         distribution_type: draft.distributionType || null,
         current_step: draft.currentStep || 1,
+        deposit_status: draft.depositStatus || null,
       };
     } catch (error) {
       console.error('Error reading draft from localStorage:', error);

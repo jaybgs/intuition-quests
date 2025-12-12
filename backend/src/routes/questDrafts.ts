@@ -22,6 +22,7 @@ const saveDraftSchema = z.object({
   reward_token: z.string().optional().nullable(),
   distribution_type: z.string().optional().nullable(),
   current_step: z.number().int().positive().optional(),
+  deposit_status: z.enum(['none', 'approved', 'deposited']).optional().nullable(),
 });
 
 // POST /api/quest-drafts - create or update a draft

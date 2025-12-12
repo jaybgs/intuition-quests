@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { useAccount } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { showToast } from './Toast';
 import { spaceService } from '../services/spaceService';
-import { DiscoverPageSkeleton } from './Skeleton';
+import { questServiceSupabase } from '../services/questServiceSupabase';
+import { DiscoverPageSkeleton, SpaceCardSkeleton, DAppCardSkeleton } from './Skeleton';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import type { Space } from '../types';
 import type { Quest } from '../types';
@@ -51,16 +51,19 @@ const projects: Project[] = [
 interface ProjectSlideshowProps {
   onQuestClick?: (questId: string) => void;
   onCreateSpace?: () => void;
-  onSpaceClick?: (spaceId: string) => void;
+  onSpaceClick?: (space: Space) => void;
+  onSeeMoreSpaces?: () => void;
 }
 
-export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: ProjectSlideshowProps) {
-  const navigate = useNavigate();
+export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, onSeeMoreSpaces }: ProjectSlideshowProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [sortByVerified, setSortByVerified] = useState(false);
-  const [sortByTrending, setSortByTrending] = useState(false);
+  const [sortByFollowing, setSortByFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSpacesLoading, setIsSpacesLoading] = useState(true);
+  const [isDAppsLoading, setIsDAppsLoading] = useState(true);
+  const [questCounts, setQuestCounts] = useState<Record<string, number>>({});
   const { address, status } = useAccount();
   const queryClient = useQueryClient();
 
@@ -69,6 +72,14 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // DApps loading (brief delay for smooth transition)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsDAppsLoading(false);
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -82,38 +93,104 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
 
   // Load spaces
   useEffect(() => {
-    const loadSpaces = async () => {
+    let isMounted = true;
+    let intervalId: NodeJS.Timeout | null = null;
+    
+    const loadSpaces = async (showLoading = false) => {
+      // Only update state if component is still mounted and not during render
+      if (!isMounted) return;
+      
       try {
+        if (showLoading) {
+          setIsSpacesLoading(true);
+        }
         // spaceService.getAllSpaces() is now async (Supabase)
         const allSpaces = await spaceService.getAllSpaces();
-        setSpaces(allSpaces);
+        // Use startTransition to mark this as a non-urgent update
+        // This prevents the "setState during render" warning
+        if (isMounted) {
+        startTransition(() => {
+          if (isMounted) {
+            setSpaces(allSpaces);
+            if (showLoading) {
+              setIsSpacesLoading(false);
+            }
+          }
+        });
+        }
       } catch (error) {
         console.error('Error loading spaces:', error);
         // Fallback to empty array on error
-        setSpaces([]);
+        if (isMounted) {
+          startTransition(() => {
+            if (isMounted) {
+            setSpaces([]);
+            if (showLoading) {
+              setIsSpacesLoading(false);
+            }
+            }
+          });
+        }
       }
     };
     
-    loadSpaces();
+    // Delay initial load to ensure we're not in render phase
+    const initialLoadTimer = setTimeout(() => {
+      if (isMounted) {
+      loadSpaces(true);
+      }
+    }, 100);
     
     // Listen for space creation events to refresh immediately
     const handleSpaceCreated = () => {
-      loadSpaces();
+      // Use setTimeout to ensure we're not in render phase
+      setTimeout(() => {
+        if (isMounted) {
+      loadSpaces(false);
+        }
+      }, 0);
     };
     
     // Listen for quest published events to refresh quest counts
     const handleQuestPublished = () => {
-      // Force re-render to update quest counts
-      setSpaces(prev => [...prev]);
+      // Use setTimeout to ensure we're not in render phase
+      setTimeout(() => {
+        if (isMounted) {
+      startTransition(() => {
+        if (isMounted) {
+          setSpaces(prev => [...prev]);
+        }
+      });
+        }
+      }, 0);
     };
     
+    // Add event listeners after a small delay to avoid render phase issues
+    setTimeout(() => {
+      if (isMounted) {
     window.addEventListener('spaceCreated', handleSpaceCreated);
     window.addEventListener('questPublished', handleQuestPublished);
+      }
+    }, 0);
     
     // Reload spaces periodically in case they change
-    const interval = setInterval(loadSpaces, 3000); // Reduced to 3 seconds for faster updates
+    // Start interval after initial load
+    setTimeout(() => {
+      if (isMounted) {
+        intervalId = setInterval(() => {
+          if (isMounted) {
+            loadSpaces(false);
+          }
+        }, 30000);
+      }
+    }, 1000);
+    
     return () => {
-      clearInterval(interval);
+      isMounted = false;
+      clearTimeout(initialLoadTimer);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
       window.removeEventListener('spaceCreated', handleSpaceCreated);
       window.removeEventListener('questPublished', handleQuestPublished);
     };
@@ -144,12 +221,21 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
 
   const currentProject = projects[currentIndex];
 
+  // Check if user is following a space
+  const isFollowingSpace = (spaceId: string): boolean => {
+    if (!address) return false;
+    const following = JSON.parse(localStorage.getItem(`user_following_${address}`) || '[]');
+    return following.includes(spaceId);
+  };
+
   // Sort spaces based on active sort options
   const sortedSpaces = [...spaces].sort((a, b) => {
     const aVerified = a.userType === 'project';
     const bVerified = b.userType === 'project';
     const aFollowers = parseInt(localStorage.getItem(`space_followers_${a.id}`) || '0');
     const bFollowers = parseInt(localStorage.getItem(`space_followers_${b.id}`) || '0');
+    const aFollowing = isFollowingSpace(a.id);
+    const bFollowing = isFollowingSpace(b.id);
     
     // Priority 1: If sorting by verified, verified spaces come first
     if (sortByVerified) {
@@ -157,72 +243,69 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
       if (!aVerified && bVerified) return 1;
     }
     
-    // Priority 2: If sorting by trending, spaces with more followers come first
-    // This applies when:
-    // - Only trending is active, OR
-    // - Both are active and we're comparing within the same verified group
-    if (sortByTrending) {
-      const followerDiff = bFollowers - aFollowers;
-      if (followerDiff !== 0) {
-        return followerDiff;
-      }
+    // Priority 2: If sorting by following, followed spaces come first
+    if (sortByFollowing) {
+      if (aFollowing && !bFollowing) return -1;
+      if (!aFollowing && bFollowing) return 1;
     }
     
     // Default: maintain original order
     return 0;
   });
 
-  // Use sorted spaces (no filtering, just sorting)
-  const filteredSpaces = sortedSpaces;
+  // Limit spaces based on screen size (8 desktop, 5 mobile)
+  const maxSpacesDesktop = 8;
+  const maxSpacesMobile = 5;
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Get quest count for a space
-  const getQuestCount = (spaceId: string): number => {
-    try {
-      let count = 0;
+  const maxSpaces = isMobile ? maxSpacesMobile : maxSpacesDesktop;
+  const displayedSpaces = sortedSpaces.slice(0, maxSpaces);
+  const hasMoreSpaces = sortedSpaces.length > maxSpaces;
+
+  // Fetch active quest counts for all spaces from Supabase
+  useEffect(() => {
+    const fetchQuestCounts = async () => {
+      if (spaces.length === 0) return;
       
-      // First, try to get quests from React Query cache
-      const questsData = queryClient.getQueryData<Quest[]>(['quests']);
-      if (questsData && Array.isArray(questsData)) {
-        questsData.forEach((quest: any) => {
-          // Count active quests that belong to this space (check both spaceId and projectId for compatibility)
-          if ((quest.status === 'active' || !quest.status) && 
-              (quest.spaceId === spaceId || quest.projectId === spaceId)) {
-            count++;
-          }
-        });
+      try {
+        const counts: Record<string, number> = {};
+        
+        // Fetch active quests for each space from Supabase
+        await Promise.all(
+          spaces.map(async (space) => {
+            try {
+              const activeQuests = await questServiceSupabase.getAllQuests({
+                spaceId: space.id,
+                status: 'active'
+              });
+              counts[space.id] = activeQuests.length;
+            } catch (error) {
+              console.error(`Error fetching quest count for space ${space.id}:`, error);
+              counts[space.id] = 0;
+            }
+          })
+        );
+        
+        setQuestCounts(counts);
+      } catch (error) {
+        console.error('Error fetching quest counts:', error);
       }
-      
-      // Also check localStorage as fallback
-      const keys = Object.keys(localStorage);
-      const publishedKeys = keys.filter(key => key.startsWith('published_quests_'));
-      
-      publishedKeys.forEach(key => {
-        try {
-          const stored = localStorage.getItem(key);
-          if (stored) {
-            const parsedQuests = JSON.parse(stored);
-            parsedQuests.forEach((quest: any) => {
-              // Count active quests that belong to this space (check both spaceId and projectId for compatibility)
-              // Only count if not already counted from React Query cache
-              if ((quest.status === 'active' || !quest.status) && 
-                  (quest.spaceId === spaceId || quest.projectId === spaceId)) {
-                // Check if this quest was already counted from React Query
-                const alreadyCounted = questsData?.some(q => q.id === quest.id);
-                if (!alreadyCounted) {
-                  count++;
-                }
-              }
-            });
-          }
-        } catch (error) {
-          // Ignore errors
-        }
-      });
-      
-      return count;
-    } catch (error) {
-      return 0;
-    }
+    };
+    
+    fetchQuestCounts();
+  }, [spaces]);
+  
+  // Get quest count for a space (from state)
+  const getQuestCount = (spaceId: string): number => {
+    return questCounts[spaceId] || 0;
   };
 
   // Get follower count for a space (mock for now)
@@ -239,7 +322,6 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
 
   const slideshowRef = useScrollAnimation();
   const spacesRef = useScrollAnimation();
-  const ecosystemRef = useScrollAnimation();
 
   if (isLoading) {
     return <DiscoverPageSkeleton />;
@@ -291,10 +373,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                 <h2 className="slideshow-title">{currentProject.title}</h2>
                 {currentProject.questCount && (
                   <div className="slideshow-quest-count">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                      <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
+                    <img src="/verified.svg" alt="Verified" width="16" height="16" />
                     {currentProject.questCount} Quests
                   </div>
                 )}
@@ -341,22 +420,19 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
               className={`spaces-filter-button ${sortByVerified ? 'active' : ''}`}
               onClick={() => setSortByVerified(!sortByVerified)}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
+              <img src="/verified.svg" alt="Verified" width="16" height="16" />
               Verified
             </button>
             <button
-              className={`spaces-filter-button ${sortByTrending ? 'active' : ''}`}
-              onClick={() => setSortByTrending(!sortByTrending)}
+              className={`spaces-filter-button ${sortByFollowing ? 'active' : ''}`}
+              onClick={() => setSortByFollowing(!sortByFollowing)}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" y1="3" x2="21" y2="3"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="21" x2="21" y2="21"/>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="8.5" cy="7" r="4"/>
+                <path d="M20 8v6M23 11h-6"/>
               </svg>
-              Trending
+              Following
             </button>
           </div>
           <button
@@ -371,12 +447,18 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
         </div>
 
         <div className="spaces-grid">
-          {filteredSpaces.length === 0 ? (
+          {isSpacesLoading ? (
+            <>
+              {[...Array(maxSpaces)].map((_, index) => (
+                <SpaceCardSkeleton key={`skeleton-${index}`} />
+              ))}
+            </>
+          ) : displayedSpaces.length === 0 ? (
             <div className="spaces-empty">
               <p>No spaces found. Create your first space to get started!</p>
             </div>
           ) : (
-            filteredSpaces.map((space) => {
+            displayedSpaces.map((space) => {
               const questCount = getQuestCount(space.id);
               const followerCount = getFollowerCount(space.id);
               const tokenInfo = getTokenStatus(space.id);
@@ -385,18 +467,15 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                 <div
                   key={space.id}
                   className="space-card"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🖱️ Space card clicked directly, space:', space.name, 'id:', space.id);
-                    // Call onSpaceClick if provided, otherwise navigate directly
-                    if (onSpaceClick) {
-                      console.log('📞 Calling onSpaceClick handler');
-                      onSpaceClick(space.id);
-                    } else {
-                      console.log('⚠️ No onSpaceClick handler, navigating directly');
-                      const spaceSlug = space.slug || space.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                      navigate(`/space-${spaceSlug}`);
+                  data-space-id={space.id}
+                  data-space-name={space.name}
+                  onClick={() => onSpaceClick?.(space)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSpaceClick?.(space);
                     }
                   }}
                 >
@@ -411,10 +490,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                       )}
                     </div>
                     <div className="space-verified-badge">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                      </svg>
+                      <img src="/verified.svg" alt="Verified" width="16" height="16" />
                     </div>
                   </div>
                   <div className="space-card-content">
@@ -424,7 +500,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
                         {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
                       </div>
                       <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
-                        {questCount} active
+                        {questCount} {questCount === 1 ? 'active quest' : 'active quests'}
                       </div>
                     </div>
                     <div className="space-token">
@@ -461,50 +537,72 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
             })
           )}
         </div>
+        {hasMoreSpaces && (
+          <div className="spaces-see-more">
+            <button
+              className="spaces-see-more-button"
+              onClick={() => onSeeMoreSpaces?.()}
+            >
+              See More
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Ecosystem dApps Section */}
-      <div ref={ecosystemRef} className="ecosystem-dapps-section">
+      <div className="ecosystem-dapps-section">
         <div className="ecosystem-dapps-header">
           <h2 className="ecosystem-dapps-title">Ecosystem dApps</h2>
         </div>
+
         <div className="ecosystem-dapps-grid">
+          {isDAppsLoading ? (
+            <>
+              {[...Array(6)].map((_, index) => (
+                <DAppCardSkeleton key={`dapp-skeleton-${index}`} />
+              ))}
+            </>
+          ) : (
+            <>
           <a
-            href="https://portal.intuition.systems"
+            href="https://portal.intuition.systems/"
             target="_blank"
             rel="noopener noreferrer"
             className="ecosystem-dapp-card"
           >
             <div className="ecosystem-dapp-icon">
-              <img src="/intuition-portal-logo.svg" alt="The Portal" />
+              <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
             </div>
             <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">The Portal</h3>
+              <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
               <p className="ecosystem-dapp-description">
-                The flagship app of Intuition, and the first Intuition explorer. Discover and explore the decentralized knowledge graph, browse claims, and interact with the Intuition protocol.
+                Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
               </p>
             </div>
           </a>
 
           <a
-            href="https://tns.intuition.box"
+            href="https://tns.intuition.box/"
             target="_blank"
             rel="noopener noreferrer"
             className="ecosystem-dapp-card"
           >
             <div className="ecosystem-dapp-icon">
-              <img src="/tns logo.svg" alt="Trust Name Service" />
+              <img src="/tns logo.svg" alt="Trust Name Services" />
             </div>
             <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Trust Name Service</h3>
+              <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
               <p className="ecosystem-dapp-description">
-                Decentralized naming service for the Intuition ecosystem. Register human-readable names for your wallet addresses and identities on the Intuition network.
+                Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
               </p>
             </div>
           </a>
 
           <a
-            href="https://inturank.intuition.box"
+            href="https://inturank.intuition.box/"
             target="_blank"
             rel="noopener noreferrer"
             className="ecosystem-dapp-card"
@@ -515,47 +613,47 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
             <div className="ecosystem-dapp-content">
               <h3 className="ecosystem-dapp-name">IntuRank</h3>
               <p className="ecosystem-dapp-description">
-                Rank and discover top projects, users, and content in the Intuition ecosystem. Track reputation scores, engagement metrics, and leaderboards across the network.
+                Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
               </p>
             </div>
           </a>
 
           <a
-            href="https://tribememe.app"
+            href="https://tribememe.app/"
             target="_blank"
             rel="noopener noreferrer"
             className="ecosystem-dapp-card"
           >
             <div className="ecosystem-dapp-icon">
-              <img src="/tribememe-logo.svg" alt="TribeMeme" />
+              <img src="/tribememe-logo.svg" alt="Tribememe" />
             </div>
             <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">TribeMeme</h3>
+              <h3 className="ecosystem-dapp-name">Tribememe</h3>
               <p className="ecosystem-dapp-description">
-                Community-driven meme platform built on Intuition. Create, share, and discover memes while leveraging the reputation system to surface the best content.
+                A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
               </p>
             </div>
           </a>
 
           <a
-            href="https://intuitionbets.com"
+            href="https://intuitionbets.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="ecosystem-dapp-card"
           >
             <div className="ecosystem-dapp-icon">
-              <img src="/intuition-bets.svg" alt="Intuition Bets" />
+              <img src="/intuition-bets.svg" alt="IntuitionBets" />
             </div>
             <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Intuition Bets</h3>
+              <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
               <p className="ecosystem-dapp-description">
-                Prediction market and betting platform powered by the Intuition knowledge graph. Place bets on outcomes and predictions with verifiable data sources.
+                Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
               </p>
             </div>
           </a>
 
           <a
-            href="https://oraclelend.intuition.box"
+            href="https://oraclelend.intuition.box/"
             target="_blank"
             rel="noopener noreferrer"
             className="ecosystem-dapp-card"
@@ -566,10 +664,12 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick }: 
             <div className="ecosystem-dapp-content">
               <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
               <p className="ecosystem-dapp-description">
-                Decentralized lending protocol powered by Intuition's reputation system and knowledge graph. Access lending and borrowing services with reputation-based risk assessment.
+                Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
               </p>
             </div>
           </a>
+            </>
+          )}
         </div>
       </div>
     </div>

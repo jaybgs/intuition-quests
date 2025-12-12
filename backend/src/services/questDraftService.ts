@@ -18,6 +18,7 @@ export interface QuestDraftData {
   reward_token?: string | null;
   distribution_type?: string | null;
   current_step?: number | null;
+  deposit_status?: 'none' | 'approved' | 'deposited' | null;
 }
 
 export interface QuestDraftListItem {
@@ -54,6 +55,7 @@ export class QuestDraftService {
         reward_token: draftData.reward_token || null,
         distribution_type: draftData.distribution_type || null,
         current_step: draftData.current_step || 1,
+        deposit_status: draftData.deposit_status || null,
         updated_at: new Date().toISOString(),
       });
 
@@ -97,6 +99,7 @@ export class QuestDraftService {
       reward_token: data.reward_token,
       distribution_type: data.distribution_type,
       current_step: data.current_step,
+      deposit_status: data.deposit_status || null,
     };
   }
 

@@ -33,7 +33,6 @@ import { spaceService } from './services/spaceService';
 import { questServiceBackend } from './services/questServiceBackend';
 import type { Space } from './types';
 import { useAdmin } from './hooks/useAdmin';
-import { useAuth } from './hooks/useAuth';
 import { wagmiConfig } from './config/wagmi';
 import { getDiceBearAvatar } from './utils/avatar';
 import './App.css';
@@ -262,7 +261,6 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
   const { connectors, connect, isPending, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
-  const { authenticate } = useAuth();
 
   useEffect(() => {
     if (connectError) {
@@ -277,37 +275,6 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
       }
     }
   }, [connectError]);
-
-  // Auto-authenticate when wallet connects
-  useEffect(() => {
-    if (isConnected && address && chainId === 1155) {
-      const existingToken = localStorage.getItem('auth_token');
-      // Only authenticate if no token exists or token might be expired
-      if (!existingToken) {
-        authenticate().catch((error) => {
-          console.warn('Auto-authentication failed:', error);
-          // Don't show error toast for auto-auth failures
-        });
-      }
-    }
-  }, [isConnected, address, chainId, authenticate]);
-
-  // Listen for token expiration events and re-authenticate
-  useEffect(() => {
-    const handleTokenExpired = () => {
-      if (isConnected && address && chainId === 1155) {
-        // Re-authenticate when token expires
-        authenticate().catch((error) => {
-          console.warn('Re-authentication failed:', error);
-        });
-      }
-    };
-
-    window.addEventListener('auth:token-expired', handleTokenExpired);
-    return () => {
-      window.removeEventListener('auth:token-expired', handleTokenExpired);
-    };
-  }, [isConnected, address, chainId, authenticate]);
 
   const handleDisconnect = async () => {
     try {

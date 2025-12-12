@@ -32,18 +32,12 @@ const corsOptions = {
       'http://127.0.0.1:3000',
     ];
     
-    // In production, allow Vercel preview deployments (pattern matching)
-    const isVercelPreview = origin && (
-      origin.includes('.vercel.app') ||
-      origin.includes('trustquests.vercel.app')
-    );
-    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
       return callback(null, true);
     }
     
-    if (allowedOrigins.includes(origin) || isVercelPreview) {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.log(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);

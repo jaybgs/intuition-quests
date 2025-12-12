@@ -40,8 +40,9 @@ If you need to change these, edit `frontend/src/config/wagmi.ts`.
 VITE_WALLETCONNECT_PROJECT_ID=
 
 # Backend API URL
-# Default: http://localhost:3001/api
-VITE_API_URL=http://localhost:3001/api
+# Development: http://localhost:3001/api
+# Production: https://trust-quests.onrender.com/api
+VITE_API_URL=https://trust-quests.onrender.com/api
 
 # OAuth Client IDs (optional)
 # Get these from the respective OAuth providers

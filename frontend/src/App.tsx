@@ -20,7 +20,6 @@ import { Rewards } from './components/Rewards';
 import { QuestDetail } from './components/QuestDetail';
 import { Bounties } from './components/Bounties';
 import { Raids } from './components/Raids';
-import { OAuthCallback } from './components/OAuthCallback';
 import { SpaceBuilder } from './components/SpaceBuilder';
 import { SpaceDetailView } from './components/SpaceDetailView';
 import { BuilderDashboard } from './components/BuilderDashboard';
@@ -1303,13 +1302,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       </header>
 
       <main className="app-main">
-        {/* OAuth Callback Handler - Check URL path first (before other content) */}
-        {(window.location.pathname.includes('/oauth/twitter/callback') ||
-          window.location.pathname.includes('/oauth/discord/callback') ||
-          window.location.pathname.includes('/oauth/github/callback') ||
-          window.location.pathname.includes('/oauth/google/callback')) ? (
-          <OAuthCallback />
-        ) : showOnboarding ? (
+        {showOnboarding ? (
           <OnboardingSetup onComplete={() => {
             setShowOnboarding(false);
             navigateToTab('discover');

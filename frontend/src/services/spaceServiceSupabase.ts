@@ -13,8 +13,8 @@ export class SpaceServiceSupabase {
    */
   async getAllSpaces(): Promise<Space[]> {
     if (!supabase) {
-      console.warn('Supabase not configured, falling back to localStorage');
-      return this.fallbackToLocalStorage();
+      console.warn('Supabase not configured, returning empty array');
+      return [];
     }
 
     try {
@@ -25,13 +25,13 @@ export class SpaceServiceSupabase {
 
       if (error) {
         console.error('Error fetching spaces from Supabase:', error);
-        return this.fallbackToLocalStorage();
+        return [];
       }
 
       return (data || []).map(space => this.mapSpaceFromDb(space));
     } catch (error) {
-      console.error('Error fetching spaces:', error);
-      return this.fallbackToLocalStorage();
+      console.error('Error fetching spaces from Supabase:', error);
+      return [];
     }
   }
 

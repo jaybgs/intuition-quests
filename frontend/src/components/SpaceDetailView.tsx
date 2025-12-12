@@ -24,6 +24,21 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
   const [isPro, setIsPro] = useState(false);
   
+  // Clear localStorage quests on mount to ensure only Supabase quests are shown
+  useEffect(() => {
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('published_quests_') || key === 'quests') {
+          localStorage.removeItem(key);
+        }
+      });
+      console.log('🧹 Cleared localStorage quests - using Supabase only');
+    } catch (error) {
+      console.warn('Error clearing localStorage quests:', error);
+    }
+  }, []);
+  
   // Check if current user is the owner of this space
   const isOwner = address && space.ownerAddress && address.toLowerCase() === space.ownerAddress.toLowerCase();
   

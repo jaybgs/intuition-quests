@@ -30,7 +30,7 @@ import { AdminLogin } from './components/AdminLogin';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { FAQButton } from './components/FAQButton';
 import { spaceService } from './services/spaceService';
-import { questServiceBackend } from './services/questServiceBackend';
+import { questServiceSupabase } from './services/questServiceSupabase';
 import type { Space } from './types';
 import { useAdmin } from './hooks/useAdmin';
 import { wagmiConfig } from './config/wagmi';
@@ -278,28 +278,61 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
 
   const handleDisconnect = async () => {
     try {
+      // Disconnect from wagmi first
       await disconnect();
     } catch (err) {
-      console.warn('Error during disconnect:', err);
+      console.warn('Error during wagmi disconnect:', err);
+      // Continue with cleanup even if disconnect fails
     }
     
     // Clear authentication token
     localStorage.removeItem('auth_token');
     
-    // Clear wagmi/web3modal cached connection state to fully reset wallet session
+    // Clear all wagmi/web3modal cached connection state to fully reset wallet session
+    // Clear all localStorage keys that start with wagmi or walletconnect
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.startsWith('wagmi') ||
+        key.startsWith('walletconnect') ||
+        key.startsWith('wc@') ||
+        key.startsWith('W3M') ||
+        key.startsWith('w3m')
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Also explicitly remove known keys (in case they weren't caught above)
     localStorage.removeItem('wagmi.store');
     localStorage.removeItem('walletconnect');
     localStorage.removeItem('wc@2:client');
+    localStorage.removeItem('wc@2:core');
+    localStorage.removeItem('wc@2:ethereum_provider');
     
     // Clear any user-specific cached data
     if (address) {
-      localStorage.removeItem(`staked_amount_${address.toLowerCase()}`);
-      localStorage.removeItem(`intuition_identity_${address.toLowerCase()}`);
-      localStorage.removeItem(`verification_attempts_${address.toLowerCase()}`);
+      const lowerAddress = address.toLowerCase();
+      localStorage.removeItem(`staked_amount_${lowerAddress}`);
+      localStorage.removeItem(`intuition_identity_${lowerAddress}`);
+      localStorage.removeItem(`verification_attempts_${lowerAddress}`);
+      localStorage.removeItem(`username_${lowerAddress}`);
+      localStorage.removeItem(`profile_pic_${lowerAddress}`);
     }
+    
+    // Clear connected wallets list
+    localStorage.removeItem('connected_wallets');
     
     // Show success notification
     showToast('Wallet disconnected successfully', 'success');
+    
+    // Force a page reload to fully reset the app state
+    // This ensures all components re-initialize with disconnected state
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   if (isConnected && address) {
@@ -328,15 +361,34 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
 
   const handleConnect = async () => {
     if (!connectors || connectors.length === 0) {
-      showToast('No wallet connectors available. Please install a wallet extension.', 'error');
+      showToast('No wallet connectors available. Please install a wallet extension like MetaMask.', 'error');
       return;
     }
+    
     try {
-      await connect({ connector: connectors[0] });
+      // Prefer MetaMask or injected connector, fallback to first available
+      const preferredConnector = connectors.find(c => 
+        c.id === 'io.metamask' || 
+        c.id === 'metaMask' ||
+        c.id === 'injected'
+      ) || connectors[0];
+      
+      if (!preferredConnector) {
+        showToast('No wallet found. Please install MetaMask or another wallet extension.', 'error');
+        return;
+      }
+      
+      showToast('Connecting wallet...', 'info');
+      await connect({ connector: preferredConnector });
     } catch (error: any) {
       // User rejection is handled silently
-      if (!error?.message?.includes('rejected') && !error?.message?.includes('denied')) {
+      if (error?.message?.includes('rejected') || error?.message?.includes('denied')) {
+        showToast('Connection was rejected', 'warning');
+      } else if (error?.message?.includes('No Ethereum provider')) {
+        showToast('No wallet found. Please install MetaMask or another wallet extension.', 'error');
+      } else {
         console.error('Connection error:', error);
+        showToast(`Failed to connect wallet: ${error?.message || 'Unknown error'}`, 'error');
       }
     }
   };
@@ -383,6 +435,13 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   // This ensures that when the URL changes, the tab switches accordingly
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) {
+      // If initialTab is quest-detail, always set it (even if selectedQuestId is not set yet)
+      // The quest will be loaded by the questName useEffect
+      if (initialTab === 'quest-detail') {
+        console.log('🔄 Setting activeTab to quest-detail from route');
+        setActiveTab('quest-detail');
+        return;
+      }
       // If initialTab is space-detail, always set it (even if selectedSpace is not set yet)
       // The space will be loaded by the spaceName useEffect
       if (initialTab === 'space-detail') {
@@ -390,9 +449,17 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         setActiveTab('space-detail');
         return;
       }
+      // Don't override quest-detail if we have a selectedQuestId (manual navigation)
+      // This prevents React Router from resetting the tab when route doesn't match
+      // Also don't override if we're navigating from space-detail to quest-detail
+      if (activeTab === 'quest-detail' && (selectedQuestId || initialTab === 'space-detail')) {
+        console.log('🔄 Keeping quest-detail tab (manual navigation), ignoring initialTab:', initialTab);
+        return;
+      }
       // Don't override space-detail if we have a selectedSpace (manual navigation)
       // This prevents React Router from resetting the tab when route doesn't match
-      if (activeTab === 'space-detail' && selectedSpace) {
+      // But allow override if we're navigating to quest-detail
+      if (activeTab === 'space-detail' && selectedSpace && initialTab !== 'quest-detail') {
         console.log('🔄 Keeping space-detail tab (manual navigation), ignoring initialTab:', initialTab);
         return;
       }
@@ -400,7 +467,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current activeTab:', activeTab);
       setActiveTab(initialTab as any);
     }
-  }, [initialTab, activeTab, selectedSpace]);
+  }, [initialTab, activeTab, selectedSpace, selectedQuestId]);
 
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(() => {
     const stored = localStorage.getItem('selectedSpaceId');
@@ -442,27 +509,110 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     }
   }, [activeTab, initialTab, selectedSpace]);
 
-  // Handle quest name from URL
+  // Restore quest from localStorage or URL when on quest-detail tab
   useEffect(() => {
-    if (questName && activeTab === 'quest-detail') {
-      // Find quest by name and set selectedQuestId
-      const findQuestByName = async () => {
+    if ((activeTab === 'quest-detail' || initialTab === 'quest-detail') && !selectedQuestId) {
+      // First, try to get from localStorage
+      const storedQuestId = localStorage.getItem('selectedQuestId');
+      if (storedQuestId) {
+        console.log('📦 Restoring quest from localStorage:', storedQuestId);
+        setSelectedQuestId(storedQuestId);
+        return;
+      }
+      
+      // If not in localStorage, try to get from URL (questName)
+      if (questName) {
+        const decodedQuestName = decodeURIComponent(questName);
+        console.log('📦 Using questName from URL as questId:', decodedQuestName);
+        setSelectedQuestId(decodedQuestName);
+        localStorage.setItem('selectedQuestId', decodedQuestName);
+      }
+    }
+  }, [activeTab, initialTab, selectedQuestId, questName]);
+
+  // Handle quest name from URL (only if we don't already have selectedQuestId)
+  useEffect(() => {
+    console.log('🔍 Quest lookup useEffect triggered - activeTab:', activeTab, 'initialTab:', initialTab, 'questName:', questName, 'selectedQuestId:', selectedQuestId);
+
+    // Skip if we're not on quest-detail tab
+    if (activeTab !== 'quest-detail' && initialTab !== 'quest-detail') {
+      console.log('🔍 Skipping quest lookup - not on quest-detail tab');
+      return;
+    }
+
+    // Ensure activeTab is set to quest-detail if initialTab is quest-detail
+    if (initialTab === 'quest-detail' && activeTab !== 'quest-detail') {
+      console.log('🔍 Setting activeTab to quest-detail');
+      setActiveTab('quest-detail');
+    }
+
+    // If we already have a selectedQuestId and questName matches, don't reload
+    if (selectedQuestId && questName) {
+      // Check if the current quest matches the questName from URL
+      const findQuestById = async () => {
         try {
-          const quests = await questServiceBackend.getAllQuests();
-          const quest = quests.find((q: any) => 
-            q.title.toLowerCase().replace(/\s+/g, '-') === questName.toLowerCase() ||
-            q.id === questName
-          );
-          if (quest) {
-            setSelectedQuestId(quest.id);
+          const quests = await questServiceSupabase.getAllQuests();
+          const currentQuest = quests.find((q: any) => q.id === selectedQuestId);
+          if (currentQuest) {
+            const questSlug = currentQuest.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const urlSlug = decodeURIComponent(questName).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const matches = currentQuest.id === questName || 
+                           currentQuest.id === decodeURIComponent(questName) || 
+                           questSlug === urlSlug;
+            
+            if (matches) {
+              console.log('🔍 Current quest matches URL, keeping selectedQuestId');
+              return;
+            }
           }
         } catch (error) {
-          console.error('Error finding quest:', error);
+          console.error('Error checking quest match:', error);
         }
       };
-      findQuestByName();
+      findQuestById();
     }
-  }, [questName, activeTab]);
+
+    // Find quest by name/ID and set selectedQuestId
+    if (questName) {
+      // Check if questName is actually a questId (starts with 'quest_' or matches ID pattern)
+      const decodedQuestName = decodeURIComponent(questName);
+      const isQuestId = decodedQuestName.startsWith('quest_') || decodedQuestName.length > 20;
+      
+      if (isQuestId) {
+        // If it's a questId, use it directly
+        console.log('🔍 Using questName as questId directly:', decodedQuestName);
+        setSelectedQuestId(decodedQuestName);
+      } else {
+        // Otherwise, try to find the quest by name/slug
+        const findQuestByName = async () => {
+          try {
+            const quests = await questServiceSupabase.getAllQuests();
+            const quest = quests.find((q: any) => {
+              const questSlug = q.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              const urlSlug = decodedQuestName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              return q.id === decodedQuestName || 
+                     q.id === questName || 
+                     q.title.toLowerCase().replace(/\s+/g, '-') === questName.toLowerCase() ||
+                     questSlug === urlSlug;
+            });
+            if (quest) {
+              console.log('🔍 Found quest from URL:', quest.id, quest.title);
+              setSelectedQuestId(quest.id);
+            } else {
+              console.warn('🔍 Quest not found for questName:', questName);
+              // If quest not found by name, try using questName as ID anyway
+              setSelectedQuestId(decodedQuestName);
+            }
+          } catch (error) {
+            console.error('Error finding quest:', error);
+            // On error, still try to use questName as ID
+            setSelectedQuestId(decodedQuestName);
+          }
+        };
+        findQuestByName();
+      }
+    }
+  }, [questName, activeTab, initialTab, selectedQuestId]);
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -643,17 +793,33 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     }
 
     if (params?.questName) {
+      // Set activeTab BEFORE navigating to prevent route from resetting it
+      setActiveTab('quest-detail');
       navigate(`/quest-${createSlug(params.questName)}`);
     } else if (params?.questId) {
-      // Try to get quest name first
-      questServiceBackend.getQuestById(params.questId).then((quest: any) => {
-        if (quest) {
-          navigate(`/quest-${createSlug(quest.title)}`);
-        } else {
-          navigate(`/quest-${params.questId}`);
+      // Set selectedQuestId immediately (synchronously) before async operations
+      setSelectedQuestId(params.questId);
+      // Store quest ID in localStorage for persistence
+      localStorage.setItem('selectedQuestId', params.questId);
+      
+      // Navigate immediately with questId to prevent route sync issues
+      navigate(`/quest-${params.questId}`);
+      
+      // Set activeTab AFTER navigating to prevent route from resetting it
+      setActiveTab('quest-detail');
+      
+      // Try to get quest name from Supabase and update URL if found
+      questServiceSupabase.getQuestById(params.questId).then((quest: any) => {
+        if (quest && quest.title) {
+          const questSlug = createSlug(quest.title);
+          // Only update URL if it's different from current
+          const currentPath = window.location.pathname;
+          if (!currentPath.includes(questSlug)) {
+            navigate(`/quest-${questSlug}`, { replace: true });
+          }
         }
       }).catch(() => {
-        navigate(`/quest-${params.questId}`);
+        // Keep the questId-based URL if we can't fetch the quest
       });
     } else if (params?.spaceName) {
       // Set the space and navigate to space detail
@@ -1236,11 +1402,11 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 }}
               />
             )}
-            {activeTab === 'quest-detail' && selectedQuestId && (
+            {activeTab === 'quest-detail' && (selectedQuestId || questName) && (
               <QuestDetail 
-                questId={selectedQuestId}
+                questId={selectedQuestId || questName || ''}
                 onBack={() => {
-                  const previousTab = localStorage.getItem('previousTab') || 'community';
+                  const previousTab = localStorage.getItem('previousTab') || 'discover';
                   navigateToTab(previousTab);
                 }}
                 onNavigateToProfile={() => {

@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
 import { CreateQuestBuilder } from './CreateQuestBuilder';
 import { QuestDetail } from './QuestDetail';
-import { QuestServiceBackend } from '../services/questServiceBackend';
+import { questServiceSupabase } from '../services/questServiceSupabase';
 import { questDraftService } from '../services/questDraftService';
 import type { Quest } from '../types';
 import { getQuestWinners, calculateAndSaveWinners, getQuestCompletions } from '../utils/raffle';
 // Contract services disabled - contracts deleted
 // import { setWinners, distributeRewards, getQuestDeposit } from '../services/questEscrowService';
 import { showToast } from './Toast';
+import { DraftCardSkeleton } from './Skeleton';
 import './BuilderQuests.css';
 
 interface BuilderQuestsProps {
@@ -25,8 +26,6 @@ interface QuestDraft {
   spaceId?: string;
 }
 
-const questService = new QuestServiceBackend();
-
 export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsProps) {
   const { address } = useAccount();
   const [activeTab, setActiveTab] = useState<'drafts' | 'published' | 'winners'>('drafts');
@@ -37,6 +36,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
   const [drafts, setDrafts] = useState<QuestDraft[]>([]);
   const [publishedQuests, setPublishedQuests] = useState<Quest[]>([]);
   const [winnersQuests, setWinnersQuests] = useState<Quest[]>([]);
+  const [isLoadingDrafts, setIsLoadingDrafts] = useState(true);
   const [isLoadingPublished, setIsLoadingPublished] = useState(false);
   const [isLoadingWinners, setIsLoadingWinners] = useState(false);
 
@@ -45,20 +45,24 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
-  // Load drafts from backend (Supabase)
+  // Load drafts from backend (Supabase only)
   useEffect(() => {
     const loadDrafts = async () => {
       if (address) {
+        setIsLoadingDrafts(true);
         try {
           const draftsList = await questDraftService.getAllDrafts(address, spaceId);
-          console.log('📋 All drafts:', draftsList);
+          console.log('📋 All drafts from Supabase:', draftsList);
           setDrafts(draftsList);
         } catch (error) {
-          console.error('❌ Error loading drafts:', error);
+          console.error('❌ Error loading drafts from Supabase:', error);
           setDrafts([]);
+        } finally {
+          setIsLoadingDrafts(false);
         }
       } else {
         setDrafts([]);
+        setIsLoadingDrafts(false);
       }
     };
 
@@ -86,62 +90,25 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     }
   };
 
-  // Load published quests from backend and localStorage
+  // Load published quests from Supabase only
   useEffect(() => {
     const loadPublishedQuests = async () => {
       if (!address || activeTab !== 'published') return;
 
       setIsLoadingPublished(true);
       try {
-        // Fetch from backend
-        const allQuests = await questService.getAllQuests();
+        // Fetch from Supabase only (no localStorage fallback)
+        const allQuests = await questServiceSupabase.getAllQuests();
         const userQuests = allQuests.filter(
           (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
         );
 
-        // Also check localStorage for published quests
-        let localPublishedQuests: any[] = [];
-        
-        try {
-          // Check published quests
-          const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
-          const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
-          if (storedPublishedQuests) {
-            const parsedQuests = JSON.parse(storedPublishedQuests);
-            parsedQuests.forEach((quest: any) => {
-              if (quest.creatorAddress?.toLowerCase() === address.toLowerCase()) {
-                localPublishedQuests.push({
-                  id: quest.id,
-                  title: quest.title,
-                  description: quest.description || '',
-                  createdAt: quest.createdAt || Date.now(),
-                  status: quest.status || 'active',
-                  creatorAddress: quest.creatorAddress,
-                });
-              }
-            });
-          }
-        } catch (error) {
-          console.warn('Error reading published quests from localStorage:', error);
-        }
-
-        // Combine backend and localStorage, removing duplicates
-        const allPublishedQuests = [...userQuests];
-        const seenIds = new Set(userQuests.map((q: Quest) => q.id));
-        
-        localPublishedQuests.forEach((localQuest: any) => {
-          if (!seenIds.has(localQuest.id)) {
-            allPublishedQuests.push(localQuest as Quest);
-            seenIds.add(localQuest.id);
-          }
-        });
-
         // Sort by creation date (newest first)
-        allPublishedQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         
-        setPublishedQuests(allPublishedQuests);
+        setPublishedQuests(userQuests);
       } catch (error) {
-        console.error('Error loading published quests:', error);
+        console.error('Error loading published quests from Supabase:', error);
         setPublishedQuests([]);
       } finally {
         setIsLoadingPublished(false);
@@ -154,60 +121,23 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
   // Listen for quest deletion events
   useEffect(() => {
     const handleQuestDeleted = () => {
-      // Reload published quests when a quest is deleted
+      // Reload published quests when a quest is deleted (from Supabase only)
       if (activeTab === 'published' && address) {
         const loadPublishedQuests = async () => {
           setIsLoadingPublished(true);
           try {
-            // Fetch from backend
-            const allQuests = await questService.getAllQuests();
+            // Fetch from Supabase only
+            const allQuests = await questServiceSupabase.getAllQuests();
             const userQuests = allQuests.filter(
               (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
             );
 
-            // Also check localStorage for published quests
-            let localPublishedQuests: any[] = [];
-            
-            try {
-              // Check published quests
-              const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
-              const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
-              if (storedPublishedQuests) {
-                const parsedQuests = JSON.parse(storedPublishedQuests);
-                parsedQuests.forEach((quest: any) => {
-                  if (quest.creatorAddress?.toLowerCase() === address.toLowerCase()) {
-                    localPublishedQuests.push({
-                      id: quest.id,
-                      title: quest.title,
-                      description: quest.description || '',
-                      createdAt: quest.createdAt || Date.now(),
-                      status: quest.status || 'active',
-                      creatorAddress: quest.creatorAddress,
-                    });
-                  }
-                });
-              }
-            } catch (error) {
-              console.warn('Error reading published quests from localStorage:', error);
-            }
-
-            // Combine backend and localStorage, removing duplicates
-            const allPublishedQuests = [...userQuests];
-            const seenIds = new Set(userQuests.map((q: Quest) => q.id));
-            
-            localPublishedQuests.forEach((localQuest: any) => {
-              if (!seenIds.has(localQuest.id)) {
-                allPublishedQuests.push(localQuest as Quest);
-                seenIds.add(localQuest.id);
-              }
-            });
-
             // Sort by creation date (newest first)
-            allPublishedQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             
-            setPublishedQuests(allPublishedQuests);
+            setPublishedQuests(userQuests);
           } catch (error) {
-            console.error('Error loading published quests:', error);
+            console.error('Error loading published quests from Supabase:', error);
             setPublishedQuests([]);
           } finally {
             setIsLoadingPublished(false);
@@ -249,55 +179,20 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
       }
       
       if (activeTab === 'published') {
-        // Reload published quests
+        // Reload published quests from Supabase only
         const loadPublishedQuests = async () => {
           if (!address) return;
           setIsLoadingPublished(true);
           try {
-            const allQuests = await questService.getAllQuests();
+            const allQuests = await questServiceSupabase.getAllQuests();
             const userQuests = allQuests.filter(
               (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
             );
 
-            // Also check localStorage for published quests
-            let localPublishedQuests: any[] = [];
-            try {
-              const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
-              const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
-              if (storedPublishedQuests) {
-                const parsedQuests = JSON.parse(storedPublishedQuests);
-                parsedQuests.forEach((quest: any) => {
-                  if (quest.creatorAddress?.toLowerCase() === address.toLowerCase()) {
-                    localPublishedQuests.push({
-                      id: quest.id,
-                      title: quest.title,
-                      description: quest.description || '',
-                      createdAt: quest.createdAt || Date.now(),
-                      status: quest.status || 'active',
-                      creatorAddress: quest.creatorAddress,
-                    });
-                  }
-                });
-              }
-            } catch (error) {
-              console.warn('Error reading published quests from localStorage:', error);
-            }
-
-            // Combine backend and localStorage, removing duplicates
-            const allPublishedQuests = [...userQuests];
-            const seenIds = new Set(userQuests.map((q: Quest) => q.id));
-            
-            localPublishedQuests.forEach((localQuest: any) => {
-              if (!seenIds.has(localQuest.id)) {
-                allPublishedQuests.push(localQuest as Quest);
-                seenIds.add(localQuest.id);
-              }
-            });
-
-            allPublishedQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-            setPublishedQuests(allPublishedQuests);
+            userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            setPublishedQuests(userQuests);
           } catch (error) {
-            console.error('Error reloading published quests:', error);
+            console.error('Error reloading published quests from Supabase:', error);
           } finally {
             setIsLoadingPublished(false);
           }
@@ -313,61 +208,22 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     };
   }, [address, activeTab, spaceId]);
 
-  // Load winners quests (concluded quests)
+  // Load winners quests (concluded quests) from Supabase only
   useEffect(() => {
     const loadWinnersQuests = async () => {
       if (!address || activeTab !== 'winners') return;
 
       setIsLoadingWinners(true);
       try {
-        // Fetch from backend
-        const allQuests = await questService.getAllQuests();
+        // Fetch from Supabase only
+        const allQuests = await questServiceSupabase.getAllQuests();
         const userQuests = allQuests.filter(
           (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
         );
 
-        // Also check localStorage for published quests
-        let localPublishedQuests: any[] = [];
-        
-        try {
-          const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
-          const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
-          if (storedPublishedQuests) {
-            const parsedQuests = JSON.parse(storedPublishedQuests);
-            parsedQuests.forEach((quest: any) => {
-              if (quest.creatorAddress?.toLowerCase() === address.toLowerCase()) {
-                localPublishedQuests.push({
-                  id: quest.id,
-                  title: quest.title,
-                  description: quest.description || '',
-                  createdAt: quest.createdAt || Date.now(),
-                  status: quest.status || 'active',
-                  creatorAddress: quest.creatorAddress,
-                  expiresAt: quest.expiresAt,
-                  distributionType: quest.distributionType,
-                  numberOfWinners: quest.numberOfWinners,
-                });
-              }
-            });
-          }
-        } catch (error) {
-          console.warn('Error reading published quests from localStorage:', error);
-        }
-
-        // Combine backend and localStorage, removing duplicates
-        const allPublishedQuests = [...userQuests];
-        const seenIds = new Set(userQuests.map((q: Quest) => q.id));
-        
-        localPublishedQuests.forEach((localQuest: any) => {
-          if (!seenIds.has(localQuest.id)) {
-            allPublishedQuests.push(localQuest as Quest);
-            seenIds.add(localQuest.id);
-          }
-        });
-
         // Filter for concluded quests (expired or completed)
         const now = Date.now();
-        const concludedQuests = allPublishedQuests.filter((quest: Quest) => {
+        const concludedQuests = userQuests.filter((quest: Quest) => {
           // Quest is concluded if:
           // 1. It has an expiresAt timestamp and it's in the past
           // 2. Or status is 'completed'
@@ -437,10 +293,10 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
         questToEdit = quests.find((q: Quest) => q.id === questId) || null;
       }
 
-      // Also try backend
+      // Also try Supabase
       if (!questToEdit) {
         try {
-          const allQuests = await questService.getAllQuests();
+          const allQuests = await questServiceSupabase.getAllQuests();
           questToEdit = allQuests.find((q: Quest) => q.id === questId && q.creatorAddress?.toLowerCase() === address.toLowerCase()) || null;
         } catch (error) {
           console.warn('Error loading quest from backend:', error);
@@ -594,7 +450,13 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
       {/* Content based on active tab */}
       {activeTab === 'drafts' ? (
         /* Drafts List or Empty State */
-        drafts.length > 0 ? (
+        isLoadingDrafts ? (
+          <div className="builder-quests-drafts-grid">
+            {[...Array(6)].map((_, index) => (
+              <DraftCardSkeleton key={`draft-skeleton-${index}`} />
+            ))}
+          </div>
+        ) : drafts.length > 0 ? (
           <div className="builder-quests-drafts-grid">
             {drafts.map((draft) => (
               <div
@@ -675,7 +537,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
             </div>
-            <h2 className="builder-quests-empty-title">Create your first draft</h2>
+            <h2 className="builder-quests-empty-title">No drafts found</h2>
             <p className="builder-quests-empty-description">
               Click the button below to start creating your first draft.
             </p>
@@ -746,7 +608,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
             </div>
-            <h2 className="builder-quests-empty-title">No published quests yet</h2>
+            <h2 className="builder-quests-empty-title">No published quests found</h2>
             <p className="builder-quests-empty-description">
               Publish a quest from your drafts to see it here.
             </p>
@@ -805,7 +667,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
             <div className="builder-quests-empty-icon">
               <img src="/verified.svg" alt="Verified" width="64" height="64" />
             </div>
-            <h2 className="builder-quests-empty-title">No concluded quests yet</h2>
+            <h2 className="builder-quests-empty-title">No concluded quests found</h2>
             <p className="builder-quests-empty-description">
               Concluded quests will appear here once they end.
             </p>
@@ -878,7 +740,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
         // Also try backend (admin can access any quest, creator can only access their own)
         if (!foundQuest) {
           try {
-            const allQuests = await questService.getAllQuests();
+            const allQuests = await questServiceSupabase.getAllQuests();
             if (isAdminUser) {
               // Admin can access any quest
               foundQuest = allQuests.find((q: Quest) => q.id === questId) || null;

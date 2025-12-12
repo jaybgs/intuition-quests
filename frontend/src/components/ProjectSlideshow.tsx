@@ -91,43 +91,46 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     return () => clearInterval(interval);
   }, []);
 
-  // Load spaces
+  // Load spaces from Supabase only
   useEffect(() => {
     let isMounted = true;
     let intervalId: NodeJS.Timeout | null = null;
+    let hasLoadedOnce = false;
     
     const loadSpaces = async (showLoading = false) => {
       // Only update state if component is still mounted and not during render
       if (!isMounted) return;
       
       try {
-        if (showLoading) {
+        if (showLoading && !hasLoadedOnce) {
           setIsSpacesLoading(true);
         }
-        // spaceService.getAllSpaces() is now async (Supabase)
+        // spaceService.getAllSpaces() uses Supabase only
         const allSpaces = await spaceService.getAllSpaces();
         // Use startTransition to mark this as a non-urgent update
         // This prevents the "setState during render" warning
         if (isMounted) {
-        startTransition(() => {
-          if (isMounted) {
-            setSpaces(allSpaces);
-            if (showLoading) {
-              setIsSpacesLoading(false);
+          startTransition(() => {
+            if (isMounted) {
+              setSpaces(allSpaces);
+              if (showLoading && !hasLoadedOnce) {
+                setIsSpacesLoading(false);
+                hasLoadedOnce = true;
+              }
             }
-          }
-        });
+          });
         }
       } catch (error) {
-        console.error('Error loading spaces:', error);
-        // Fallback to empty array on error
+        console.error('Error loading spaces from Supabase:', error);
+        // Return empty array on error - no localStorage fallback
         if (isMounted) {
           startTransition(() => {
             if (isMounted) {
-            setSpaces([]);
-            if (showLoading) {
-              setIsSpacesLoading(false);
-            }
+              setSpaces([]);
+              if (showLoading && !hasLoadedOnce) {
+                setIsSpacesLoading(false);
+                hasLoadedOnce = true;
+              }
             }
           });
         }
@@ -137,16 +140,16 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     // Delay initial load to ensure we're not in render phase
     const initialLoadTimer = setTimeout(() => {
       if (isMounted) {
-      loadSpaces(true);
+        loadSpaces(true);
       }
     }, 100);
     
-    // Listen for space creation events to refresh immediately
+    // Listen for space creation events to refresh immediately (without showing loading)
     const handleSpaceCreated = () => {
       // Use setTimeout to ensure we're not in render phase
       setTimeout(() => {
         if (isMounted) {
-      loadSpaces(false);
+          loadSpaces(false);
         }
       }, 0);
     };
@@ -156,11 +159,11 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
       // Use setTimeout to ensure we're not in render phase
       setTimeout(() => {
         if (isMounted) {
-      startTransition(() => {
-        if (isMounted) {
-          setSpaces(prev => [...prev]);
-        }
-      });
+          startTransition(() => {
+            if (isMounted) {
+              setSpaces(prev => [...prev]);
+            }
+          });
         }
       }, 0);
     };
@@ -168,12 +171,12 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     // Add event listeners after a small delay to avoid render phase issues
     setTimeout(() => {
       if (isMounted) {
-    window.addEventListener('spaceCreated', handleSpaceCreated);
-    window.addEventListener('questPublished', handleQuestPublished);
+        window.addEventListener('spaceCreated', handleSpaceCreated);
+        window.addEventListener('questPublished', handleQuestPublished);
       }
     }, 0);
     
-    // Reload spaces periodically in case they change
+    // Reload spaces periodically in case they change (without showing loading)
     // Start interval after initial load
     setTimeout(() => {
       if (isMounted) {

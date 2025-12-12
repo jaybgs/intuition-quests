@@ -22,13 +22,23 @@ import './CreateQuestBuilder.css';
 // Quest Templates
 const QUEST_TEMPLATES = [
   {
+    id: 'custom',
+    name: 'Start from Scratch',
+    description: 'Create a custom quest from scratch',
+    icon: '✨',
+    actions: [],
+    defaultTitle: '',
+    defaultDescription: '',
+    defaultDifficulty: ''
+  },
+  {
     id: 'social-follow',
     name: 'Social Follow',
     description: 'Get users to follow your social media accounts',
     icon: '📱',
     actions: [
-      { id: 1, title: 'Follow on X' },
-      { id: 2, title: 'Follow on Discord' }
+      { id: 31, title: 'Follow a Twitter account' },
+      { id: 10, title: 'Joined Discord Server' }
     ],
     defaultTitle: 'Follow Us on Social Media',
     defaultDescription: 'Follow our social media accounts to stay updated!',
@@ -40,8 +50,8 @@ const QUEST_TEMPLATES = [
     description: 'Engage users with your community',
     icon: '👥',
     actions: [
-      { id: 1, title: 'Join Discord' },
-      { id: 2, title: 'Follow on X' }
+      { id: 10, title: 'Joined Discord Server' },
+      { id: 31, title: 'Follow a Twitter account' }
     ],
     defaultTitle: 'Join Our Community',
     defaultDescription: 'Join our community and connect with other members!',
@@ -65,7 +75,7 @@ const QUEST_TEMPLATES = [
     description: 'Test users knowledge with a quiz',
     icon: '🧠',
     actions: [
-      { id: 15, title: 'Quiz' }
+      { id: 14, title: 'Quiz' }
     ],
     defaultTitle: 'Test Your Knowledge',
     defaultDescription: 'Take our quiz to test your knowledge!',
@@ -77,21 +87,11 @@ const QUEST_TEMPLATES = [
     description: 'Drive traffic to your website',
     icon: '🌐',
     actions: [
-      { id: 3, title: 'Visit website' }
+      { id: 36, title: 'Visit website' }
     ],
     defaultTitle: 'Visit Our Website',
     defaultDescription: 'Visit our website to learn more about us!',
     defaultDifficulty: 'beginner'
-  },
-  {
-    id: 'custom',
-    name: 'Start from Scratch',
-    description: 'Create a custom quest from scratch',
-    icon: '✨',
-    actions: [],
-    defaultTitle: '',
-    defaultDescription: '',
-    defaultDifficulty: ''
   }
 ];
 
@@ -969,9 +969,9 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
   const { createQuest, isCreating } = useQuests();
   const queryClient = useQueryClient();
   const [isPublishing, setIsPublishing] = useState(false);
-  // Start at step 0 (template selection) for new quests, but only for Pro users
-  // Free users skip templates and go straight to step 1
-  const [currentStep, setCurrentStep] = useState(draftId ? 1 : (isPro ? 0 : 1));
+  // Start at step 0 (template selection) for new quests
+  // All users see templates, but only Pro users can use Pro templates
+  const [currentStep, setCurrentStep] = useState(draftId ? 1 : 0);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -1934,7 +1934,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
             <p style={{ marginBottom: '2rem', color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
               {isPro 
                 ? 'Select a template to get started quickly, or start from scratch'
-                : 'Templates are available for Pro users. Upgrade to access pre-built quest templates.'}
+                : 'Start from scratch or upgrade to Pro to access pre-built quest templates.'}
             </p>
             
             <div style={{

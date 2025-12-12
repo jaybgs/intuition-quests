@@ -223,3 +223,17 @@ export function DashboardSkeleton() {
     </div>
   );
 }
+
+export function DraftCardSkeleton() {
+  return (
+    <div className="builder-quests-draft-card" style={{ pointerEvents: 'none' }}>
+      <div className="builder-quests-draft-header">
+        <Skeleton className="skeleton-draft-icon" style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
+        <Skeleton className="skeleton-draft-badge" style={{ width: '60px', height: '24px', borderRadius: '12px' }} />
+      </div>
+      <Skeleton className="skeleton-draft-title" style={{ width: '80%', height: '20px', marginTop: '16px', marginBottom: '8px' }} />
+      <Skeleton className="skeleton-draft-meta" style={{ width: '60%', height: '16px', marginBottom: '8px' }} />
+      <Skeleton className="skeleton-draft-date" style={{ width: '70%', height: '14px' }} />
+    </div>
+  );
+}

@@ -1,9 +1,8 @@
 import { useAccount } from 'wagmi';
-import { QuestServiceBackend } from '../services/questServiceBackend';
+import { questServiceSupabase } from '../services/questServiceSupabase';
+import { questServiceBackend } from '../services/questServiceBackend';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSocialConnections } from './useSocialConnections';
-
-const questService = new QuestServiceBackend();
 
 export function useQuests() {
   const { address } = useAccount();
@@ -19,9 +18,10 @@ export function useQuests() {
     queryKey: ['quests'],
     queryFn: async () => {
       try {
-        return await questService.getAllQuests();
+        // Use Supabase only - no localStorage fallback
+        return await questServiceSupabase.getAllQuests();
       } catch (error) {
-        console.error('Error fetching quests:', error);
+        console.error('Error fetching quests from Supabase:', error);
         return []; // Return empty array on error instead of blocking
       }
     },
@@ -37,7 +37,7 @@ export function useQuests() {
 
   const completeQuestMutation = useMutation({
     mutationFn: (questId: string) =>
-      questService.completeQuest(questId, address!),
+      questServiceBackend.completeQuest(questId, address!),
     onSuccess: async () => {
       // Invalidate and refetch queries to ensure UI updates
       await queryClient.invalidateQueries({ queryKey: ['user-xp', address] });
@@ -74,7 +74,7 @@ export function useQuests() {
         }
       }
       
-      return questService.createQuest(
+      return questServiceBackend.createQuest(
         data.projectId,
         data.projectName,
         data.title,

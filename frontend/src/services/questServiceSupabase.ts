@@ -17,7 +17,8 @@ export class QuestServiceSupabase {
     offset?: number;
   }): Promise<Quest[]> {
     if (!supabase) {
-      return this.fallbackGetAllQuests(filters);
+      console.warn('Supabase not configured, returning empty array');
+      return [];
     }
 
     try {
@@ -50,13 +51,13 @@ export class QuestServiceSupabase {
 
       if (error) {
         console.error('Error fetching quests from Supabase:', error);
-        return this.fallbackGetAllQuests(filters);
+        return [];
       }
 
       return (data || []).map(quest => this.mapQuestFromDb(quest));
     } catch (error) {
-      console.error('Error fetching quests:', error);
-      return this.fallbackGetAllQuests(filters);
+      console.error('Error fetching quests from Supabase:', error);
+      return [];
     }
   }
 

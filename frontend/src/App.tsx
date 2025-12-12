@@ -1382,7 +1382,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             {activeTab === 'create' && <CreateQuest />}
             {activeTab === 'profile' && <UserProfile />}
             {activeTab === 'dashboard' && <UserDashboard onEditProfile={() => {
-              // edit-profile is a sub-view, not a route, so use setActiveTab
+              console.log('onEditProfile called, setting activeTab to edit-profile');
               setActiveTab('edit-profile');
             }} />}
             {activeTab === 'edit-profile' && <EditProfile onBack={() => {

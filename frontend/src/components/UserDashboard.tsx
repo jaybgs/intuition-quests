@@ -443,7 +443,13 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
     <div className="user-dashboard">
       {/* Edit Profile Button - Outside Rectangle */}
       <div className="user-details-header">
-        <button onClick={onEditProfile} className="edit-profile-button-galxe">
+        <button
+          onClick={() => {
+            console.log('Edit Profile button clicked');
+            onEditProfile();
+          }}
+          className="edit-profile-button-galxe"
+        >
           Edit Profile
         </button>
       </div>

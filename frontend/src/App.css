@@ -1648,6 +1648,163 @@ body {
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
+.social-connections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.social-connection-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.social-connection-item:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.social-connection-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.social-connection-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.social-connection-icon.twitter {
+  background: linear-gradient(135deg, #1da1f2, #1991db);
+  color: white;
+}
+
+.social-connection-icon.discord {
+  background: linear-gradient(135deg, #5865f2, #4752c4);
+  color: white;
+}
+
+.social-connection-icon.github {
+  background: linear-gradient(135deg, #333, #24292e);
+  color: white;
+}
+
+.social-connection-icon.google {
+  background: linear-gradient(135deg, #ea4335, #4285f4);
+  color: white;
+}
+
+.social-connection-info {
+  flex: 1;
+}
+
+.social-connection-name {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.social-connection-status {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.social-connection-status.connected {
+  color: #10b981;
+}
+
+.social-connection-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.social-connect-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.social-connect-button.twitter {
+  background: #1da1f2;
+  color: white;
+}
+
+.social-connect-button.twitter:hover {
+  background: #1991db;
+}
+
+.social-connect-button.discord {
+  background: #5865f2;
+  color: white;
+}
+
+.social-connect-button.discord:hover {
+  background: #4752c4;
+}
+
+.social-connect-button.github {
+  background: #333;
+  color: white;
+}
+
+.social-connect-button.github:hover {
+  background: #24292e;
+}
+
+.social-connect-button.google {
+  background: #ea4335;
+  color: white;
+}
+
+.social-connect-button.google:hover {
+  background: #d33b2c;
+}
+
+.social-connect-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.social-disconnect-button {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.social-disconnect-button:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.social-disconnect-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .social-item:hover {
   background: rgba(37, 43, 61, 0.25);
   backdrop-filter: blur(45px);

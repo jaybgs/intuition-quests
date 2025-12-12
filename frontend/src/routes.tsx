@@ -1,6 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AppWithRouter from './AppWithRouter';
-import { OAuthCallback } from './components/OAuthCallback';
 
 // Create router with all routes
 export const router = createBrowserRouter([
@@ -57,22 +56,5 @@ export const router = createBrowserRouter([
   {
     path: '/space/*',
     element: <AppWithRouter />,
-  },
-  // OAuth callback routes - must be before catch-all
-  {
-    path: '/oauth/twitter/callback',
-    element: <OAuthCallback />,
-  },
-  {
-    path: '/oauth/discord/callback',
-    element: <OAuthCallback />,
-  },
-  {
-    path: '/oauth/github/callback',
-    element: <OAuthCallback />,
-  },
-  {
-    path: '/oauth/google/callback',
-    element: <OAuthCallback />,
   },
 ]);

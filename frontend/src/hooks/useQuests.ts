@@ -2,11 +2,9 @@ import { useAccount } from 'wagmi';
 import { questServiceSupabase } from '../services/questServiceSupabase';
 import { questServiceBackend } from '../services/questServiceBackend';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSocialConnections } from './useSocialConnections';
 
 export function useQuests() {
   const { address } = useAccount();
-  const { connections } = useSocialConnections();
   const queryClient = useQueryClient();
   
   // Expose queryClient globally for immediate cache invalidation

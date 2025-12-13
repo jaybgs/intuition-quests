@@ -62,10 +62,10 @@ export async function signInWithOAuth(provider: OAuthProvider['id']): Promise<OA
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
+        queryParams: provider === 'google' ? {
           access_type: 'offline',
           prompt: 'consent',
-        },
+        } : undefined,
       },
     });
 
@@ -119,24 +119,24 @@ export async function handleOAuthCallback(): Promise<OAuthResult> {
       };
     }
 
-    if (data.session && data.user) {
-      console.log('✅ OAuth callback successful:', {
-        user: data.user.email,
-        provider: data.user.app_metadata?.provider
-      });
+        if (data.session) {
+          console.log('✅ OAuth callback successful:', {
+            user: data.session.user.email || data.session.user.user_metadata?.user_name,
+            provider: data.session.user.app_metadata?.provider
+          });
 
-      return {
-        success: true,
-        user: data.user,
-        session: data.session
-      };
-    } else {
-      console.warn('⚠️ OAuth callback: No session found');
-      return {
-        success: false,
-        error: 'No authentication session found'
-      };
-    }
+          return {
+            success: true,
+            user: data.session.user,
+            session: data.session
+          };
+        } else {
+          console.warn('⚠️ OAuth callback: No session found');
+          return {
+            success: false,
+            error: 'No authentication session found'
+          };
+        }
 
   } catch (error: any) {
     console.error('❌ Unexpected OAuth callback error:', error);
@@ -190,14 +190,14 @@ export async function getCurrentSession(): Promise<{ session: Session | null; us
   }
 
   try {
-    const { data: { session, user }, error } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession();
 
     if (error) {
       console.error('❌ Get session error:', error);
       return { session: null, user: null };
     }
 
-    return { session, user };
+    return { session, user: session?.user || null };
   } catch (error) {
     console.error('❌ Unexpected get session error:', error);
     return { session: null, user: null };

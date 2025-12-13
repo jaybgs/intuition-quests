@@ -25,6 +25,7 @@ Replace `yourdomain.com` with your actual domain.
 Add these redirect URLs:
 ```
 https://yourdomain.com/auth/callback
+https://yourdomain.com/auth/callback/oauth/consent
 https://your-project.supabase.co/auth/v1/callback
 ```
 
@@ -40,7 +41,9 @@ https://your-project.supabase.co/auth/v1/callback
 4. **Authentication settings**:
    - **Type of App**: Web App
    - **App permissions**: Read
-   - **Callback URLs**: `https://yourdomain.com/auth/callback`
+   - **Callback URLs**:
+     - `https://yourdomain.com/auth/callback`
+     - `https://yourdomain.com/auth/callback/oauth/consent`
 5. **Copy credentials**:
    - **API Key** (Consumer Key)
    - **API Key Secret** (Consumer Secret)
@@ -49,7 +52,9 @@ https://your-project.supabase.co/auth/v1/callback
 1. **Go to**: https://discord.com/developers/applications
 2. **Create Application** or select existing
 3. **OAuth2 Settings**:
-   - **Redirects**: `https://yourdomain.com/auth/callback`
+   - **Redirects**:
+     - `https://yourdomain.com/auth/callback`
+     - `https://yourdomain.com/auth/callback/oauth/consent`
 4. **Copy credentials**:
    - **Client ID**
    - **Client Secret**
@@ -59,7 +64,9 @@ https://your-project.supabase.co/auth/v1/callback
 2. **New OAuth App**:
    - **Application name**: Your app name
    - **Homepage URL**: `https://yourdomain.com`
-   - **Authorization callback URL**: `https://yourdomain.com/auth/callback`
+   - **Authorization callback URL**:
+     - `https://yourdomain.com/auth/callback`
+     - `https://yourdomain.com/auth/callback/oauth/consent`
 3. **Copy credentials**:
    - **Client ID**
    - **Client Secret**
@@ -69,7 +76,9 @@ https://your-project.supabase.co/auth/v1/callback
 2. **Create OAuth 2.0 Client ID**:
    - **Application type**: Web application
    - **Name**: Your app name
-   - **Authorized redirect URIs**: `https://yourdomain.com/auth/callback`
+   - **Authorized redirect URIs**:
+     - `https://yourdomain.com/auth/callback`
+     - `https://yourdomain.com/auth/callback/oauth/consent`
 3. **Copy credentials**:
    - **Client ID**
    - **Client Secret**

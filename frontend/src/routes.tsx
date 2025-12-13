@@ -58,9 +58,13 @@ export const router = createBrowserRouter([
     path: '/space/*',
     element: <AppWithRouter />,
   },
-  // OAuth callback route
+  // OAuth callback routes
   {
     path: '/auth/callback',
+    element: <OAuthCallback />,
+  },
+  {
+    path: '/auth/callback/oauth/consent',
     element: <OAuthCallback />,
   },
 ]);

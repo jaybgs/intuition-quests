@@ -111,7 +111,7 @@ CREATE INDEX IF NOT EXISTS idx_quest_completions_completed ON quest_completions(
 -- Social Platform enum
 CREATE TYPE social_platform AS ENUM ('TWITTER', 'DISCORD', 'EMAIL', 'GITHUB');
 
--- Social Connections table
+-- Social Connections table (keeping for compatibility)
 CREATE TABLE IF NOT EXISTS social_connections (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -121,6 +121,19 @@ CREATE TABLE IF NOT EXISTS social_connections (
   verified BOOLEAN DEFAULT false,
   connected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id, platform)
+);
+
+-- Wallet Social Connections table (new - for wallet-based auth)
+CREATE TABLE IF NOT EXISTS wallet_socials (
+  wallet_address TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  provider_user_id TEXT NOT NULL,
+  provider_username TEXT,
+  provider_data JSONB,
+  access_token TEXT,
+  refresh_token TEXT,
+  verified_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (wallet_address, provider)
 );
 
 CREATE INDEX IF NOT EXISTS idx_social_connections_user ON social_connections(user_id);

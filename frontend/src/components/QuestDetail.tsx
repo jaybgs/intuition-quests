@@ -13,6 +13,9 @@ import { saveQuestCompletion } from '../utils/raffle';
 import { useSubscription } from '../hooks/useSubscription';
 import { spaceService } from '../services/spaceService';
 import { questServiceSupabase } from '../services/questServiceSupabase';
+import { useWalletSocialConnections } from '../hooks/useWalletSocialConnections';
+import { verifyTaskCompletion, type TaskRequirement } from '../services/taskVerificationService';
+import { verifySocialTask, type SocialVerificationResult } from '../services/socialVerificationService';
 import './QuestDetail.css';
 
 interface QuestDetailProps {
@@ -39,6 +42,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   const { quests, completeQuest, isCompleting } = useQuests();
   const queryClient = useQueryClient();
   const { isPro } = useSubscription();
+  const { hasConnectedProvider } = useWalletSocialConnections();
   const [quest, setQuest] = useState<Quest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
@@ -676,24 +680,89 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   };
 
-  // Check if social account is connected
-  const checkSocialConnection = (step: any): boolean => {
-    if (!address) return false;
-    
-    const stored = localStorage.getItem(`social_connections_${address.toLowerCase()}`);
-    if (!stored) return false;
-    
-    try {
-      const connections = JSON.parse(stored);
-      const title = step.title.toLowerCase();
-      
-      if (title.includes('twitter') || title.includes('x')) {
-        return connections.twitter !== null;
-      } else if (title.includes('discord')) {
-        return connections.discord !== null;
+  // Verify task completion using social APIs
+  const verifyTaskCompletion = async (step: any) => {
+    if (!address) return { success: false, completed: false, error: 'No wallet connected' };
+
+    const title = step.title.toLowerCase();
+    const description = step.description?.toLowerCase() || '';
+
+    // Twitter tasks
+    if (title.includes('twitter') || title.includes('x')) {
+      if (title.includes('follow') || description.includes('follow')) {
+        // Extract username from step data (you'd need to store this in quest requirements)
+        const targetUsername = step.twitterUsername || step.targetUsername || 'targetaccount';
+        return await verifySocialTask(address, 'twitter', 'follow', { username: targetUsername });
       }
-      return true; // Other tasks don't require social connection
-    } catch {
+    }
+
+    // Discord tasks
+    if (title.includes('discord')) {
+      if (title.includes('join') || description.includes('join server')) {
+        const serverId = step.discordServerId || step.serverId || '123456789';
+        return await verifySocialTask(address, 'discord', 'join_server', { serverId });
+      }
+    }
+
+    // GitHub tasks
+    if (title.includes('github')) {
+      if (title.includes('star') || description.includes('star')) {
+        const [owner, repo] = (step.githubRepo || 'owner/repo').split('/');
+        return await verifySocialTask(address, 'github', 'star_repo', { owner, repo });
+      }
+    }
+
+    // For non-social tasks, return true
+    return { success: true, completed: true };
+  };
+
+  // Check if social task is completed
+  const checkSocialTaskCompletion = async (step: any): Promise<boolean> => {
+    if (!address) return false;
+
+    const title = step.title.toLowerCase();
+    const description = step.description?.toLowerCase() || '';
+
+    try {
+      // Twitter tasks
+      if (title.includes('twitter') || title.includes('x')) {
+        if (title.includes('follow') || description.includes('follow')) {
+          const targetUsername = step.twitterUsername || step.targetUsername || 'targetaccount';
+          const result = await verifySocialTask(address, 'twitter', 'follow', { username: targetUsername });
+          return result.success && result.completed;
+        }
+        // If just checking connection, verify any Twitter connection exists
+        return hasConnectedProvider('twitter');
+      }
+
+      // Discord tasks
+      if (title.includes('discord')) {
+        if (title.includes('join') || description.includes('join server')) {
+          const serverId = step.discordServerId || step.serverId || '123456789';
+          const result = await verifySocialTask(address, 'discord', 'join_server', { serverId });
+          return result.success && result.completed;
+        }
+        return hasConnectedProvider('discord');
+      }
+
+      // GitHub tasks
+      if (title.includes('github')) {
+        if (title.includes('star') || description.includes('star')) {
+          const [owner, repo] = (step.githubRepo || 'owner/repo').split('/');
+          const result = await verifySocialTask(address, 'github', 'star_repo', { owner, repo });
+          return result.success && result.completed;
+        }
+        return hasConnectedProvider('github');
+      }
+
+      // Google tasks
+      if (title.includes('google')) {
+        return hasConnectedProvider('google');
+      }
+
+      return true; // Other tasks don't require social verification
+    } catch (error) {
+      console.error('Error checking social task completion:', error);
       return false;
     }
   };
@@ -720,8 +789,9 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       }
     }
 
-    // Check if social account is connected
-    if (!checkSocialConnection(step)) {
+    // Check if social task is completed
+    const isTaskCompleted = await checkSocialTaskCompletion(step);
+    if (!isTaskCompleted) {
       const title = step.title.toLowerCase();
       let accountType = 'social account';
       if (title.includes('twitter') || title.includes('x')) {
@@ -740,12 +810,11 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       [stepId]: { status: 'verifying' }
     }));
 
-    // Simulate verification (would call actual API)
-    setTimeout(() => {
-      // Randomly succeed or fail for demo (80% success rate)
-      const success = Math.random() > 0.2;
-      
-      if (success) {
+    try {
+      // Perform actual social task verification
+      const verificationResult = await verifyTaskCompletion(step);
+
+      if (verificationResult.success && verificationResult.completed) {
         // Mark as verified
         setVerificationStates(prev => ({
           ...prev,

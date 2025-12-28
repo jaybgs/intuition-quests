@@ -35,9 +35,14 @@ router.post('/login', async (req: Request, res: Response) => {
     // Get or create user
     const user = await userService.getOrCreateUser(address);
 
-    // Generate JWT token
+    // Generate JWT token with wallet address for RLS policies
     const token = jwt.sign(
-      { address: user.address, userId: user.id },
+      {
+        address: user.address,
+        userId: user.id,
+        wallet: user.address.toLowerCase(), // For RLS policies
+        role: 'authenticated'
+      },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );

@@ -1,6 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AppWithRouter from './AppWithRouter';
-import { OAuthCallback } from './components/OAuthCallback';
 
 // Create router with all routes
 export const router = createBrowserRouter([
@@ -57,14 +56,5 @@ export const router = createBrowserRouter([
   {
     path: '/space/*',
     element: <AppWithRouter />,
-  },
-  // OAuth callback routes
-  {
-    path: '/auth/callback',
-    element: <OAuthCallback />,
-  },
-  {
-    path: '/auth/callback/oauth/consent',
-    element: <OAuthCallback />,
   },
 ]);

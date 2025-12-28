@@ -14,8 +14,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { spaceService } from '../services/spaceService';
 import { questServiceSupabase } from '../services/questServiceSupabase';
 import { useWalletSocialConnections } from '../hooks/useWalletSocialConnections';
-import { verifyTaskCompletion, type TaskRequirement } from '../services/taskVerificationService';
-import { verifySocialTask, type SocialVerificationResult } from '../services/socialVerificationService';
+// TODO: Implement your own task verification service
 import './QuestDetail.css';
 
 interface QuestDetailProps {
@@ -42,7 +41,12 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   const { quests, completeQuest, isCompleting } = useQuests();
   const queryClient = useQueryClient();
   const { isPro } = useSubscription();
-  const { hasConnectedProvider } = useWalletSocialConnections();
+  // TODO: Implement your own social connection checking
+  const hasConnectedProvider = (provider: string): boolean => {
+    // TODO: Check if user has connected this social provider in your system
+    console.log('TODO: Check if user has connected provider:', provider);
+    return false; // Placeholder - implement your logic
+  };
   const [quest, setQuest] = useState<Quest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
@@ -680,43 +684,36 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   };
 
-  // Verify task completion using social APIs
+  // TODO: Implement your own task verification logic
   const verifyTaskCompletion = async (step: any) => {
     if (!address) return { success: false, completed: false, error: 'No wallet connected' };
 
     const title = step.title.toLowerCase();
     const description = step.description?.toLowerCase() || '';
 
-    // Twitter tasks
+    // TODO: Implement your own verification logic here
+    // This is where you would integrate with your custom authentication/verification system
+
     if (title.includes('twitter') || title.includes('x')) {
-      if (title.includes('follow') || description.includes('follow')) {
-        // Extract username from step data (you'd need to store this in quest requirements)
-        const targetUsername = step.twitterUsername || step.targetUsername || 'targetaccount';
-        return await verifySocialTask(address, 'twitter', 'follow', { username: targetUsername });
-      }
+      console.log('TODO: Implement Twitter verification for step:', step);
+      return { success: false, completed: false, error: 'Twitter verification not implemented yet' };
     }
 
-    // Discord tasks
     if (title.includes('discord')) {
-      if (title.includes('join') || description.includes('join server')) {
-        const serverId = step.discordServerId || step.serverId || '123456789';
-        return await verifySocialTask(address, 'discord', 'join_server', { serverId });
-      }
+      console.log('TODO: Implement Discord verification for step:', step);
+      return { success: false, completed: false, error: 'Discord verification not implemented yet' };
     }
 
-    // GitHub tasks
     if (title.includes('github')) {
-      if (title.includes('star') || description.includes('star')) {
-        const [owner, repo] = (step.githubRepo || 'owner/repo').split('/');
-        return await verifySocialTask(address, 'github', 'star_repo', { owner, repo });
-      }
+      console.log('TODO: Implement GitHub verification for step:', step);
+      return { success: false, completed: false, error: 'GitHub verification not implemented yet' };
     }
 
-    // For non-social tasks, return true
+    // For non-social tasks, return success (you can implement other verification types here)
     return { success: true, completed: true };
   };
 
-  // Check if social task is completed
+  // TODO: Implement your own social task completion checking
   const checkSocialTaskCompletion = async (step: any): Promise<boolean> => {
     if (!address) return false;
 
@@ -724,40 +721,31 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     const description = step.description?.toLowerCase() || '';
 
     try {
-      // Twitter tasks
+      // TODO: Implement your own verification logic here
+      // For now, just check if we have "connected" providers (you need to implement this)
+
       if (title.includes('twitter') || title.includes('x')) {
-        if (title.includes('follow') || description.includes('follow')) {
-          const targetUsername = step.twitterUsername || step.targetUsername || 'targetaccount';
-          const result = await verifySocialTask(address, 'twitter', 'follow', { username: targetUsername });
-          return result.success && result.completed;
-        }
-        // If just checking connection, verify any Twitter connection exists
-        return hasConnectedProvider('twitter');
+        // TODO: Check if user has Twitter connection in your system
+        console.log('TODO: Check Twitter connection for step:', step);
+        return false; // Placeholder - implement your logic
       }
 
-      // Discord tasks
       if (title.includes('discord')) {
-        if (title.includes('join') || description.includes('join server')) {
-          const serverId = step.discordServerId || step.serverId || '123456789';
-          const result = await verifySocialTask(address, 'discord', 'join_server', { serverId });
-          return result.success && result.completed;
-        }
-        return hasConnectedProvider('discord');
+        // TODO: Check if user has Discord connection in your system
+        console.log('TODO: Check Discord connection for step:', step);
+        return false; // Placeholder - implement your logic
       }
 
-      // GitHub tasks
       if (title.includes('github')) {
-        if (title.includes('star') || description.includes('star')) {
-          const [owner, repo] = (step.githubRepo || 'owner/repo').split('/');
-          const result = await verifySocialTask(address, 'github', 'star_repo', { owner, repo });
-          return result.success && result.completed;
-        }
-        return hasConnectedProvider('github');
+        // TODO: Check if user has GitHub connection in your system
+        console.log('TODO: Check GitHub connection for step:', step);
+        return false; // Placeholder - implement your logic
       }
 
-      // Google tasks
       if (title.includes('google')) {
-        return hasConnectedProvider('google');
+        // TODO: Check if user has Google connection in your system
+        console.log('TODO: Check Google connection for step:', step);
+        return false; // Placeholder - implement your logic
       }
 
       return true; // Other tasks don't require social verification
@@ -820,15 +808,15 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           ...prev,
           [stepId]: { status: 'verified' }
         }));
-        
+
         // Update quest step as completed
         if (quest) {
-          const updatedSteps = quest.steps?.map(s => 
+          const updatedSteps = quest.steps?.map(s =>
             s.id === stepId ? { ...s, completed: true } : s
           );
           setQuest({ ...quest, steps: updatedSteps });
         }
-        
+
         showToast('Task verified successfully!', 'success');
       } else {
         // Mark as failed and start cooldown
@@ -838,7 +826,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           [stepId]: { status: 'cooldown', cooldownEnd }
         }));
         showToast('Verification failed. Please try again in 30s', 'error');
-        
+
         // Set up timer to clear cooldown
         setTimeout(() => {
           setVerificationStates(prev => ({
@@ -847,7 +835,24 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           }));
         }, 30000);
       }
-    }, 2000); // 2 second verification delay
+    } catch (error: any) {
+      console.error('Verification error:', error);
+      // Mark as failed and start cooldown
+      const cooldownEnd = Date.now() + 30000; // 30 seconds
+      setVerificationStates(prev => ({
+        ...prev,
+        [stepId]: { status: 'cooldown', cooldownEnd }
+      }));
+      showToast(`Verification failed: ${error.message || 'Unknown error'}`, 'error');
+
+      // Set up timer to clear cooldown
+      setTimeout(() => {
+        setVerificationStates(prev => ({
+          ...prev,
+          [stepId]: { status: 'idle' }
+        }));
+      }, 30000);
+    }
   };
 
   // Handle marking a document as read

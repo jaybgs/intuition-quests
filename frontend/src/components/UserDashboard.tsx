@@ -6,7 +6,7 @@ import { apiClient } from '../services/apiClient';
 import { useUserXP } from '../hooks/useUserXP';
 import { useUserActivity } from '../hooks/useUserActivity';
 import { useIntuitionData, IntuitionAtom, IntuitionTriple } from '../hooks/useIntuitionData';
-import { useSocialConnections } from '../hooks/useSocialConnections';
+import { useWalletSocialConnections } from '../hooks/useWalletSocialConnections';
 import { showToast } from './Toast';
 import { truncateUsername } from '../utils/usernameUtils';
 import { getDiceBearAvatar } from '../utils/avatar';
@@ -97,13 +97,11 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   const { getAtoms, getClaimsByCreator, getIdentityByAddress, getTriples, getStakedClaimsCount } = useIntuitionData();
   const {
     connections,
-    isConnecting,
-    connectTwitter,
-    connectDiscord,
-    connectGithub,
-    connectGoogle,
-    disconnect: disconnectSocial
-  } = useSocialConnections();
+    isLoading: isSocialLoading,
+    connectSocialAccount,
+    getConnectedProviders,
+    hasConnectedProvider
+  } = useWalletSocialConnections();
 
   // Track connected wallets
   const [connectedWallets, setConnectedWallets] = useState<ConnectedWallet[]>(() => {
@@ -386,50 +384,25 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   }, [connectedWallets.length]);
 
   // Social connection handlers
-  const handleConnectTwitter = async () => {
-    const result = await connectTwitter();
+  const handleConnectSocial = async (provider: 'twitter' | 'discord' | 'github' | 'google') => {
+    const result = await connectSocialAccount(provider);
     if (result.success) {
-      showToast('Redirecting to Twitter...', 'info');
+      showToast(`Redirecting to ${provider}...`, 'info');
     } else {
-      showToast(`Failed to connect Twitter: ${result.error}`, 'error');
-    }
-  };
-
-  const handleConnectDiscord = async () => {
-    const result = await connectDiscord();
-    if (result.success) {
-      showToast('Redirecting to Discord...', 'info');
-    } else {
-      showToast(`Failed to connect Discord: ${result.error}`, 'error');
-    }
-  };
-
-  const handleConnectGithub = async () => {
-    const result = await connectGithub();
-    if (result.success) {
-      showToast('Redirecting to GitHub...', 'info');
-    } else {
-      showToast(`Failed to connect GitHub: ${result.error}`, 'error');
-    }
-  };
-
-  const handleConnectGoogle = async () => {
-    const result = await connectGoogle();
-    if (result.success) {
-      showToast('Redirecting to Google...', 'info');
-    } else {
-      showToast(`Failed to connect Google: ${result.error}`, 'error');
+      showToast(`Failed to connect ${provider}: ${result.error}`, 'error');
     }
   };
 
   const handleDisconnectSocial = async (platform: 'twitter' | 'discord' | 'github' | 'google') => {
-    const result = await disconnectSocial(platform);
-    if (result.success) {
-      showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnected`, 'success');
-    } else {
-      showToast(`Failed to disconnect ${platform}: ${result.error}`, 'error');
-    }
+    // TODO: Implement disconnect functionality
+    showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnect not implemented yet`, 'info');
   };
+
+  // Individual connection handlers
+  const handleConnectTwitter = () => handleConnectSocial('twitter');
+  const handleConnectDiscord = () => handleConnectSocial('discord');
+  const handleConnectGithub = () => handleConnectSocial('github');
+  const handleConnectGoogle = () => handleConnectSocial('google');
 
   // Toggle wallet expansion
   const toggleWalletExpansion = (walletAddress: string) => {

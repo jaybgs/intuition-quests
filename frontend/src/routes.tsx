@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AppWithRouter from './AppWithRouter';
 import { OAuthCallback } from './components/OAuthCallback';
-import { SocialCallback } from './components/SocialCallback';
 
 // Create router with all routes
 export const router = createBrowserRouter([
@@ -67,10 +66,5 @@ export const router = createBrowserRouter([
   {
     path: '/auth/callback/oauth/consent',
     element: <OAuthCallback />,
-  },
-  // Social connection callback
-  {
-    path: '/auth/social-callback',
-    element: <SocialCallback />,
   },
 ]);

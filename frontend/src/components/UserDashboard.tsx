@@ -98,6 +98,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   const {
     connections,
     isLoading: isSocialLoading,
+    isConnecting,
     connectSocialAccount,
     getConnectedProviders,
     hasConnectedProvider

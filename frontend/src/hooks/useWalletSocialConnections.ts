@@ -20,6 +20,7 @@ export interface WalletSocialConnection {
 interface SocialConnectionsState {
   connections: WalletSocialConnection[];
   isLoading: boolean;
+  isConnecting: string | null;
   error: string | null;
 }
 
@@ -28,6 +29,7 @@ export function useWalletSocialConnections() {
   const [state, setState] = useState<SocialConnectionsState>({
     connections: [],
     isLoading: false,
+    isConnecting: null,
     error: null
   });
 
@@ -36,7 +38,7 @@ export function useWalletSocialConnections() {
     if (address) {
       loadConnections();
     } else {
-      setState({ connections: [], isLoading: false, error: null });
+      setState({ connections: [], isLoading: false, isConnecting: null, error: null });
     }
   }, [address]);
 
@@ -52,16 +54,19 @@ export function useWalletSocialConnections() {
         error: null
       });
     } catch (error: any) {
-      setState({
-        connections: [],
+      setState(prev => ({
+        ...prev,
         isLoading: false,
         error: error.message || 'Failed to load social connections'
-      });
+      }));
     }
   };
 
   const connectSocialAccount = async (provider: 'google' | 'github' | 'discord' | 'twitter') => {
     if (!address) throw new Error('No wallet connected');
+
+    // Set connecting state
+    setState(prev => ({ ...prev, isConnecting: provider }));
 
     try {
       // Initiate social connection - this returns OAuth URL and state
@@ -71,6 +76,7 @@ export function useWalletSocialConnections() {
       window.location.href = `${redirectUrl}?state=${state}`;
       return { success: true };
     } catch (error: any) {
+      setState(prev => ({ ...prev, isConnecting: null }));
       return { success: false, error: error.message };
     }
   };
@@ -93,6 +99,7 @@ export function useWalletSocialConnections() {
     loadConnections,
     getConnectedProviders,
     hasConnectedProvider,
-    getConnectionForProvider
+    getConnectionForProvider,
+    isConnecting: state.isConnecting
   };
 }

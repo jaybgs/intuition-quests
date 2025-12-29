@@ -54,6 +54,13 @@ export async function authenticateAdmin(username: string, password: string): Pro
       return { success: false, error: 'Invalid username or password' };
     }
 
+    // Auto-logout any existing wallet connection when admin logs in
+    // This is done by dispatching a custom event that the app can listen to
+    if (typeof window !== 'undefined') {
+      console.log('🔐 Admin login: Auto-logging out existing wallet connection');
+      window.dispatchEvent(new CustomEvent('adminLoginAutoLogout'));
+    }
+
     // Create session
     const session: AdminSession = {
       username: admin.username,

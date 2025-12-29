@@ -110,10 +110,14 @@ class ApiClient {
   }
 
   async completeQuest(questId: string, verificationData?: Record<string, any>) {
-    const response = await this.client.post(`/quests/${questId}/complete`, {
+    const response = await this.client.post(`/quests/complete`, {
+      questId,
       verificationData,
     });
-    return response.data.completion;
+    return {
+      xpEarned: response.data.xpEarned || 0,
+      claimId: response.data.claimId || null,
+    };
   }
 
   async getQuestCompletions(questId: string, limit = 100) {

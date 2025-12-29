@@ -14,6 +14,7 @@ export const ADMIN_ADDRESS = '0xec48e65C2AD6d242F173467EC3edc7AAD78CFA07' as con
 
 // Contract addresses - DEPLOYED TO INTUITION CHAIN (Dec 8, 2025)
 // NOTE: Atom creation now uses Intuition SDK directly for better compatibility
+// Trust Quests Payment now accepts native TRUST tokens (not ERC20)
 export const CONTRACT_ADDRESSES = {
   // Contract 1: Space Identity Creation
   // NOW USES SDK DIRECTLY - Custom contract had MultiVault compatibility issues
@@ -30,6 +31,9 @@ export const CONTRACT_ADDRESSES = {
   // Contract 4: Claim IQ
   // NOW USES SDK DIRECTLY - Creates completion triples via SDK
   CLAIM_IQ: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+
+  // Trust Quests Payment - PRO SUBSCRIPTION (Native TRUST tokens)
+  TRUST_QUESTS_PAYMENT: '0xF43b19c406B5178e13B9B9e576109F915bCef20C' as `0x${string}`,
 } as const;
 
 // Check if contracts are deployed (not zero address)

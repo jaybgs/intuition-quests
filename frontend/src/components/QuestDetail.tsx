@@ -8,6 +8,7 @@ import { Quest } from '../types';
 import { intuitionChain } from '../config/wagmi';
 import { showToast } from './Toast';
 import { saveQuestCompletion } from '../utils/raffle';
+import { useSocialConnections } from '../hooks/useSocialConnections';
 // Removed questClaimSurchargeService - claiming is now free
 // Removed CONTRACT_ADDRESSES and formatUnits - no longer needed for free claiming
 import { useSubscription } from '../hooks/useSubscription';
@@ -34,6 +35,7 @@ interface StepVerificationState {
 
 export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilder = false, onEdit }: QuestDetailProps) {
   const { address } = useAccount();
+  const { hasConnectedProvider } = useSocialConnections();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
   const chainId = useChainId();
@@ -41,12 +43,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   const { quests, completeQuest, isCompleting } = useQuests();
   const queryClient = useQueryClient();
   const { isPro } = useSubscription();
-  // TODO: Implement your own social connection checking
-  const hasConnectedProvider = (provider: string): boolean => {
-    // TODO: Check if user has connected this social provider in your system
-    console.log('TODO: Check if user has connected provider:', provider);
-    return false; // Placeholder - implement your logic
-  };
   const [quest, setQuest] = useState<Quest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
@@ -684,36 +680,72 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   };
 
-  // TODO: Implement your own task verification logic
+  // Verify task completion using social APIs
   const verifyTaskCompletion = async (step: any) => {
     if (!address) return { success: false, completed: false, error: 'No wallet connected' };
 
     const title = step.title.toLowerCase();
     const description = step.description?.toLowerCase() || '';
 
-    // TODO: Implement your own verification logic here
-    // This is where you would integrate with your custom authentication/verification system
+    // Determine provider and action from step
+    let provider: 'twitter' | 'discord' | 'github' | 'google' | null = null;
+    let action: string = '';
+    let params: any = {};
 
     if (title.includes('twitter') || title.includes('x')) {
-      console.log('TODO: Implement Twitter verification for step:', step);
-      return { success: false, completed: false, error: 'Twitter verification not implemented yet' };
+      provider = 'twitter';
+      if (title.includes('follow') || description.includes('follow')) {
+        action = 'follow';
+        params.username = step.twitterUsername || step.targetUsername || 'targetaccount';
+      }
+    } else if (title.includes('discord')) {
+      provider = 'discord';
+      if (title.includes('join') || description.includes('join server')) {
+        action = 'join_server';
+        params.serverId = step.discordServerId || step.serverId || '123456789';
+      }
+    } else if (title.includes('github')) {
+      provider = 'github';
+      if (title.includes('star') || description.includes('star')) {
+        action = 'star_repo';
+        const [owner, repo] = (step.githubRepo || 'owner/repo').split('/');
+        params.owner = owner;
+        params.repo = repo;
+      }
+    } else if (title.includes('google')) {
+      provider = 'google';
+      action = 'connect'; // Basic connection verification
     }
 
-    if (title.includes('discord')) {
-      console.log('TODO: Implement Discord verification for step:', step);
-      return { success: false, completed: false, error: 'Discord verification not implemented yet' };
+    // If it's a social task, verify with backend
+    if (provider && action) {
+      try {
+        const response = await apiClient.post('/social/verify', {
+          provider,
+          action,
+          params
+        });
+
+        return {
+          success: response.data.success,
+          completed: response.data.completed,
+          error: response.data.error
+        };
+      } catch (error: any) {
+        console.error('Social verification error:', error);
+        return {
+          success: false,
+          completed: false,
+          error: error.response?.data?.error || error.message || 'Verification failed'
+        };
+      }
     }
 
-    if (title.includes('github')) {
-      console.log('TODO: Implement GitHub verification for step:', step);
-      return { success: false, completed: false, error: 'GitHub verification not implemented yet' };
-    }
-
-    // For non-social tasks, return success (you can implement other verification types here)
+    // For non-social tasks, return success
     return { success: true, completed: true };
   };
 
-  // TODO: Implement your own social task completion checking
+  // Check if social task is completed (connection exists)
   const checkSocialTaskCompletion = async (step: any): Promise<boolean> => {
     if (!address) return false;
 
@@ -721,32 +753,22 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     const description = step.description?.toLowerCase() || '';
 
     try {
-      // TODO: Implement your own verification logic here
-      // For now, just check if we have "connected" providers (you need to implement this)
-
-      if (title.includes('twitter') || title.includes('x')) {
-        // TODO: Check if user has Twitter connection in your system
-        console.log('TODO: Check Twitter connection for step:', step);
-        return false; // Placeholder - implement your logic
+      // Check if user has connected the required social provider
+    if (title.includes('twitter') || title.includes('x')) {
+      return hasConnectedProvider('twitter');
       }
 
       if (title.includes('discord')) {
-        // TODO: Check if user has Discord connection in your system
-        console.log('TODO: Check Discord connection for step:', step);
-        return false; // Placeholder - implement your logic
+      return hasConnectedProvider('discord');
       }
 
       if (title.includes('github')) {
-        // TODO: Check if user has GitHub connection in your system
-        console.log('TODO: Check GitHub connection for step:', step);
-        return false; // Placeholder - implement your logic
+      return hasConnectedProvider('github');
       }
 
       if (title.includes('google')) {
-        // TODO: Check if user has Google connection in your system
-        console.log('TODO: Check Google connection for step:', step);
-        return false; // Placeholder - implement your logic
-      }
+      return hasConnectedProvider('google');
+    }
 
       return true; // Other tasks don't require social verification
     } catch (error) {
@@ -808,15 +830,15 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           ...prev,
           [stepId]: { status: 'verified' }
         }));
-
+        
         // Update quest step as completed
         if (quest) {
-          const updatedSteps = quest.steps?.map(s =>
+          const updatedSteps = quest.steps?.map(s => 
             s.id === stepId ? { ...s, completed: true } : s
           );
           setQuest({ ...quest, steps: updatedSteps });
         }
-
+        
         showToast('Task verified successfully!', 'success');
       } else {
         // Mark as failed and start cooldown
@@ -826,7 +848,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           [stepId]: { status: 'cooldown', cooldownEnd }
         }));
         showToast('Verification failed. Please try again in 30s', 'error');
-
+        
         // Set up timer to clear cooldown
         setTimeout(() => {
           setVerificationStates(prev => ({
@@ -1130,6 +1152,20 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
 
   return (
     <div className="quest-detail-container galxe-exact">
+      {/* Back Button */}
+      <div className="quest-detail-back-section">
+        <button
+          onClick={onBack}
+          className="quest-detail-back-button"
+          aria-label="Back to Community"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to Community
+        </button>
+      </div>
+
       {/* Top Header */}
       <div className="quest-detail-top-header">
         <div className="quest-detail-header-left">

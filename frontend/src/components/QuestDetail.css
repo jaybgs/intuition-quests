@@ -12,6 +12,45 @@
   max-width: 100vw;
 }
 
+/* Back Button Section */
+.quest-detail-back-section {
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 16px 24px 8px 24px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.quest-detail-back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.quest-detail-back-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.quest-detail-back-button svg {
+  flex-shrink: 0;
+}
+
 /* Top Header - Glass Morphism */
 .quest-detail-top-header {
   width: 100%;
@@ -739,6 +778,15 @@
     padding: 0;
   }
 
+  .quest-detail-back-section {
+    padding: 12px 16px 4px 16px;
+  }
+
+  .quest-detail-back-button {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+
   .quest-detail-main-content {
     max-width: 100%;
     width: 100%;
@@ -894,6 +942,84 @@
 }
 
 @media (max-width: 480px) {
+  .quest-detail-back-section {
+    padding: 8px 16px 4px 16px;
+  }
+
+  .quest-detail-back-button {
+    font-size: 12px;
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .quest-detail-back-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .quest-detail-top-header {
+    padding: 12px 16px;
+  }
+
+  .quest-detail-page-title {
+    font-size: clamp(18px, 4vw, 24px);
+  }
+
+  .quest-detail-task-item,
+  .quest-detail-task-item-exact {
+    padding: 16px;
+    gap: 12px;
+    min-height: 60px; /* Better touch target */
+  }
+
+  .quest-detail-creator-name {
+    font-size: 14px;
+  }
+
+  .quest-detail-follow-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 36px; /* Better touch target */
+  }
+
+  .quest-detail-task-text-exact {
+    font-size: 13px;
+  }
+
+  .quest-detail-title-section {
+    padding: 12px;
+  }
+
+  .quest-detail-reward-section {
+    padding: 0 12px 12px;
+  }
+
+  .quest-detail-tasks-container {
+    padding: 0 12px 60px;
+  }
+
+  .quest-detail-claim-button-container {
+    padding: 12px;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .quest-detail-back-section {
+    padding: 8px 16px 4px 16px;
+  }
+
+  .quest-detail-back-button {
+    font-size: 12px;
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .quest-detail-back-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
   .quest-detail-top-header {
     padding: 12px 16px;
   }

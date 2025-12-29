@@ -4,14 +4,16 @@
   "description": "This directory contains the Solidity smart contracts for TrustQuests on Intuition Chain (Chain ID: 1155).",
   "main": "index.js",
   "scripts": {
+    "compile": "hardhat compile",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
-    "hardhat": "^3.0.17"
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@openzeppelin/contracts": "^4.9.6",
+    "hardhat": "^2.28.1"
   },
   "type": "module",
   "dependencies": {

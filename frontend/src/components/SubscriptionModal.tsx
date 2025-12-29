@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSubscription } from '../hooks/useSubscription';
 import { showToast } from './Toast';
+import { CONTRACT_ADDRESSES } from '../contracts/addresses';
 import './SubscriptionModal.css';
 
 interface SubscriptionModalProps {
@@ -11,8 +12,10 @@ interface SubscriptionModalProps {
 }
 
 export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionModalProps) {
-  const { upgradeToPro } = useSubscription();
+  const { upgradeToPro, isPaying } = useSubscription();
   const [mounted, setMounted] = useState(false);
+
+  const contractDeployed = CONTRACT_ADDRESSES.TRUST_QUESTS_PAYMENT !== '0x0000000000000000000000000000000000000000';
 
   // Ensure component is mounted (for SSR/hydration)
   useEffect(() => {
@@ -60,10 +63,17 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
     showToast('Continuing with Free plan', 'success');
   };
 
-  const handleSelectPro = () => {
-    upgradeToPro();
+  const handleSelectPro = async () => {
+    try {
+      const result = await upgradeToPro();
+      if (result.success) {
     onProceed('pro');
-    showToast('Upgraded to Pro plan!', 'success');
+        showToast(`Upgraded to Pro plan! TX: ${result.txHash?.slice(0, 10)}...`, 'success');
+      }
+    } catch (error: any) {
+      console.error('Pro upgrade failed:', error);
+      showToast(`Payment failed: ${error.message}`, 'error');
+    }
   };
 
   const modalContent = (
@@ -120,7 +130,7 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
             <div className="subscription-plan-badge">Recommended</div>
             <div className="subscription-plan-header">
               <h3 className="subscription-plan-name">Pro</h3>
-              <div className="subscription-plan-price">200 TRUST<span>/month</span></div>
+              <div className="subscription-plan-price">10 TRUST<span>/month</span></div>
             </div>
             <ul className="subscription-plan-features">
               <li>✓ Unlimited active quests</li>
@@ -133,9 +143,20 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
               <li>✓ Automated rewards</li>
               <li>✓ Priority support</li>
             </ul>
-            <button className="subscription-plan-button pro" onClick={handleSelectPro}>
-              Upgrade to Pro
+            {contractDeployed ? (
+              <button
+                className="subscription-plan-button pro"
+                onClick={handleSelectPro}
+                disabled={isPaying}
+              >
+                {isPaying ? 'Processing Payment...' : 'Upgrade to Pro'}
             </button>
+            ) : (
+              <div className="subscription-plan-coming-soon">
+                <p>🚧 Payment system coming soon!</p>
+                <small>Contact admin for early access</small>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,0 +1,8 @@
+{
+  "contractName": "TrustQuestsPayment",
+  "address": "0xF43b19c406B5178e13B9B9e576109F915bCef20C",
+  "network": "Intuition Chain",
+  "trustTokenAddress": "0x6cd905df2ed214b22e0d48ff17cd4200c1c6d8a3",
+  "proPlanPrice": "10 TRUST",
+  "deployedAt": "2025-12-29T17:15:05.194Z"
+}

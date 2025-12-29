@@ -255,3 +255,25 @@
   }
 }
 
+/* Coming Soon Message */
+.subscription-plan-coming-soon {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.subscription-plan-coming-soon p {
+  margin: 0 0 0.25rem 0;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.subscription-plan-coming-soon small {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+}
+

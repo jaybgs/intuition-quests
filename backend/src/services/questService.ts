@@ -150,6 +150,25 @@ export class QuestService {
     return quest?.completed_by || [];
   }
 
+  async deleteQuestsBySpaceId(spaceId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('published_quests')
+        .delete()
+        .eq('space_id', spaceId);
+
+      if (error) {
+        console.error('Error deleting quests by space_id:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting quests by space_id:', error);
+      return false;
+    }
+  }
+
   async addQuestCompletion(questId: string, userAddress: string) {
     // Get current completions
     const { data: quest, error: fetchError } = await supabase

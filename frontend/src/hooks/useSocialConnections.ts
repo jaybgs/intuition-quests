@@ -1,12 +1,6 @@
-/**
- * Social Connections Hook using Supabase Auth
- * Manages OAuth authentication and social connections
- */
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { signInWithOAuth, signOut, getCurrentSession, onAuthStateChange } from '../services/oauthService';
-import { OAUTH_PROVIDERS, type OAuthProvider } from '../services/oauthService';
-import type { User, Session } from '@supabase/supabase-js';
+import { apiClient } from '../services/apiClient';
 
 interface ConnectedAccount {
   platform: string;
@@ -25,152 +19,166 @@ interface SocialConnections {
   twitter: ConnectedAccount | null;
 }
 
-const STORAGE_KEY = 'supabase_auth_session';
+interface SocialConnectionsState {
+  connections: SocialConnections;
+  isLoading: boolean;
+  isConnecting: string | null;
+  error: string | null;
+}
 
 export function useSocialConnections() {
   const { address } = useAccount();
-  const [connections, setConnections] = useState<SocialConnections>({
+  const [state, setState] = useState<SocialConnectionsState>({
+    connections: {
     google: null,
     github: null,
     discord: null,
-    twitter: null,
+      twitter: null
+    },
+    isLoading: false,
+    isConnecting: null,
+    error: null
   });
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isConnecting, setIsConnecting] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Load current session on mount
+  // Load connections when wallet changes
   useEffect(() => {
-    const loadSession = async () => {
-      try {
-        const { session, user } = await getCurrentSession();
-        setCurrentUser(user);
-
-        if (user) {
-          // Convert Supabase user to our connection format
-          const provider = user.app_metadata?.provider || user.app_metadata?.providers?.[0];
-          if (provider) {
-            const connection: ConnectedAccount = {
-              platform: provider,
-              username: user.user_metadata?.user_name || user.user_metadata?.name,
-              email: user.email,
-              id: user.id,
-              avatar: user.user_metadata?.avatar_url,
-              profileUrl: user.user_metadata?.user_name ? `https://${provider}.com/${user.user_metadata.user_name}` : undefined,
-              connectedAt: user.created_at ? new Date(user.created_at).getTime() : Date.now(),
-            };
-
-            setConnections(prev => ({
-              ...prev,
-              [provider]: connection,
-            }));
-          }
-        }
-      } catch (error) {
-        console.error('Error loading session:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSession();
-  }, []);
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        setCurrentUser(session.user);
-
-        // Update connections based on the signed-in user
-        const provider = session.user.app_metadata?.provider || session.user.app_metadata?.providers?.[0];
-        if (provider && OAUTH_PROVIDERS.find(p => p.id === provider)) {
-          const connection: ConnectedAccount = {
-            platform: provider,
-            username: session.user.user_metadata?.user_name || session.user.user_metadata?.name,
-            email: session.user.email,
-            id: session.user.id,
-            avatar: session.user.user_metadata?.avatar_url,
-            profileUrl: session.user.user_metadata?.user_name ? `https://${provider}.com/${session.user.user_metadata.user_name}` : undefined,
-            connectedAt: Date.now(),
-          };
-
-          setConnections(prev => ({
-            ...prev,
-            [provider]: connection,
-          }));
-        }
-
-      } else if (event === 'SIGNED_OUT') {
-        setCurrentUser(null);
-        // Clear all connections on sign out
-        setConnections({
+    if (address) {
+      loadConnections();
+    } else {
+      setState({
+        connections: {
           google: null,
           github: null,
           discord: null,
-          twitter: null,
-        });
-      }
-    });
+          twitter: null
+        },
+        isLoading: false,
+        isConnecting: null,
+        error: null
+      });
+    }
+  }, [address]);
 
-    return unsubscribe;
-  }, []);
+  const loadConnections = async () => {
+    if (!address) return;
 
-  const connectOAuth = async (provider: OAuthProvider['id']) => {
-    setIsConnecting(provider);
+    console.log('Loading connections for address:', address);
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      const result = await signInWithOAuth(provider);
+      const response = await apiClient.get(`/social/connections/${address}`);
+      console.log('Connections API response:', response.data);
 
-      if (result.success) {
-        // With redirect flow, the page will redirect and come back
-        // The auth state change listener will handle updating the connections
-        return { success: true };
-      } else {
-        return { success: false, error: result.error };
-      }
+      // Transform array into object keyed by provider
+      const connectionsArray = response.data.connections || [];
+      const connectionsObject: SocialConnections = {
+        google: null,
+        github: null,
+        discord: null,
+        twitter: null
+      };
+
+      connectionsArray.forEach((conn: any) => {
+        const provider = conn.provider;
+        if (provider in connectionsObject) {
+          connectionsObject[provider as keyof SocialConnections] = {
+            platform: provider,
+            username: conn.provider_username,
+            email: conn.provider_data?.email,
+            id: conn.provider_user_id,
+            avatar: conn.provider_data?.avatar,
+            profileUrl: conn.provider_data?.profileUrl,
+            connectedAt: new Date(conn.verified_at).getTime()
+          };
+        }
+      });
+
+      console.log('Transformed connections object:', connectionsObject);
+
+      setState(prev => ({
+            ...prev,
+        connections: connectionsObject,
+        isLoading: false
+      }));
     } catch (error: any) {
-      console.error(`${provider} connection error:`, error);
-      return { success: false, error: error.message || `Failed to connect ${provider}` };
-    } finally {
-      setIsConnecting(null);
+      console.error('Failed to load social connections:', error);
+      setState(prev => ({
+        ...prev,
+        connections: {
+          google: null,
+          github: null,
+          discord: null,
+          twitter: null
+        },
+        isLoading: false,
+        error: error.message || 'Failed to load social connections'
+      }));
     }
   };
 
-  const disconnectSocial = async (provider: OAuthProvider['id']) => {
-    try {
-      // Sign out from Supabase Auth (this will disconnect all providers)
-      const result = await signOut();
+  const connectSocialAccount = async (provider: 'twitter' | 'discord' | 'github' | 'google') => {
+    if (!address) {
+      throw new Error('Wallet not connected');
+    }
 
-      if (result.success) {
-        setCurrentUser(null);
-        setConnections({
-          google: null,
-          github: null,
-          discord: null,
-          twitter: null,
-        });
-        return { success: true };
+    setState(prev => ({ ...prev, isConnecting: provider }));
+
+    try {
+      // Get OAuth URL from backend
+      const response = await apiClient.get(`/social/connect/${provider}`);
+
+      if (response.data.authUrl) {
+        // Redirect to OAuth provider (full page redirect)
+        window.location.href = response.data.authUrl;
       } else {
-        return { success: false, error: result.error };
+        throw new Error('Failed to get OAuth URL');
       }
     } catch (error: any) {
-      console.error(`Disconnect error:`, error);
-      return { success: false, error: error.message || 'Failed to disconnect' };
+      console.error('OAuth connection failed:', error);
+      setState(prev => ({
+        ...prev,
+        isConnecting: null,
+        error: error.message || 'Failed to initiate OAuth'
+      }));
+      throw error;
     }
+  };
+
+  const disconnectSocialAccount = async (provider: string) => {
+    if (!address) return { success: false, error: 'No wallet connected' };
+
+    try {
+      // Call backend to disconnect (if implemented)
+      // For now, just remove from local state
+      setState(prev => ({
+        ...prev,
+        connections: prev.connections.filter(c => c.provider !== provider)
+      }));
+        return { success: true };
+    } catch (error: any) {
+      setState(prev => ({ ...prev, error: error.message }));
+      return { success: false, error: error.message };
+    }
+  };
+
+  const hasConnectedProvider = (provider: string): boolean => {
+    return state.connections.some(c => c.provider === provider);
+  };
+
+  const getConnectedProviders = (): string[] => {
+    return state.connections.map(c => c.provider);
+  };
+
+  const getConnectionForProvider = (provider: string): SocialConnection | null => {
+    return state.connections.find(c => c.provider === provider) || null;
   };
 
   return {
-    connections,
-    currentUser,
-    isConnecting,
-    isLoading,
-    connectTwitter: () => connectOAuth('twitter'),
-    connectDiscord: () => connectOAuth('discord'),
-    connectGithub: () => connectOAuth('github'),
-    connectGoogle: () => connectOAuth('google'),
-    disconnect: disconnectSocial,
-    signOut: () => signOut(),
+    ...state,
+    connectSocialAccount,
+    disconnectSocialAccount,
+    loadConnections,
+    getConnectedProviders,
+    hasConnectedProvider,
+    getConnectionForProvider
   };
 }

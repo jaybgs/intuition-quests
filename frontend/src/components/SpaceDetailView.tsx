@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import type { Space, Quest } from '../types';
 import { useQuests } from '../hooks/useQuests';
+import { useAdmin } from '../hooks/useAdmin';
 import { CommunityQuestCard } from './CommunityQuestCard';
 import { truncateUsername } from '../utils/usernameUtils';
 import { followService } from '../services/followService';
@@ -18,6 +19,7 @@ interface SpaceDetailViewProps {
 
 export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }: SpaceDetailViewProps) {
   const { address } = useAccount();
+  const { isAdmin: isAdminUser } = useAdmin();
   const { quests, isLoading: questsLoading } = useQuests();
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
@@ -39,8 +41,9 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
     }
   }, []);
   
-  // Check if current user is the owner of this space
+  // Check if current user is the owner of this space or an admin
   const isOwner = address && space.ownerAddress && address.toLowerCase() === space.ownerAddress.toLowerCase();
+  const canAccessBuilder = isOwner || isAdminUser;
   
   // Filter quests for this space
   const spaceQuests = useMemo(() => {
@@ -211,13 +214,13 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                 </svg>
               </a>
             )}
-            {isOwner && onBuilderAccess && (
-              <button 
+            {canAccessBuilder && onBuilderAccess && (
+              <button
                 className="space-detail-follow-button"
                 onClick={() => onBuilderAccess(space.id)}
-                title="Builder Dashboard"
+                title={isAdminUser && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
               >
-                Builder Dashboard
+                {isAdminUser && !isOwner ? "Admin: Builder Dashboard" : "Builder Dashboard"}
               </button>
             )}
             {!isOwner && (
@@ -260,13 +263,13 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                   </svg>
                 </a>
               )}
-              {isOwner && onBuilderAccess && (
-                <button 
+              {canAccessBuilder && onBuilderAccess && (
+                <button
                   className="space-detail-follow-button"
                   onClick={() => onBuilderAccess(space.id)}
-                  title="Builder Dashboard"
+                  title={isAdminUser && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
                 >
-                  Builder Dashboard
+                  {isAdminUser && !isOwner ? "Admin: Builder Dashboard" : "Builder Dashboard"}
                 </button>
               )}
               {!isOwner && (

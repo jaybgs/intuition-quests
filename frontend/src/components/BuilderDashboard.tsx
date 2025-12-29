@@ -3,6 +3,7 @@ import { useAccount } from 'wagmi';
 import { spaceService } from '../services/spaceService';
 import type { Space } from '../types';
 import { useQuests } from '../hooks/useQuests';
+import { useAdmin } from '../hooks/useAdmin';
 import { useBuilderStats } from '../hooks/useBuilderStats';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import { useSubscription } from '../hooks/useSubscription';
@@ -18,6 +19,7 @@ interface BuilderDashboardProps {
 
 export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   const { address } = useAccount();
+  const { isAdmin: isAdminUser } = useAdmin();
   const [space, setSpace] = useState<Space | null>(null);
   const [activeNav, setActiveNav] = useState<'dashboard' | 'quests' | 'guide' | 'settings' | 'analytics'>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -85,16 +87,26 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             return;
           }
           
-          // Check if the connected wallet is the owner of this space
+          // Check if the connected wallet is the owner of this space or if user is admin
           const isOwner = address.toLowerCase() === loadedSpace.ownerAddress.toLowerCase();
-          setIsAuthorized(isOwner);
+          const isAuthorized = isOwner || isAdminUser;
+          console.log('🔍 BuilderDashboard Authorization Check:', {
+            spaceId,
+            userAddress: address?.toLowerCase(),
+            spaceOwner: loadedSpace.ownerAddress?.toLowerCase(),
+            isOwner,
+            isAdminUser,
+            isAuthorized
+          });
+          setIsAuthorized(isAuthorized);
           
-          if (isOwner) {
+          if (isAuthorized) {
             setSpace(loadedSpace);
           } else {
-            console.error('Unauthorized access: User is not the owner of this space', {
+            console.error('Unauthorized access: User is not the owner of this space and not an admin', {
               userAddress: address.toLowerCase(),
-              spaceOwner: loadedSpace.ownerAddress.toLowerCase()
+              spaceOwner: loadedSpace.ownerAddress.toLowerCase(),
+              isAdmin: isAdminUser
             });
             // Try to get user's first space instead
             spaceService.getSpacesByOwner(address).then(userSpaces => {
@@ -231,7 +243,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
     return (
       <div className="builder-dashboard-page">
         <div className="builder-dashboard-loading">
-          <p>Unauthorized access. You can only access spaces you own.</p>
+          <p>Unauthorized access. You can only access spaces you own or have admin privileges for.</p>
           {onBack && (
             <button onClick={onBack} className="builder-back-button" style={{ marginTop: '16px', padding: '8px 16px', background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer' }}>
               Go Back

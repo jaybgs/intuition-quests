@@ -5,7 +5,6 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import questRoutes from './routes/quests.js';
 import userRoutes from './routes/users.js';
 import leaderboardRoutes from './routes/leaderboard.js';
 import authRoutes from './routes/auth.js';
@@ -13,6 +12,7 @@ import spaceRoutes from './routes/spaces.js';
 import questDraftRoutes from './routes/questDrafts.js';
 import questRoutes from './routes/quests.js';
 import socialRoutes from './routes/social.js';
+import subscriptionRoutes from './routes/subscription.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,6 +74,7 @@ app.use('/api/quest-drafts', questDraftRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/spaces', spaceRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

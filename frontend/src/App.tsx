@@ -32,6 +32,7 @@ import { spaceService } from './services/spaceService';
 import { questServiceSupabase } from './services/questServiceSupabase';
 import type { Space } from './types';
 import { useAdmin } from './hooks/useAdmin';
+import { useSubscription } from './hooks/useSubscription';
 import { useAuth } from './hooks/useAuth';
 import { wagmiConfig } from './config/wagmi';
 import { getDiceBearAvatar } from './utils/avatar';
@@ -503,6 +504,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   });
 
   const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -511,7 +513,22 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hasCreatedSpaces, setHasCreatedSpaces] = useState<boolean>(false);
   const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
+  const [isDatabasePro, setIsDatabasePro] = useState<boolean | null>(null);
   const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdmin();
+  const { isPro: isLocalPro } = useSubscription();
+
+  // Check database for pro subscription status
+  const checkDatabaseProStatus = async () => {
+    if (!address) return false;
+
+    try {
+      const response = await apiClient.get('/subscription/status');
+      return response.data.hasPro;
+    } catch (error) {
+      console.error('Failed to check database pro status:', error);
+      return false;
+    }
+  };
   const navRef = useRef<HTMLElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -936,6 +953,20 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     }
   };
 
+  // Auto-logout wallet when admin logs in
+  useEffect(() => {
+    const handleAdminLoginAutoLogout = () => {
+      if (isConnected) {
+        console.log('🔐 Admin login detected - auto-logging out wallet connection');
+        disconnect();
+        showToast('Wallet disconnected due to admin login', 'info');
+      }
+    };
+
+    window.addEventListener('adminLoginAutoLogout', handleAdminLoginAutoLogout);
+    return () => window.removeEventListener('adminLoginAutoLogout', handleAdminLoginAutoLogout);
+  }, [isConnected, disconnect]);
+
   // Hidden admin login/logout via keyboard shortcut (Ctrl+Shift+A or Cmd+Shift+A on Mac)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1324,24 +1355,49 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                   setSelectedQuestId(questId);
                   navigateToTab('quest-detail', { questId });
                 }}
-                onCreateSpace={() => {
+                onCreateSpace={async () => {
                   // Check if user already has a space
                   if (address) {
-                    spaceService.getSpacesByOwner(address).then(existingSpaces => {
+                    try {
+                      const existingSpaces = await spaceService.getSpacesByOwner(address);
                       if (existingSpaces.length > 0) {
                         showToast('You can only create one space. Redirecting to your existing space...', 'warning');
                         setSelectedSpaceId(existingSpaces[0].id);
                         navigateToTab('builder-dashboard');
                         return;
                       }
-                    });
+                    } catch (error) {
+                      console.error('Error checking existing spaces:', error);
+                      // Continue with space creation if space check fails
+                    }
                   }
+
                   localStorage.setItem('spaceBuilderSource', 'discover');
                   localStorage.setItem('previousTab', 'discover');
-                  setPendingSpaceCreation(() => () => {
+
+                  // Check database for pro subscription status
+                  console.log('🔍 Checking database for pro subscription...');
+                  const hasDatabasePro = await checkDatabaseProStatus();
+
+                  if (hasDatabasePro) {
+                    console.log('✅ Database confirms pro subscription, proceeding to space builder');
                     navigateToTab('space-builder');
-                  });
-                  setShowSubscriptionModal(true);
+                  } else {
+                    console.log('⚠️ Database shows no pro subscription, showing payment modal');
+                    setPendingSpaceCreation(() => async () => {
+                      // Double-check database after payment
+                      console.log('🔄 Re-checking database after payment...');
+                      const confirmedPro = await checkDatabaseProStatus();
+                      if (confirmedPro) {
+                        console.log('✅ Database confirms payment, proceeding to space builder');
+                        navigateToTab('space-builder');
+                      } else {
+                        console.error('❌ Database does not confirm pro subscription after payment');
+                        showToast('Payment verification failed. Please contact support.', 'error');
+                      }
+                    });
+                    setShowSubscriptionModal(true);
+                  }
                 }}
                 onSpaceClick={(space) => {
                   try {
@@ -1395,24 +1451,49 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                   setSelectedQuestId(questId);
                   navigateToTab('quest-detail', { questId });
                 }}
-                onCreateSpace={() => {
+                onCreateSpace={async () => {
                   // Check if user already has a space
                   if (address) {
-                    spaceService.getSpacesByOwner(address).then(existingSpaces => {
+                    try {
+                      const existingSpaces = await spaceService.getSpacesByOwner(address);
                       if (existingSpaces.length > 0) {
                         showToast('You can only create one space. Redirecting to your existing space...', 'warning');
                         setSelectedSpaceId(existingSpaces[0].id);
                         navigateToTab('builder-dashboard');
                         return;
                       }
-                    });
+                    } catch (error) {
+                      console.error('Error checking existing spaces:', error);
+                      // Continue with space creation if space check fails
+                    }
                   }
+
                   localStorage.setItem('spaceBuilderSource', 'community');
                   localStorage.setItem('previousTab', 'community');
-                  setPendingSpaceCreation(() => () => {
+
+                  // Check database for pro subscription status
+                  console.log('🔍 Checking database for pro subscription...');
+                  const hasDatabasePro = await checkDatabaseProStatus();
+
+                  if (hasDatabasePro) {
+                    console.log('✅ Database confirms pro subscription, proceeding to space builder');
                     navigateToTab('space-builder');
-                  });
-                  setShowSubscriptionModal(true);
+                  } else {
+                    console.log('⚠️ Database shows no pro subscription, showing payment modal');
+                    setPendingSpaceCreation(() => async () => {
+                      // Double-check database after payment
+                      console.log('🔄 Re-checking database after payment...');
+                      const confirmedPro = await checkDatabaseProStatus();
+                      if (confirmedPro) {
+                        console.log('✅ Database confirms payment, proceeding to space builder');
+                        navigateToTab('space-builder');
+                      } else {
+                        console.error('❌ Database does not confirm pro subscription after payment');
+                        showToast('Payment verification failed. Please contact support.', 'error');
+                      }
+                    });
+                    setShowSubscriptionModal(true);
+                  }
                 }}
                 onSeeMoreQuests={() => setActiveTab('all-quests')}
               />
@@ -1537,23 +1618,49 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     showToast('Failed to load space details', 'error');
                   }
                 }}
-                onCreateSpace={() => {
+                onCreateSpace={async () => {
+                  // Check if user already has a space
                   if (address) {
-                    spaceService.getSpacesByOwner(address).then(existingSpaces => {
+                    try {
+                      const existingSpaces = await spaceService.getSpacesByOwner(address);
                       if (existingSpaces.length > 0) {
                         showToast('You can only create one space. Redirecting to your existing space...', 'warning');
                         setSelectedSpaceId(existingSpaces[0].id);
                         navigateToTab('builder-dashboard');
                         return;
                       }
-                    });
+                    } catch (error) {
+                      console.error('Error checking existing spaces:', error);
+                      // Continue with space creation if space check fails
+                    }
                   }
+
                   localStorage.setItem('spaceBuilderSource', 'spaces');
                   localStorage.setItem('previousTab', 'spaces');
-                  setPendingSpaceCreation(() => () => {
+
+                  // Check database for pro subscription status
+                  console.log('🔍 Checking database for pro subscription...');
+                  const hasDatabasePro = await checkDatabaseProStatus();
+
+                  if (hasDatabasePro) {
+                    console.log('✅ Database confirms pro subscription, proceeding to space builder');
                     navigateToTab('space-builder');
-                  });
-                  setShowSubscriptionModal(true);
+                  } else {
+                    console.log('⚠️ Database shows no pro subscription, showing payment modal');
+                    setPendingSpaceCreation(() => async () => {
+                      // Double-check database after payment
+                      console.log('🔄 Re-checking database after payment...');
+                      const confirmedPro = await checkDatabaseProStatus();
+                      if (confirmedPro) {
+                        console.log('✅ Database confirms payment, proceeding to space builder');
+                        navigateToTab('space-builder');
+                      } else {
+                        console.error('❌ Database does not confirm pro subscription after payment');
+                        showToast('Payment verification failed. Please contact support.', 'error');
+                      }
+                    });
+                    setShowSubscriptionModal(true);
+                  }
                 }}
               />
             )}

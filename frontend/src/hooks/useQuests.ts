@@ -17,7 +17,25 @@ export function useQuests() {
     queryFn: async () => {
       try {
         // Use Supabase only - no localStorage fallback
-        return await questServiceSupabase.getAllQuests();
+        const allQuests = await questServiceSupabase.getAllQuests();
+
+        // Filter out quests that ended more than 3 days ago (for community tab)
+        const now = Date.now();
+        const threeDaysAgo = now - (3 * 24 * 60 * 60 * 1000); // 3 days in milliseconds
+
+        return allQuests.filter(quest => {
+          // If quest has no end date, keep it
+          if (!quest.expiresAt) return true;
+
+          // If quest ends in the future, keep it
+          if (quest.expiresAt > now) return true;
+
+          // If quest ended within the last 3 days, keep it
+          if (quest.expiresAt > threeDaysAgo) return true;
+
+          // Otherwise, hide it (ended more than 3 days ago)
+          return false;
+        });
       } catch (error) {
         console.error('Error fetching quests from Supabase:', error);
         return []; // Return empty array on error instead of blocking
@@ -100,4 +118,3 @@ export function useQuests() {
     isCreating: createQuestMutation.isPending,
   };
 }
-

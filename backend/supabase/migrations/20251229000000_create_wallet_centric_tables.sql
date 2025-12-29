@@ -4,7 +4,7 @@
 -- User quests table (replaces any old quest completion tracking)
 CREATE TABLE IF NOT EXISTS user_quests (
   wallet_address TEXT NOT NULL,
-  quest_id UUID NOT NULL,
+  quest_id TEXT NOT NULL,
   completed_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY (wallet_address, quest_id)
 );

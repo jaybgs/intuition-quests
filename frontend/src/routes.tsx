@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AppWithRouter from './AppWithRouter';
+import { SocialCallback } from './components/SocialCallback';
 
 // Create router with all routes
 export const router = createBrowserRouter([
@@ -56,5 +57,10 @@ export const router = createBrowserRouter([
   {
     path: '/space/*',
     element: <AppWithRouter />,
+  },
+  // Social OAuth callback
+  {
+    path: '/auth/social-callback',
+    element: <SocialCallback />,
   },
 ]);

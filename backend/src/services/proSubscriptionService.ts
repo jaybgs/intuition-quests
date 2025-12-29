@@ -3,7 +3,7 @@
  * Handles pro user subscription management in Supabase
  */
 
-import { supabase } from '../config/supabase';
+import { supabase } from '../config/supabase.js';
 
 export interface ProUserData {
   wallet_address: string;

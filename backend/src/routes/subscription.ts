@@ -5,8 +5,8 @@
 
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import { authenticateWallet } from '../middleware/auth';
-import { proSubscriptionService } from '../services/proSubscriptionService';
+import { authenticateWallet } from '../middleware/auth.js';
+import { proSubscriptionService } from '../services/proSubscriptionService.js';
 
 const router = Router();
 

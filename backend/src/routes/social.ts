@@ -485,7 +485,7 @@ router.post('/callback', async (req: Request, res: Response) => {
           grant_type: 'authorization_code',
           code,
           redirect_uri: config.redirectUri,
-          code_verifier: codeVerifier
+          ...(codeVerifier && { code_verifier: codeVerifier })
         })
       });
     } else {

@@ -468,13 +468,13 @@ router.post('/callback', async (req: Request, res: Response) => {
     const config = OAUTH_PROVIDERS[provider as keyof typeof OAUTH_PROVIDERS];
 
     // Exchange code for access token (provider-specific)
-    let tokenResponse: Response;
+    let fetchResponse: globalThis.Response;
 
     if (provider === 'twitter') {
       // Twitter uses PKCE with Basic Auth (confidential client)
       console.log('🐦 Twitter OAuth: Using PKCE token exchange with Basic Auth');
       const authString = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
-      tokenResponse = await fetch(config.tokenUrl, {
+      fetchResponse = await fetch(config.tokenUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${authString}`,
@@ -492,7 +492,7 @@ router.post('/callback', async (req: Request, res: Response) => {
       // Other providers use Basic Auth
       console.log(`🔄 ${provider} OAuth: Using Basic Auth token exchange`);
       const authString = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
-      tokenResponse = await fetch(config.tokenUrl, {
+      fetchResponse = await fetch(config.tokenUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${authString}`,
@@ -507,13 +507,13 @@ router.post('/callback', async (req: Request, res: Response) => {
       });
     }
 
-    if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
+    if (!fetchResponse.ok) {
+      const errorData = await fetchResponse.text();
       console.error('Token exchange failed:', errorData);
       return res.status(400).json({ error: 'Failed to exchange authorization code' });
     }
 
-    const tokenData = await tokenResponse.json() as TokenData;
+    const tokenData = await fetchResponse.json() as TokenData;
 
     // Get user profile data
     let profileData: any = {};

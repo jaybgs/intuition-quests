@@ -425,11 +425,17 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
                 console.log('🎯 Edit Highlights button clicked');
                 console.log('isAdmin:', isAdmin);
                 console.log('onEditHighlights:', !!onEditHighlights);
-                if (onEditHighlights) {
-                  onEditHighlights();
+                if (isAdmin) {
+                  if (onEditHighlights) {
+                    onEditHighlights();
+                  }
+                } else {
+                  console.log('❌ User is not admin - cannot edit highlights');
+                  // Show admin login hint
+                  alert('Admin access required. Press Ctrl+Shift+A to login as admin.');
                 }
               }}
-              title="Edit Weekly Highlights"
+              title={isAdmin ? "Edit Weekly Highlights" : "Admin access required - Press Ctrl+Shift+A"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>

@@ -1440,10 +1440,44 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               />
             )}
 
-            {activeTab === 'edit-slideshow' && isAdminAuthenticated && (
-              <HighlightsEditor
-                onBack={() => navigateToTab('discover')}
-              />
+            {activeTab === 'edit-slideshow' && (
+              isAdminAuthenticated ? (
+                <HighlightsEditor
+                  onBack={() => navigateToTab('discover')}
+                />
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '50vh',
+                  padding: '20px',
+                  textAlign: 'center'
+                }}>
+                  <h2 style={{ color: '#ef4444', marginBottom: '16px' }}>Admin Access Required</h2>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '20px' }}>
+                    You need admin privileges to edit weekly highlights.
+                  </p>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '14px' }}>
+                    Press <kbd style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>Ctrl+Shift+A</kbd> to login as admin.
+                  </p>
+                  <button
+                    onClick={() => navigateToTab('discover')}
+                    style={{
+                      marginTop: '20px',
+                      padding: '10px 20px',
+                      background: 'rgba(59, 130, 246, 0.9)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Back to Discover
+                  </button>
+                </div>
+              )
             )}
 
             {activeTab === 'leaderboard' && <Leaderboard />}

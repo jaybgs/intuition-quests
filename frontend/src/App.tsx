@@ -832,6 +832,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       'builder-dashboard': '/builder-dashboard',
       'space-builder': '/create-space',
       'create': '/create-quest',
+      'edit-slideshow': '/edit-slideshow',
     };
 
     // Store previous tab before navigating

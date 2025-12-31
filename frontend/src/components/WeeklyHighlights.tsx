@@ -421,7 +421,14 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
           <div className="highlights-admin-controls">
             <button
               className="highlights-edit-button"
-              onClick={onEditHighlights}
+              onClick={() => {
+                console.log('🎯 Edit Highlights button clicked');
+                console.log('isAdmin:', isAdmin);
+                console.log('onEditHighlights:', !!onEditHighlights);
+                if (onEditHighlights) {
+                  onEditHighlights();
+                }
+              }}
               title="Edit Weekly Highlights"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

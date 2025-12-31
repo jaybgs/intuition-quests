@@ -510,7 +510,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [pendingSpaceCreation, setPendingSpaceCreation] = useState<(() => void) | null>(null);
+  const [pendingSpaceCreation, setPendingSpaceCreation] = useState<((tier: 'free' | 'pro') => void) | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hasCreatedSpaces, setHasCreatedSpaces] = useState<boolean>(false);
   const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
@@ -1385,16 +1385,22 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     navigateToTab('space-builder');
                   } else {
                     console.log('⚠️ Database shows no pro subscription, showing payment modal');
-                    setPendingSpaceCreation(() => async () => {
-                      // Double-check database after payment
-                      console.log('🔄 Re-checking database after payment...');
-                      const confirmedPro = await checkDatabaseProStatus();
-                      if (confirmedPro) {
-                        console.log('✅ Database confirms payment, proceeding to space builder');
+                    setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
+                      if (tier === 'free') {
+                        // Free users can create spaces with limitations
+                        console.log('✅ Free plan selected, proceeding to space builder with limitations');
                         navigateToTab('space-builder');
                       } else {
-                        console.error('❌ Database does not confirm pro subscription after payment');
-                        showToast('Payment verification failed. Please contact support.', 'error');
+                        // Double-check database after pro payment
+                        console.log('🔄 Re-checking database after pro payment...');
+                        const confirmedPro = await checkDatabaseProStatus();
+                        if (confirmedPro) {
+                          console.log('✅ Database confirms pro payment, proceeding to space builder');
+                          navigateToTab('space-builder');
+                        } else {
+                          console.error('❌ Database does not confirm pro subscription after payment');
+                          showToast('Payment verification failed. Please contact support.', 'error');
+                        }
                       }
                   });
                   setShowSubscriptionModal(true);
@@ -1481,16 +1487,22 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     navigateToTab('space-builder');
                   } else {
                     console.log('⚠️ Database shows no pro subscription, showing payment modal');
-                    setPendingSpaceCreation(() => async () => {
-                      // Double-check database after payment
-                      console.log('🔄 Re-checking database after payment...');
-                      const confirmedPro = await checkDatabaseProStatus();
-                      if (confirmedPro) {
-                        console.log('✅ Database confirms payment, proceeding to space builder');
+                    setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
+                      if (tier === 'free') {
+                        // Free users can create spaces with limitations
+                        console.log('✅ Free plan selected, proceeding to space builder with limitations');
                         navigateToTab('space-builder');
                       } else {
-                        console.error('❌ Database does not confirm pro subscription after payment');
-                        showToast('Payment verification failed. Please contact support.', 'error');
+                        // Double-check database after pro payment
+                        console.log('🔄 Re-checking database after pro payment...');
+                        const confirmedPro = await checkDatabaseProStatus();
+                        if (confirmedPro) {
+                          console.log('✅ Database confirms pro payment, proceeding to space builder');
+                          navigateToTab('space-builder');
+                        } else {
+                          console.error('❌ Database does not confirm pro subscription after payment');
+                          showToast('Payment verification failed. Please contact support.', 'error');
+                        }
                       }
                   });
                   setShowSubscriptionModal(true);
@@ -1648,16 +1660,22 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     navigateToTab('space-builder');
                   } else {
                     console.log('⚠️ Database shows no pro subscription, showing payment modal');
-                    setPendingSpaceCreation(() => async () => {
-                      // Double-check database after payment
-                      console.log('🔄 Re-checking database after payment...');
-                      const confirmedPro = await checkDatabaseProStatus();
-                      if (confirmedPro) {
-                        console.log('✅ Database confirms payment, proceeding to space builder');
+                    setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
+                      if (tier === 'free') {
+                        // Free users can create spaces with limitations
+                        console.log('✅ Free plan selected, proceeding to space builder with limitations');
                         navigateToTab('space-builder');
                       } else {
-                        console.error('❌ Database does not confirm pro subscription after payment');
-                        showToast('Payment verification failed. Please contact support.', 'error');
+                        // Double-check database after pro payment
+                        console.log('🔄 Re-checking database after pro payment...');
+                        const confirmedPro = await checkDatabaseProStatus();
+                        if (confirmedPro) {
+                          console.log('✅ Database confirms pro payment, proceeding to space builder');
+                          navigateToTab('space-builder');
+                        } else {
+                          console.error('❌ Database does not confirm pro subscription after payment');
+                          showToast('Payment verification failed. Please contact support.', 'error');
+                        }
                       }
                   });
                   setShowSubscriptionModal(true);
@@ -1696,11 +1714,17 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           setShowSubscriptionModal(false);
           setPendingSpaceCreation(null);
         }}
-        onProceed={() => {
+        onProceed={(tier: 'free' | 'pro') => {
           setShowSubscriptionModal(false);
+
           if (pendingSpaceCreation) {
-            pendingSpaceCreation();
+            // Pass the selected tier to the pending space creation function
+            pendingSpaceCreation(tier);
             setPendingSpaceCreation(null);
+          } else if (tier === 'free') {
+            // Fallback: Free users can proceed directly to space builder
+            console.log('✅ Free plan selected, proceeding to space builder');
+            navigateToTab('space-builder');
           }
         }}
       />

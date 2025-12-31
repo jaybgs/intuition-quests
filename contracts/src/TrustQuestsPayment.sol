@@ -121,4 +121,35 @@ contract TrustQuestsPayment is ReentrancyGuard {
 
         emit FundsWithdrawn(to, balance, msg.sender);
     }
+
+    // ========================================
+    // TESTING/ADMIN FUNCTIONS (AUTHORIZED ONLY)
+    // ========================================
+
+    /**
+     * @dev Reset pro status for a user (testing purposes only)
+     * @param user Address to reset pro status for
+     */
+    function resetProStatus(address user) external onlyAuthorizedWithdrawer {
+        require(user != address(0), "Invalid user address");
+
+        hasPaidPro[user] = false;
+        paymentTimestamps[user] = 0;
+
+        emit FundsWithdrawn(user, 0, msg.sender); // Reuse event for logging
+    }
+
+    /**
+     * @dev Reset pro status for multiple users (batch testing)
+     * @param users Array of addresses to reset
+     */
+    function resetProStatusBatch(address[] calldata users) external onlyAuthorizedWithdrawer {
+        for (uint256 i = 0; i < users.length; i++) {
+            require(users[i] != address(0), "Invalid user address");
+            hasPaidPro[users[i]] = false;
+            paymentTimestamps[users[i]] = 0;
+        }
+
+        emit FundsWithdrawn(msg.sender, 0, msg.sender); // Reuse event for logging
+    }
 }

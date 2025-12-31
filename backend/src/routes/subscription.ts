@@ -5,7 +5,7 @@
 
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import { authenticateWallet } from '../middleware/auth.js';
+import { authenticateWallet, AuthRequest } from '../middleware/auth.js';
 import { proSubscriptionService } from '../services/proSubscriptionService.js';
 
 const router = Router();
@@ -15,11 +15,10 @@ const router = Router();
  * Save pro subscription payment to database
  */
 router.post('/pro-payment', authenticateWallet, [
-  body('walletAddress').isString().notEmpty(),
   body('txHash').isString().notEmpty(),
   body('amount').isString().notEmpty(),
   body('timestamp').isISO8601()
-], async (req: Request, res: Response) => {
+], async (req: AuthRequest, res: Response) => {
   try {
     // Check validation
     const errors = validationResult(req);
@@ -31,16 +30,13 @@ router.post('/pro-payment', authenticateWallet, [
       });
     }
 
-    const { walletAddress, txHash, amount, timestamp } = req.body;
-    const authenticatedWallet = req.walletAddress!;
+    const authenticatedWallet = req.user?.address!;
+    const { txHash, amount, timestamp } = req.body;
 
-    // Verify the authenticated wallet matches the payment wallet
-    if (authenticatedWallet.toLowerCase() !== walletAddress.toLowerCase()) {
-      return res.status(403).json({
-        success: false,
-        error: 'Wallet address mismatch'
-      });
-    }
+    console.log('💰 Processing pro payment for:', authenticatedWallet, 'TX:', txHash);
+
+    // Use the authenticated wallet address
+    const walletAddress = authenticatedWallet;
 
     console.log('💾 Saving pro payment to database:', {
       walletAddress,
@@ -86,9 +82,9 @@ router.post('/pro-payment', authenticateWallet, [
  * GET /api/subscription/status
  * Check if user has active pro subscription
  */
-router.get('/status', authenticateWallet, async (req: Request, res: Response) => {
+router.get('/status', authenticateWallet, async (req: AuthRequest, res: Response) => {
   try {
-    const walletAddress = req.walletAddress!;
+    const walletAddress = req.user?.address!;
 
     console.log('🔍 Checking pro status for:', walletAddress);
 

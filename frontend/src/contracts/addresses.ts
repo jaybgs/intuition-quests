@@ -33,7 +33,8 @@ export const CONTRACT_ADDRESSES = {
   CLAIM_IQ: '0x0000000000000000000000000000000000000000' as `0x${string}`,
 
   // Trust Quests Payment - PRO SUBSCRIPTION (Native TRUST tokens)
-  TRUST_QUESTS_PAYMENT: '0xF43b19c406B5178e13B9B9e576109F915bCef20C' as `0x${string}`,
+  // Updated: Dec 31, 2025 - Added reset functions for testing
+  TRUST_QUESTS_PAYMENT: '0x57CE7B8051e9684C21955178C56b6eCDAcb5Dfb4' as `0x${string}`,
 } as const;
 
 // Check if contracts are deployed (not zero address)

@@ -30,6 +30,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { FAQButton } from './components/FAQButton';
 import { spaceService } from './services/spaceService';
 import { questServiceSupabase } from './services/questServiceSupabase';
+import { apiClient } from './services/apiClient';
 import type { Space } from './types';
 import { useAdmin } from './hooks/useAdmin';
 import { useSubscription } from './hooks/useSubscription';
@@ -1369,7 +1370,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     } catch (error) {
                       console.error('Error checking existing spaces:', error);
                       // Continue with space creation if space check fails
-                    }
+                  }
                   }
 
                   localStorage.setItem('spaceBuilderSource', 'discover');
@@ -1395,8 +1396,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                         console.error('❌ Database does not confirm pro subscription after payment');
                         showToast('Payment verification failed. Please contact support.', 'error');
                       }
-                    });
-                    setShowSubscriptionModal(true);
+                  });
+                  setShowSubscriptionModal(true);
                   }
                 }}
                 onSpaceClick={(space) => {
@@ -1465,7 +1466,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     } catch (error) {
                       console.error('Error checking existing spaces:', error);
                       // Continue with space creation if space check fails
-                    }
+                  }
                   }
 
                   localStorage.setItem('spaceBuilderSource', 'community');
@@ -1491,8 +1492,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                         console.error('❌ Database does not confirm pro subscription after payment');
                         showToast('Payment verification failed. Please contact support.', 'error');
                       }
-                    });
-                    setShowSubscriptionModal(true);
+                  });
+                  setShowSubscriptionModal(true);
                   }
                 }}
                 onSeeMoreQuests={() => setActiveTab('all-quests')}
@@ -1632,7 +1633,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     } catch (error) {
                       console.error('Error checking existing spaces:', error);
                       // Continue with space creation if space check fails
-                    }
+                  }
                   }
 
                   localStorage.setItem('spaceBuilderSource', 'spaces');
@@ -1658,8 +1659,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                         console.error('❌ Database does not confirm pro subscription after payment');
                         showToast('Payment verification failed. Please contact support.', 'error');
                       }
-                    });
-                    setShowSubscriptionModal(true);
+                  });
+                  setShowSubscriptionModal(true);
                   }
                 }}
               />

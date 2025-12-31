@@ -4,15 +4,10 @@
  */
 
 // Trust Quests Payment ABI - Pro subscription payments (compiled from contract)
+// Updated: Dec 31, 2025 - Added reset functions for testing, fixed payable modifier
 export const TRUST_QUESTS_PAYMENT_ABI = [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_trustTokenAddress",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -171,6 +166,13 @@ export const TRUST_QUESTS_PAYMENT_ABI = [
   },
   {
     "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "paused",
     "outputs": [
       {
@@ -180,6 +182,13 @@ export const TRUST_QUESTS_PAYMENT_ABI = [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "payForPro",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -202,30 +211,29 @@ export const TRUST_QUESTS_PAYMENT_ABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "pause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "payForPro",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "trustToken",
-    "outputs": [
+    "inputs": [
       {
-        "internalType": "contract IERC20",
-        "name": "",
+        "internalType": "address",
+        "name": "user",
         "type": "address"
       }
     ],
-    "stateMutability": "view",
+    "name": "resetProStatus",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "users",
+        "type": "address[]"
+      }
+    ],
+    "name": "resetProStatusBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -238,7 +246,20 @@ export const TRUST_QUESTS_PAYMENT_ABI = [
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "address payable",
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawAllFunds",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address payable",
         "name": "to",
         "type": "address"
       },
@@ -249,19 +270,6 @@ export const TRUST_QUESTS_PAYMENT_ABI = [
       }
     ],
     "name": "withdrawFunds",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawAllFunds",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

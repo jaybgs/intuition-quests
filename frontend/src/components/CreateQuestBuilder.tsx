@@ -1589,6 +1589,16 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         endTime,
       };
 
+      // Save to database first
+      try {
+        console.log('💾 Saving quest to database...');
+        const response = await apiClient.post('/quests', questData);
+        console.log('✅ Quest saved to database:', response.data);
+      } catch (error) {
+        console.error('❌ Failed to save quest to database:', error);
+        // Continue with localStorage fallback for now
+      }
+
       // Save to published quests - localStorage for immediate UI updates
       const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
       const existingPublished = JSON.parse(localStorage.getItem(publishedQuestsKey) || '[]');

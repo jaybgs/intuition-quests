@@ -103,7 +103,7 @@ router.post('/', authenticateWallet, async (req: Request, res: Response) => {
 
     // Insert quest into database
     const { data, error } = await supabase
-      .from('quests')
+      .from('published_quests')
       .insert({
         id: validated.id,
         title: validated.title,

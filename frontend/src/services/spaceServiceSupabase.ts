@@ -162,6 +162,7 @@ export class SpaceServiceSupabase {
         twitter_url: data.twitterUrl.trim(),
         owner_address: data.ownerAddress.toLowerCase(),
         user_type: data.userType.toUpperCase(),
+        project_type: data.projectType || 'undisclosed',
         atom_id: data.atomId,
         atom_transaction_hash: data.atomTransactionHash,
       };

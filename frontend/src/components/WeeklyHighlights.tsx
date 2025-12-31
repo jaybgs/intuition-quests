@@ -48,16 +48,16 @@ const projects: Project[] = [
   },
 ];
 
-interface ProjectSlideshowProps {
+interface WeeklyHighlightsProps {
   onQuestClick?: (questId: string) => void;
   onCreateSpace?: () => void;
   onSpaceClick?: (space: Space) => void;
   onSeeMoreSpaces?: () => void;
   isAdmin?: boolean;
-  onEditSlideshow?: () => void;
+  onEditHighlights?: () => void;
 }
 
-export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, onSeeMoreSpaces, isAdmin, onEditSlideshow }: ProjectSlideshowProps) {
+export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, onSeeMoreSpaces, isAdmin, onEditHighlights }: WeeklyHighlightsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [sortByVerified, setSortByVerified] = useState(false);
@@ -417,18 +417,18 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
         </div>
 
         {/* Admin Edit Button */}
-        {isAdmin && onEditSlideshow && (
-          <div className="slideshow-admin-controls">
+        {isAdmin && onEditHighlights && (
+          <div className="highlights-admin-controls">
             <button
-              className="slideshow-edit-button"
-              onClick={onEditSlideshow}
-              title="Edit Slideshow"
+              className="highlights-edit-button"
+              onClick={onEditHighlights}
+              title="Edit Weekly Highlights"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
-              Edit Slideshow
+              Edit Highlights
             </button>
           </div>
         )}

@@ -45,13 +45,29 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
   const isOwner = address && space.ownerAddress && address.toLowerCase() === space.ownerAddress.toLowerCase();
   const canAccessBuilder = isOwner || isAdminUser;
   
-  // Filter quests for this space
+  // Filter and sort quests for this space (active first, then ended)
   const spaceQuests = useMemo(() => {
-    return quests.filter(q => 
-      q.spaceId === space.id || 
+    const now = Date.now();
+
+    // Filter quests for this space
+    const filteredQuests = quests.filter(q =>
+      q.spaceId === space.id ||
       q.projectName?.toLowerCase() === space.name.toLowerCase() ||
       q.creatorAddress?.toLowerCase() === space.ownerAddress.toLowerCase()
     );
+
+    // Sort: active quests first, then ended quests
+    return filteredQuests.sort((a, b) => {
+      const aIsActive = (!a.expiresAt || a.expiresAt > now) && a.status === 'active';
+      const bIsActive = (!b.expiresAt || b.expiresAt > now) && b.status === 'active';
+
+      // Active quests come first
+      if (aIsActive && !bIsActive) return -1;
+      if (!aIsActive && bIsActive) return 1;
+
+      // Within same category, sort by creation date (newest first)
+      return b.createdAt - a.createdAt;
+    });
   }, [quests, space]);
 
   // Check if space owner has pro subscription

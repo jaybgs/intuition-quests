@@ -48,6 +48,10 @@ export const router = createBrowserRouter([
         element: <App initialTab="create" />,
       },
       {
+        path: 'edit-slideshow',
+        element: <App initialTab="edit-slideshow" />,
+      },
+      {
         path: 'quest-:questName',
         element: <App initialTab="quest-detail" />,
       },

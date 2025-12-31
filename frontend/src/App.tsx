@@ -7,7 +7,7 @@ import { QuestList } from './components/QuestList';
 import { Leaderboard } from './components/Leaderboard';
 import { CreateQuest } from './components/CreateQuest';
 import { UserProfile } from './components/UserProfile';
-import { ProjectSlideshow } from './components/ProjectSlideshow';
+import { WeeklyHighlights } from './components/WeeklyHighlights';
 import { UserDashboard } from './components/UserDashboard';
 import { EditProfile } from './components/EditProfile';
 import { SignupModal } from './components/SignupModal';
@@ -28,6 +28,7 @@ import { Spaces } from './components/Spaces';
 import { AdminLogin } from './components/AdminLogin';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { FAQButton } from './components/FAQButton';
+import { HighlightsEditor } from './components/HighlightsEditor';
 import { spaceService } from './services/spaceService';
 import { questServiceSupabase } from './services/questServiceSupabase';
 import { apiClient } from './services/apiClient';
@@ -443,7 +444,7 @@ interface AppContentProps {
 
 function AppContent({ initialTab = 'discover', questName = null, spaceName = null }: AppContentProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests'>(initialTab as any);
+  const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests' | 'edit-slideshow'>(initialTab as any);
   
   // Try to restore selectedSpace from localStorage on mount
   const getInitialSpace = (): Space | null => {
@@ -1351,7 +1352,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             )}
 
             {activeTab === 'discover' && (
-              <ProjectSlideshow 
+              <WeeklyHighlights 
                 onQuestClick={(questId) => {
                   setSelectedQuestId(questId);
                   navigateToTab('quest-detail', { questId });
@@ -1431,6 +1432,16 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 onSeeMoreSpaces={() => {
                   navigateToTab('spaces');
                 }}
+                isAdmin={isAdminAuthenticated}
+                onEditHighlights={() => {
+                  navigateToTab('edit-slideshow');
+                }}
+              />
+            )}
+
+            {activeTab === 'edit-slideshow' && isAdminAuthenticated && (
+              <HighlightsEditor
+                onBack={() => navigateToTab('discover')}
               />
             )}
 

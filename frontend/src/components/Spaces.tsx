@@ -5,7 +5,6 @@ import { useAccount } from 'wagmi';
 import { SpaceCardSkeleton } from './Skeleton';
 import type { Space } from '../types';
 import './Spaces.css';
-import './ProjectSlideshow.css';
 
 interface SpacesProps {
   onSpaceClick?: (space: Space) => void;

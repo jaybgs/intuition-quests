@@ -24,6 +24,11 @@ interface CommunityQuestCardProps {
 export function CommunityQuestCard({ quest, onClick }: CommunityQuestCardProps) {
   const { address } = useAccount();
   const [isHovered, setIsHovered] = useState(false);
+
+  // Check if quest is active or ended
+  const now = Date.now();
+  const isActive = (!quest.expiresAt || quest.expiresAt > now) && quest.status === 'active';
+  const isEnded = quest.expiresAt && quest.expiresAt <= now;
   
   // Check if quest is completed by checking both completedBy array and claimed quests
   const claimedQuests = address 
@@ -72,6 +77,10 @@ export function CommunityQuestCard({ quest, onClick }: CommunityQuestCardProps) 
               {quest.difficulty.toUpperCase()}
             </span>
           )}
+          {/* Quest status badge */}
+          <span className={`quest-status status-${isActive ? 'active' : 'ended'}`}>
+            {isActive ? 'ACTIVE' : 'ENDED'}
+          </span>
           {quest.estimatedTime && (
             <span className="quest-time">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

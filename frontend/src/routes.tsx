@@ -48,6 +48,10 @@ export const router = createBrowserRouter([
     path: '/create-quest',
     element: <AppWithRouter />,
   },
+  {
+    path: '/edit-slideshow',
+    element: <AppWithRouter />,
+  },
   // Quest routes - using wildcard to match any quest identifier
   {
     path: '/quest/*',

@@ -6,6 +6,7 @@ import { spaceService } from '../services/spaceService';
 import { questServiceSupabase } from '../services/questServiceSupabase';
 import { DiscoverPageSkeleton, SpaceCardSkeleton, DAppCardSkeleton } from './Skeleton';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
+import { highlightsServiceSupabase } from '../services/highlightsServiceSupabase';
 import type { Space } from '../types';
 import type { Quest } from '../types';
 import './WeeklyHighlights.css';
@@ -19,10 +20,11 @@ interface Project {
   questCount?: number;
   isHot?: boolean;
   isTrending?: boolean;
+  questLink?: string;
 }
 
-// Mock projects data - replace with actual data
-const projects: Project[] = [
+// Default projects data
+const defaultProjects: Project[] = [
   {
     id: '1',
     title: 'Project Alpha',
@@ -30,6 +32,7 @@ const projects: Project[] = [
     gradientColors: ['#2563eb', '#2563eb'],
     questCount: 12,
     isHot: true,
+    questLink: '#quests',
   },
   {
     id: '2',
@@ -38,6 +41,7 @@ const projects: Project[] = [
     gradientColors: ['#10b981', '#3b82f6'],
     questCount: 8,
     isTrending: true,
+    questLink: '#quests',
   },
   {
     id: '3',
@@ -45,6 +49,7 @@ const projects: Project[] = [
     description: 'Explore new opportunities and grow your portfolio. Start your journey today!',
     gradientColors: ['#f59e0b', '#ef4444'],
     questCount: 15,
+    questLink: '#quests',
   },
 ];
 
@@ -58,6 +63,8 @@ interface WeeklyHighlightsProps {
 }
 
 export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, onSeeMoreSpaces, isAdmin, onEditHighlights }: WeeklyHighlightsProps) {
+  // State for highlights loaded from Supabase
+  const [projects, setProjects] = useState<Project[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [sortByVerified, setSortByVerified] = useState(false);
@@ -85,13 +92,55 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     return () => clearTimeout(timer);
   }, []);
 
+  // Load highlights from Supabase
   useEffect(() => {
+    const loadHighlights = async () => {
+      try {
+        const highlights = await highlightsServiceSupabase.getAllHighlights();
+        setProjects(highlights);
+      } catch (error) {
+        console.error('Error loading highlights:', error);
+        // Fallback to default highlights if Supabase fails
+        setProjects([
+          {
+            id: '1',
+            title: 'Project Alpha',
+            description: 'Complete tasks to earn rewards and unlock exclusive features. Join thousands of users earning daily!',
+            gradientColors: ['#2563eb', '#2563eb'],
+            questCount: 12,
+            isHot: true,
+          },
+          {
+            id: '2',
+            title: 'Project Beta',
+            description: 'Join the community and participate in exciting challenges. New quests added weekly!',
+            gradientColors: ['#10b981', '#3b82f6'],
+            questCount: 8,
+            isTrending: true,
+          },
+          {
+            id: '3',
+            title: 'Project Gamma',
+            description: 'Explore new opportunities and grow your portfolio. Start your journey today!',
+            gradientColors: ['#f59e0b', '#ef4444'],
+            questCount: 15,
+          },
+        ]);
+      }
+    };
+
+    loadHighlights();
+  }, []);
+
+  useEffect(() => {
+    if (projects.length === 0) return; // Don't start interval if no projects
+
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % projects.length);
     }, 5000); // Change slide every 5 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [projects]);
 
   // Load spaces from Supabase only
   useEffect(() => {
@@ -170,11 +219,31 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
       }, 0);
     };
     
+    // Handle highlights updated event
+    const handleHighlightsUpdated = () => {
+      // Use setTimeout to ensure we're not in render phase
+      setTimeout(async () => {
+        if (isMounted) {
+          try {
+            const highlights = await highlightsServiceSupabase.getAllHighlights();
+            startTransition(() => {
+              if (isMounted) {
+                setProjects(highlights);
+              }
+            });
+          } catch (error) {
+            console.error('Error refreshing highlights:', error);
+          }
+        }
+      }, 0);
+    };
+
     // Add event listeners after a small delay to avoid render phase issues
     setTimeout(() => {
       if (isMounted) {
     window.addEventListener('spaceCreated', handleSpaceCreated);
     window.addEventListener('questPublished', handleQuestPublished);
+    window.addEventListener('highlightsUpdated', handleHighlightsUpdated);
       }
     }, 0);
     
@@ -198,6 +267,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
       }
       window.removeEventListener('spaceCreated', handleSpaceCreated);
       window.removeEventListener('questPublished', handleQuestPublished);
+      window.removeEventListener('highlightsUpdated', handleHighlightsUpdated);
     };
   }, []);
 
@@ -213,18 +283,16 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     setCurrentIndex((prev) => (prev + 1) % projects.length);
   };
 
-  const handleStartQuest = () => {
+  const handleStartQuest = (questLink?: string) => {
     // Check primarily for address - more reliable than isConnected
     if (!address) {
       showToast('Please connect your wallet to start quests', 'warning');
       return;
     }
     showToast('Redirecting to quests...', 'info');
-    // Navigate to quests page
-    window.location.hash = '#quests';
+    // Navigate to quest link or default to quests page
+    window.location.hash = questLink || '#quests';
   };
-
-  const currentProject = projects[currentIndex];
 
   // Check if user is following a space
   const isFollowingSpace = (spaceId: string): boolean => {
@@ -328,9 +396,11 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
   const slideshowRef = useScrollAnimation();
   const spacesRef = useScrollAnimation();
 
-  if (isLoading) {
+  if (isLoading || projects.length === 0) {
     return <DiscoverPageSkeleton />;
   }
+
+  const currentProject = projects[currentIndex];
 
   return (
     <div className="discover-earn-container">
@@ -345,16 +415,44 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
-          <div className="slideshow-content">
+          <div
+            className="slideshow-content"
+            onClick={() => handleStartQuest(currentProject.questLink)}
+            style={{ cursor: currentProject.questLink ? 'pointer' : 'default' }}
+          >
             <div 
               className="slideshow-image"
               style={{
                 background: `linear-gradient(135deg, ${currentProject.gradientColors[0]} 0%, ${currentProject.gradientColors[1]} 100%)`
               }}
             >
-              <div className="slideshow-image-placeholder">
-                {currentProject.title.charAt(0)}
-              </div>
+
+              <svg viewBox="0 0 320 535" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{width: '180px', color: 'rgb(255, 255, 255)', position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(calc(-50% + 250px))'}}>
+                <path d="m277.296 319.617-.177 885.003 42.195-92.35.176-885.001-42.194 92.348Z" fill="#48494A"></path>
+                <path d="m118.014 344.353-.177 886.417 159.283-24.74.176-886.416-159.282 24.739Z" fill="#2F2E30"></path>
+                <path d="M.925 276.762.748 1166.55l117.088 67.6.177-889.789L.925 276.762Z" fill="#1B1C1C"></path>
+                <path d="m277.297 319.616 42.194-92.348-117.088-67.598L43.12 184.409.926 276.758l117.088 67.598 159.283-24.74Z"></path>
+                <path d="m9.463 274.51 38.913-85.246L200.83 165.57l110.288 63.729-38.913 85.246-152.453 23.704L9.463 274.51Z" fill="#403F42"></path>
+                <path d="m48.64 204.722 152.093-23.509 104.606 60.115 5.423-11.815-110.029-63.233L48.64 189.789 9.818 274.373l5.423 3.117 33.399-72.768Z" fill="url(#pedestal_svg__a)"></path>
+                <path d="m257.862 226.559 26.118 15.092-26.303 57.564-.001.003-.128.285-28.41 4.415-23.837 3.694-76.948 11.965h-.001l-7.034 1.086-10.883-6.292h-.001L70.855 291.52l-38.02-21.941 26.44-57.863 11.424-1.778 39.579-6.144 18.213-2.833 67.016-10.405 9.638 5.566.225-.39-.225.39 23.837 13.761 28.88 16.676Z" stroke="#000" stroke-width="0.901" fill="transparent"></path>
+                <path opacity="0.2" d="M180.113 281.73c29.395 0 53.225-12.529 53.225-27.985s-23.83-27.986-53.225-27.986c-29.394 0-53.224 12.53-53.224 27.986 0 15.456 23.83 27.985 53.224 27.985Z" fill="#000"></path>
+
+                <g transform="translate(136.124, 210.844) rotate(-5) scale(3)">
+                  <defs>
+                    <clipPath id="oval-clip">
+                      <ellipse cx="0" cy="0" rx="44" ry="35"/>
+                    </clipPath>
+                  </defs>
+                  <image href="/coin_4-removebg-preview.png" x="-44" y="-44" width="88" height="88" style={{opacity: 1}} clipPath="url(#oval-clip)" className="w-full"/>
+                </g>
+
+                <defs>
+                  <linearGradient id="pedestal_svg__a" x1="57.235" y1="189.497" x2="257.141" y2="311.742" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#6E6E6E"></stop>
+                    <stop offset="1" stop-color="#1B1C1C"></stop>
+                  </linearGradient>
+                </defs>
+              </svg>
               {currentProject.isHot && (
                 <div className="slideshow-badge slideshow-badge-hot">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -384,9 +482,9 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
                 )}
               </div>
               <p className="slideshow-description">{currentProject.description}</p>
-              <button 
+              <button
                 className="slideshow-start-button"
-                onClick={handleStartQuest}
+                onClick={() => handleStartQuest(currentProject.questLink)}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="5 12 10 17 20 7"/>
@@ -405,15 +503,28 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
               />
             ))}
           </div>
-          <button 
-            className="slideshow-nav slideshow-next" 
-            onClick={goToNext} 
+          <button
+            className="slideshow-nav slideshow-next"
+            onClick={goToNext}
             aria-label="Next slide"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18l6-6-6-6"/>
             </svg>
           </button>
+
+          {/* Mobile PNG Display inside slideshow */}
+          {isMobile && (
+            <div className="mobile-png-container">
+              <img
+                src="/coin_4-removebg-preview.png"
+                alt="TrustQuests Coin"
+                className="mobile-display-png"
+                onLoad={() => console.log('Mobile PNG loaded')}
+                onError={(e) => console.log('Mobile PNG failed to load:', e)}
+              />
+            </div>
+          )}
         </div>
 
         {/* Admin Edit Button */}

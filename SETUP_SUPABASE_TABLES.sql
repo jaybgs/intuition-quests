@@ -264,5 +264,30 @@ ADD COLUMN IF NOT EXISTS space_id TEXT;
 -- Create index for space_id for faster queries
 CREATE INDEX IF NOT EXISTS idx_published_quests_space_id ON published_quests(space_id);
 
+-- Weekly Highlights table
+CREATE TABLE IF NOT EXISTS weekly_highlights (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  image TEXT,
+  gradient_colors JSONB NOT NULL DEFAULT '["#2563eb", "#2563eb"]'::jsonb,
+  quest_count INTEGER DEFAULT 0,
+  is_hot BOOLEAN DEFAULT false,
+  is_trending BOOLEAN DEFAULT false,
+  quest_link TEXT,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_weekly_highlights_order ON weekly_highlights(display_order);
+CREATE INDEX IF NOT EXISTS idx_weekly_highlights_created ON weekly_highlights(created_at);
+
+-- Trigger to auto-update updated_at
+CREATE TRIGGER update_weekly_highlights_updated_at BEFORE UPDATE ON weekly_highlights
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable Row Level Security on weekly_highlights table
+ALTER TABLE weekly_highlights ENABLE ROW LEVEL SECURITY;
 
 

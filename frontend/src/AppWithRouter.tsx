@@ -19,6 +19,7 @@ export default function AppWithRouter() {
     '/builder-dashboard': 'builder-dashboard',
     '/create-space': 'space-builder',
     '/create-quest': 'create',
+    '/edit-slideshow': 'edit-slideshow',
   };
 
   // Get initial tab from route

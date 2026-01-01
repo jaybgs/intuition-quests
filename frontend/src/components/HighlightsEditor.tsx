@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { showToast } from './Toast';
+import { highlightsServiceSupabase } from '../services/highlightsServiceSupabase';
 import './HighlightsEditor.css';
 
 interface Highlight {
@@ -11,10 +12,11 @@ interface Highlight {
   questCount?: number;
   isHot?: boolean;
   isTrending?: boolean;
+  questLink?: string;
 }
 
-// Mock highlights data - in a real app, this would come from an API
-const initialHighlights: Highlight[] = [
+// Default highlights
+const defaultHighlights: Highlight[] = [
   {
     id: '1',
     title: 'Project Alpha',
@@ -22,6 +24,7 @@ const initialHighlights: Highlight[] = [
     gradientColors: ['#2563eb', '#2563eb'],
     questCount: 12,
     isHot: true,
+    questLink: '#quests',
   },
   {
     id: '2',
@@ -30,6 +33,7 @@ const initialHighlights: Highlight[] = [
     gradientColors: ['#10b981', '#3b82f6'],
     questCount: 8,
     isTrending: true,
+    questLink: '#quests',
   },
   {
     id: '3',
@@ -37,22 +41,74 @@ const initialHighlights: Highlight[] = [
     description: 'Explore new opportunities and grow your portfolio. Start your journey today!',
     gradientColors: ['#f59e0b', '#ef4444'],
     questCount: 15,
+    questLink: '#quests',
   },
 ];
+
+// Load highlights from Supabase or use defaults
+const loadHighlights = async (): Promise<Highlight[]> => {
+  try {
+    return await highlightsServiceSupabase.getAllHighlights();
+  } catch (error) {
+    console.warn('Error loading highlights from Supabase:', error);
+    return defaultHighlights;
+  }
+};
+
+// Save highlights to Supabase
+const saveHighlights = async (highlightsToSave: Highlight[]): Promise<boolean> => {
+  try {
+    return await highlightsServiceSupabase.saveAllHighlights(highlightsToSave);
+  } catch (error) {
+    console.error('Error saving highlights to Supabase:', error);
+    return false;
+  }
+};
 
 interface HighlightsEditorProps {
   onBack: () => void;
 }
 
 export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
-  const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [editingHighlight, setEditingHighlight] = useState<Highlight | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSave = () => {
-    // In a real app, this would save to an API
-    console.log('Saving weekly highlights:', highlights);
-    showToast('Weekly highlights updated successfully!', 'success');
-    onBack();
+  // Load highlights on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const loadedHighlights = await loadHighlights();
+        setHighlights(loadedHighlights);
+      } catch (error) {
+        console.error('Error loading highlights:', error);
+        setHighlights(defaultHighlights);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      const success = await saveHighlights(highlights);
+      if (success) {
+        console.log('Saving weekly highlights:', highlights);
+        showToast('Weekly highlights updated successfully!', 'success');
+
+        // Dispatch event to notify other components that highlights were updated
+        window.dispatchEvent(new Event('highlightsUpdated'));
+
+        onBack();
+      } else {
+        showToast('Failed to save highlights. Please try again.', 'error');
+      }
+    } catch (error) {
+      console.error('Error saving highlights:', error);
+      showToast('Failed to save highlights. Please try again.', 'error');
+    }
   };
 
   const handleAddHighlight = () => {
@@ -62,6 +118,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
       description: 'Highlight description goes here...',
       gradientColors: ['#6366f1', '#8b5cf6'],
       questCount: 0,
+      questLink: '#quests',
     };
     setHighlights([...highlights, newHighlight]);
   };
@@ -84,6 +141,36 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
     setEditingHighlight(null);
     showToast('Highlight updated', 'success');
   };
+
+  if (isLoading) {
+    return (
+      <div className="highlights-editor">
+        <div className="highlights-editor-header">
+          <button className="highlights-editor-back-btn" onClick={onBack}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+            Back
+          </button>
+          <h1 className="highlights-editor-title">Edit Weekly Highlights</h1>
+          <div className="highlights-editor-actions">
+            <div style={{ padding: '8px 16px', color: 'rgba(255,255,255,0.6)' }}>Loading...</div>
+          </div>
+        </div>
+        <div className="highlights-editor-content">
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '200px',
+            color: 'rgba(255,255,255,0.6)'
+          }}>
+            Loading highlights...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
       <div className="highlights-editor">
@@ -144,7 +231,44 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                     background: `linear-gradient(135deg, ${highlight.gradientColors[0]}, ${highlight.gradientColors[1]})`
                   }}
                 >
-                  {highlight.image && <img src={highlight.image} alt={highlight.title} />}
+                  <div className="highlight-image-placeholder">
+                    {highlight.title.charAt(0)}
+                  </div>
+                  {/* Logo on the right side */}
+                  <div className="highlight-logo">
+                    {highlight.image ? (
+                      <img
+                        src={highlight.image}
+                        alt={`${highlight.title} logo`}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          objectFit: 'contain',
+                          borderRadius: '4px'
+                        }}
+                        onError={(e) => {
+                          // If image fails to load, show default SVG
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.setAttribute('style', 'display: block;');
+                        }}
+                      />
+                    ) : null}
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.8)"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ display: highlight.image ? 'none' : 'block' }}
+                    >
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                      <path d="M2 17l10 5 10-5"/>
+                      <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                  </div>
                   <div className="highlight-badges">
                     {highlight.isHot && <span className="badge badge-hot">HOT</span>}
                     {highlight.isTrending && <span className="badge badge-trending">TRENDING</span>}
@@ -224,27 +348,43 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
               </div>
 
               <div className="form-group">
-                <label>Background Colors</label>
+                <label>Quest Link</label>
+                <input
+                  type="text"
+                  value={editingHighlight.questLink || ''}
+                  onChange={(e) => setEditingHighlight({...editingHighlight, questLink: e.target.value || undefined})}
+                  placeholder="#quests or https://example.com/quest"
+                />
+              </div>
+
+
+              <div className="form-group">
+                <label>Background Colors (Hex codes)</label>
                 <div className="color-inputs">
                   <input
-                    type="color"
+                    type="text"
                     value={editingHighlight.gradientColors[0]}
                     onChange={(e) => setEditingHighlight({
                       ...editingHighlight,
                       gradientColors: [e.target.value, editingHighlight.gradientColors[1]]
                     })}
-                    title="Primary background color"
+                    placeholder="#2563eb"
+                    style={{ flex: 1 }}
                   />
                   <input
-                    type="color"
+                    type="text"
                     value={editingHighlight.gradientColors[1]}
                     onChange={(e) => setEditingHighlight({
                       ...editingHighlight,
                       gradientColors: [editingHighlight.gradientColors[0], e.target.value]
                     })}
-                    title="Secondary background color"
+                    placeholder="#3b82f6"
+                    style={{ flex: 1 }}
                   />
                 </div>
+                <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
+                  Enter hex color codes (e.g., #ff0000, #00ff00)
+                </small>
               </div>
 
               <div className="form-group">

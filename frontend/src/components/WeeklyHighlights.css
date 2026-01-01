@@ -9,6 +9,27 @@
   box-sizing: border-box;
 }
 
+
+.mobile-png-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.mobile-display-png {
+  max-width: 100%;
+  height: auto;
+  max-height: 200px; /* Limit height on mobile */
+  object-fit: contain;
+  border-radius: 12px;
+  background: transparent;
+  mix-blend-mode: multiply;
+  transform: translate(50px, -100px) scale(0.65);
+}
+
 .welcome-text {
   font-size: clamp(2rem, 5vw + 1rem, 3.5rem); /* Responsive: 32px to 56px based on viewport */
   font-weight: 700;
@@ -43,7 +64,7 @@
   backdrop-filter: blur(36px);
   -webkit-backdrop-filter: blur(36px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px; /* Fixed border-radius */
+  border-radius: 24px; /* More rounded corners */
   padding: 20px; /* Fixed padding */
   display: flex;
   flex-direction: column;
@@ -79,9 +100,8 @@
 
 .slideshow-image {
   width: 100%;
-  height: 200px; /* Fixed height */
   min-height: 200px;
-  max-height: 200px;
+  max-height: 230px; /* Allow content to expand up to 230px */
   border-radius: 12px; /* Fixed border-radius */
   overflow: hidden;
   display: flex;
@@ -104,6 +124,18 @@
   font-weight: bold;
   color: rgba(255, 255, 255, 0.9);
   z-index: 1;
+}
+
+.slideshow-logo {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.slideshow-image:hover .slideshow-logo {
+  opacity: 1;
 }
 
 .slideshow-badge {
@@ -378,16 +410,32 @@
     max-height: 500px;
     padding: 20px; /* Fixed padding */
     border: none; /* No border on mobile */
-    border-radius: 16px; /* Fixed border-radius */
+    border-radius: 24px; /* More rounded corners */
     margin-top: 35px; /* Move slideshow down by 35px (15px up from 50px) */
   }
 
   .slideshow-image {
-    height: 200px; /* Fixed height for mobile */
     min-height: 200px;
-    max-height: 200px;
+    max-height: 230px; /* Allow content to expand up to 230px on mobile */
     border-radius: 12px; /* Fixed border-radius */
   }
+
+  /* Mobile positioning adjustments for pedestal SVG */
+  .slideshow-image svg {
+    width: 140px !important; /* Shrink size on mobile */
+    bottom: -30px !important; /* Move up 20px from -50px */
+    left: 50% !important;
+    transform: translateX(calc(-50% + 60px)) !important; /* Move further to the left */
+  }
+
+  /* Mobile adjustments for Mezo Network logo inside pedestal */
+  .slideshow-image svg image {
+    width: 84px !important; /* Scale proportionally with pedestal (70% of 120px) */
+    height: 70px !important; /* Scale proportionally with pedestal (70% of 100px) */
+    x: 178px !important; /* Adjust position for mobile scaling */
+    y: 255px !important; /* Adjust vertical position for mobile */
+  }
+
 
   .slideshow-title {
     font-size: 18px; /* Fixed font size */

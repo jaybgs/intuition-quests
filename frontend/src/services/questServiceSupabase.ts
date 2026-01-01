@@ -362,17 +362,6 @@ export class QuestServiceSupabase {
       expiresAt: row.expires_at,
       endDate: row.end_date,
       endTime: row.end_time,
-      atomId: row.atom_id,
-      atomTransactionHash: row.atom_transaction_hash,
-      distributionType: row.distribution_type,
-      numberOfWinners: row.number_of_winners,
-      rewardDeposit: row.reward_deposit,
-      rewardToken: row.reward_token,
-      difficulty: row.difficulty,
-      estimatedTime: row.estimated_time,
-      expiresAt: row.expires_at ? new Date(row.expires_at).getTime() : undefined,
-      winnerPrizes,
-      image: row.image,
     };
   }
 

@@ -51,7 +51,7 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
 
     // Filter quests for this space
     const filteredQuests = quests.filter(q =>
-      q.spaceId === space.id ||
+      q.spaceId === space.id || 
       q.projectName?.toLowerCase() === space.name.toLowerCase() ||
       q.creatorAddress?.toLowerCase() === space.ownerAddress.toLowerCase()
     );
@@ -231,7 +231,7 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
               </a>
             )}
             {canAccessBuilder && onBuilderAccess && (
-              <button
+              <button 
                 className="space-detail-follow-button"
                 onClick={() => onBuilderAccess(space.id)}
                 title={isAdminUser && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
@@ -280,7 +280,7 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                 </a>
               )}
               {canAccessBuilder && onBuilderAccess && (
-                <button
+                <button 
                   className="space-detail-follow-button"
                   onClick={() => onBuilderAccess(space.id)}
                   title={isAdminUser && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}

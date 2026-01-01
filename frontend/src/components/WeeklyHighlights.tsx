@@ -132,31 +132,36 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     loadHighlights();
   }, []);
 
-  // Add slide transition effect
+  // Add smooth slide transition effect
   const [isAnimating, setIsAnimating] = useState(false);
 
   const goToSlide = (index: number) => {
-    if (isAnimating) return; // Prevent rapid clicking during animation
+    if (isAnimating || index === currentIndex) return; // Prevent rapid clicking and same slide
 
     setIsAnimating(true);
 
-    // Add slide-out animation to the glass container
     const glassElement = document.querySelector('.slideshow-glass');
     if (glassElement) {
-      glassElement.classList.remove('slide-in');
-      glassElement.classList.add('slide-out');
+      // Start slide-out animation
+      glassElement.classList.add('sliding-out');
+      glassElement.classList.remove('sliding-in');
 
-      // After slide-out animation, change slide and slide-in
-      setTimeout(() => {
-        setCurrentIndex(index);
-        glassElement.classList.remove('slide-out');
-        glassElement.classList.add('slide-in');
-
-        // Reset animation state after slide-in completes
+      // Use requestAnimationFrame for smoother timing
+      requestAnimationFrame(() => {
         setTimeout(() => {
-          setIsAnimating(false);
-        }, 600);
-      }, 400);
+          // Change slide content while invisible
+          setCurrentIndex(index);
+
+          // Start slide-in animation
+          glassElement.classList.remove('sliding-out');
+          glassElement.classList.add('sliding-in');
+
+          // Reset animation state after transition completes
+          setTimeout(() => {
+            setIsAnimating(false);
+          }, 800); // Match CSS transition duration
+        }, 200); // Brief pause when invisible
+      });
     } else {
       setCurrentIndex(index);
       setIsAnimating(false);

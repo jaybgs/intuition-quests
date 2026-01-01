@@ -95,13 +95,13 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
     try {
       const success = await saveHighlights(highlights);
       if (success) {
-        console.log('Saving weekly highlights:', highlights);
-        showToast('Weekly highlights updated successfully!', 'success');
+    console.log('Saving weekly highlights:', highlights);
+    showToast('Weekly highlights updated successfully!', 'success');
 
         // Dispatch event to notify other components that highlights were updated
         window.dispatchEvent(new Event('highlightsUpdated'));
 
-        onBack();
+    onBack();
       } else {
         showToast('Failed to save highlights. Please try again.', 'error');
       }

@@ -54,6 +54,28 @@
   }
 }
 
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+}
+
 .slideshow-glass {
   width: 100%;
   max-width: 900px; /* Reduced width for desktop */
@@ -74,6 +96,16 @@
               0 4px 14px rgba(0, 0, 0, 0.3),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+  overflow: hidden; /* Prevent content from showing outside during animations */
+}
+
+.slideshow-glass.slide-in {
+  animation: slideInLeft 0.6s ease-out;
+}
+
+.slideshow-glass.slide-out {
+  animation: slideOutRight 0.4s ease-in;
+}
   overflow: hidden;
   box-sizing: border-box;
 }

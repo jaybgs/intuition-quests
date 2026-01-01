@@ -132,15 +132,59 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     loadHighlights();
   }, []);
 
+  // Add slide transition effect
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const goToSlide = (index: number) => {
+    if (isAnimating) return; // Prevent rapid clicking during animation
+
+    setIsAnimating(true);
+
+    // Add slide-out animation to the glass container
+    const glassElement = document.querySelector('.slideshow-glass');
+    if (glassElement) {
+      glassElement.classList.remove('slide-in');
+      glassElement.classList.add('slide-out');
+
+      // After slide-out animation, change slide and slide-in
+      setTimeout(() => {
+        setCurrentIndex(index);
+        glassElement.classList.remove('slide-out');
+        glassElement.classList.add('slide-in');
+
+        // Reset animation state after slide-in completes
+        setTimeout(() => {
+          setIsAnimating(false);
+        }, 600);
+      }, 400);
+    } else {
+      setCurrentIndex(index);
+      setIsAnimating(false);
+    }
+  };
+
+  const goToPrevious = () => {
+    if (isAnimating) return;
+    const newIndex = (currentIndex - 1 + projects.length) % projects.length;
+    goToSlide(newIndex);
+  };
+
+  const goToNext = () => {
+    if (isAnimating) return;
+    const newIndex = (currentIndex + 1) % projects.length;
+    goToSlide(newIndex);
+  };
+
+  // Auto-advance slides with animation
   useEffect(() => {
-    if (projects.length === 0) return; // Don't start interval if no projects
+    if (projects.length === 0 || isAnimating) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % projects.length);
+      goToNext();
     }, 5000); // Change slide every 5 seconds
 
     return () => clearInterval(interval);
-  }, [projects]);
+  }, [projects, isAnimating]);
 
   // Load spaces from Supabase only
   useEffect(() => {
@@ -237,7 +281,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         }
       }, 0);
     };
-
+    
     // Add event listeners after a small delay to avoid render phase issues
     setTimeout(() => {
       if (isMounted) {
@@ -271,17 +315,6 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     };
   }, []);
 
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index);
-  };
-
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + projects.length) % projects.length);
-  };
-
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % projects.length);
-  };
 
   const handleStartQuest = (questLink?: string) => {
     // Check primarily for address - more reliable than isConnected
@@ -482,7 +515,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
                 )}
               </div>
               <p className="slideshow-description">{currentProject.description}</p>
-              <button
+              <button 
                 className="slideshow-start-button"
                 onClick={() => handleStartQuest(currentProject.questLink)}
               >
@@ -503,9 +536,9 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
               />
             ))}
           </div>
-          <button
-            className="slideshow-nav slideshow-next"
-            onClick={goToNext}
+          <button 
+            className="slideshow-nav slideshow-next" 
+            onClick={goToNext} 
             aria-label="Next slide"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

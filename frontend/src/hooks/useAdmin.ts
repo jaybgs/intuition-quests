@@ -28,7 +28,15 @@ export function useAdmin() {
     setIsLoading(true);
     const loggedIn = isAdminLoggedIn();
     const session = getAdminSession();
-    
+    const adminStatus = session?.role === 'admin' || session?.role === 'oracle';
+
+    console.log('🔐 useAdmin checkAdminStatus:', {
+      loggedIn,
+      session: session ? { role: session.role, expiryTime: session.expiryTime } : null,
+      adminStatus,
+      currentTime: Date.now()
+    });
+
     setIsAuthenticated(loggedIn);
     setAdminRole(session?.role || null);
     setIsLoading(false);

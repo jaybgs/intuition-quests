@@ -140,28 +140,34 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
 
     setIsAnimating(true);
 
-    const glassElement = document.querySelector('.slideshow-glass');
-    if (glassElement) {
-      // Start slide-out animation
-      glassElement.classList.add('sliding-out');
-      glassElement.classList.remove('sliding-in');
+    // Get all slide elements
+    const slides = document.querySelectorAll('.slideshow-slide');
+    const currentSlide = slides[currentIndex];
+    const nextSlide = slides[index];
 
-      // Use requestAnimationFrame for smoother timing
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          // Change slide content while invisible
-          setCurrentIndex(index);
+    if (currentSlide && nextSlide) {
+      // Determine direction
+      const direction = index > currentIndex ? 1 : -1;
 
-          // Start slide-in animation
-          glassElement.classList.remove('sliding-out');
-          glassElement.classList.add('sliding-in');
+      // Add leaving animation to current slide
+      currentSlide.classList.add('leaving-left');
+      currentSlide.classList.remove('active');
 
-          // Reset animation state after transition completes
-          setTimeout(() => {
-            setIsAnimating(false);
-          }, 800); // Match CSS transition duration
-        }, 200); // Brief pause when invisible
-      });
+      // Add entering animation to next slide
+      nextSlide.classList.add('entering-right');
+      nextSlide.classList.add('active');
+
+
+      // Update current index after animation starts
+      setTimeout(() => {
+        setCurrentIndex(index);
+
+        // Clean up classes
+        currentSlide.classList.remove('leaving-left', 'active');
+        nextSlide.classList.remove('entering-right');
+
+        setIsAnimating(false);
+      }, 800); // Match CSS transition duration
     } else {
       setCurrentIndex(index);
       setIsAnimating(false);
@@ -169,13 +175,11 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
   };
 
   const goToPrevious = () => {
-    if (isAnimating) return;
     const newIndex = (currentIndex - 1 + projects.length) % projects.length;
     goToSlide(newIndex);
   };
 
   const goToNext = () => {
-    if (isAnimating) return;
     const newIndex = (currentIndex + 1) % projects.length;
     goToSlide(newIndex);
   };
@@ -185,11 +189,12 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     if (projects.length === 0 || isAnimating) return;
 
     const interval = setInterval(() => {
-      goToNext();
+      const nextIndex = (currentIndex + 1) % projects.length;
+      goToSlide(nextIndex);
     }, 5000); // Change slide every 5 seconds
 
     return () => clearInterval(interval);
-  }, [projects, isAnimating]);
+  }, [projects, isAnimating, currentIndex]);
 
   // Load spaces from Supabase only
   useEffect(() => {
@@ -443,6 +448,10 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
   return (
     <div className="discover-earn-container">
       <h1 className="welcome-text">Welcome to TrustQuests</h1>
+      <p className="welcome-description">
+        Discover and complete blockchain quests on the Intuition network.
+        Earn rewards, build your reputation, and connect with the Web3 community.
+      </p>
       <div className="slideshow-glass">
           <button 
             className="slideshow-nav slideshow-prev" 
@@ -453,97 +462,88 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
-          <div
-            className="slideshow-content"
-            onClick={() => handleStartQuest(currentProject.questLink)}
-            style={{ cursor: currentProject.questLink ? 'pointer' : 'default' }}
-          >
-            <div 
-              className="slideshow-image"
-              style={{
-                background: `linear-gradient(135deg, ${currentProject.gradientColors[0]} 0%, ${currentProject.gradientColors[1]} 100%)`
-              }}
-            >
-
-              <svg viewBox="0 0 320 535" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{width: '180px', color: 'rgb(255, 255, 255)', position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(calc(-50% + 250px))'}}>
-                <path d="m277.296 319.617-.177 885.003 42.195-92.35.176-885.001-42.194 92.348Z" fill="#48494A"></path>
-                <path d="m118.014 344.353-.177 886.417 159.283-24.74.176-886.416-159.282 24.739Z" fill="#2F2E30"></path>
-                <path d="M.925 276.762.748 1166.55l117.088 67.6.177-889.789L.925 276.762Z" fill="#1B1C1C"></path>
-                <path d="m277.297 319.616 42.194-92.348-117.088-67.598L43.12 184.409.926 276.758l117.088 67.598 159.283-24.74Z"></path>
-                <path d="m9.463 274.51 38.913-85.246L200.83 165.57l110.288 63.729-38.913 85.246-152.453 23.704L9.463 274.51Z" fill="#403F42"></path>
-                <path d="m48.64 204.722 152.093-23.509 104.606 60.115 5.423-11.815-110.029-63.233L48.64 189.789 9.818 274.373l5.423 3.117 33.399-72.768Z" fill="url(#pedestal_svg__a)"></path>
-                <path d="m257.862 226.559 26.118 15.092-26.303 57.564-.001.003-.128.285-28.41 4.415-23.837 3.694-76.948 11.965h-.001l-7.034 1.086-10.883-6.292h-.001L70.855 291.52l-38.02-21.941 26.44-57.863 11.424-1.778 39.579-6.144 18.213-2.833 67.016-10.405 9.638 5.566.225-.39-.225.39 23.837 13.761 28.88 16.676Z" stroke="#000" stroke-width="0.901" fill="transparent"></path>
-                <path opacity="0.2" d="M180.113 281.73c29.395 0 53.225-12.529 53.225-27.985s-23.83-27.986-53.225-27.986c-29.394 0-53.224 12.53-53.224 27.986 0 15.456 23.83 27.985 53.224 27.985Z" fill="#000"></path>
-
-                <g transform="translate(136.124, 210.844) rotate(-5) scale(3)">
-                  <defs>
-                    <clipPath id="oval-clip">
-                      <ellipse cx="0" cy="0" rx="44" ry="35"/>
-                    </clipPath>
-                  </defs>
-                  <image href="/coin_4-removebg-preview.png" x="-44" y="-44" width="88" height="88" style={{opacity: 1}} clipPath="url(#oval-clip)" className="w-full"/>
-                </g>
-
-                <defs>
-                  <linearGradient id="pedestal_svg__a" x1="57.235" y1="189.497" x2="257.141" y2="311.742" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#6E6E6E"></stop>
-                    <stop offset="1" stop-color="#1B1C1C"></stop>
-                  </linearGradient>
-                </defs>
-              </svg>
-              {currentProject.isHot && (
-                <div className="slideshow-badge slideshow-badge-hot">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.6 1.5-3.5 3.5-5.5z"/>
-                  </svg>
-                  Hot
-                </div>
-              )}
-              {currentProject.isTrending && (
-                <div className="slideshow-badge slideshow-badge-trending">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                    <polyline points="17 6 23 6 23 12"/>
-                  </svg>
-                  Trending
-                </div>
-              )}
-            </div>
-            <div className="slideshow-info">
-              <div className="slideshow-header">
-                <h2 className="slideshow-title">{currentProject.title}</h2>
-                {currentProject.questCount && (
-                  <div className="slideshow-quest-count">
-                    <img src="/verified.svg" alt="Verified" width="16" height="16" />
-                    {currentProject.questCount} Quests
-                  </div>
-                )}
-              </div>
-              <p className="slideshow-description">{currentProject.description}</p>
-              <button 
-                className="slideshow-start-button"
-                onClick={() => handleStartQuest(currentProject.questLink)}
+          <div className="slideshow-container">
+            {projects.map((project, index) => (
+              <div
+                key={project.id}
+                className={`slideshow-slide ${index === currentIndex ? 'active' : ''}`}
+                onClick={() => handleStartQuest(project.questLink)}
+                style={{ cursor: project.questLink ? 'pointer' : 'default' }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="5 12 10 17 20 7"/>
-                </svg>
-                Start Quest
-              </button>
-            </div>
-          </div>
-          <div className="slideshow-indicators">
-            {projects.map((_, index) => (
-              <button
-                key={index}
-                className={`slideshow-dot ${index === currentIndex ? 'active' : ''}`}
-                onClick={() => goToSlide(index)}
-                aria-label={`Go to slide ${index + 1}`}
-              />
+                <div
+                  className="slideshow-image"
+                  style={{
+                    background: `linear-gradient(135deg, ${project.gradientColors[0]} 0%, ${project.gradientColors[1]} 100%)`
+                  }}
+                >
+
+                  <svg viewBox="0 0 320 535" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{width: '180px', color: 'rgb(255, 255, 255)', position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(calc(-50% + 250px))'}}>
+                    <path d="m277.296 319.617-.177 885.003 42.195-92.35.176-885.001-42.194 92.348Z" fill="#48494A"></path>
+                    <path d="m118.014 344.353-.177 886.417 159.283-24.74.176-886.416-159.282 24.739Z" fill="#2F2E30"></path>
+                    <path d="M.925 276.762.748 1166.55l117.088 67.6.177-889.789L.925 276.762Z" fill="#1B1C1C"></path>
+                    <path d="m277.297 319.616 42.194-92.348-117.088-67.598L43.12 184.409.926 276.758l117.088 67.598 159.283-24.74Z"></path>
+                    <path d="m9.463 274.51 38.913-85.246L200.83 165.57l110.288 63.729-38.913 85.246-152.453 23.704L9.463 274.51Z" fill="#403F42"></path>
+                    <path d="m48.64 204.722 152.093-23.509 104.606 60.115 5.423-11.815-110.029-63.233L48.64 189.789 9.818 274.373l5.423 3.117 33.399-72.768Z" fill="url(#pedestal_svg__a)"></path>
+                    <path d="m257.862 226.559 26.118 15.092-26.303 57.564-.001.003-.128.285-28.41 4.415-23.837 3.694-76.948 11.965h-.001l-7.034 1.086-10.883-6.292h-.001L70.855 291.52l-38.02-21.941 26.44-57.863 11.424-1.778 39.579-6.144 18.213-2.833 67.016-10.405 9.638 5.566.225-.39-.225.39 23.837 13.761 28.88 16.676Z" stroke="#000" stroke-width="0.901" fill="transparent"></path>
+                    <path opacity="0.2" d="M180.113 281.73c29.395 0 53.225-12.529 53.225-27.985s-23.83-27.986-53.225-27.986c-29.394 0-53.224 12.53-53.224 27.986 0 15.456 23.83 27.985 53.224 27.985Z" fill="#000"></path>
+                    <g transform="translate(136.124, 210.844) rotate(-5) scale(3)">
+                      <defs>
+                        <clipPath id="oval-clip">
+                          <ellipse cx="0" cy="0" rx="44" ry="35"/>
+                        </clipPath>
+                      </defs>
+                      <image href="/coin_4-removebg-preview.png" x="-44" y="-44" width="88" height="88" style={{opacity: 1}} clipPath="url(#oval-clip)" className="w-full"/>
+                    </g>
+
+                    <defs>
+                      <linearGradient id="pedestal_svg__a" x1="57.235" y1="189.497" x2="257.141" y2="311.742" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#6E6E6E"></stop>
+                        <stop offset="1" stop-color="#1B1C1C"></stop>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+
+                  {/* Individual coin for each slide */}
+                  {isMobile && (
+                    <img
+                      src="/coin_4-removebg-preview.png"
+                      alt="TrustQuests Coin"
+                      className="slide-coin"
+                    />
+                  )}
+
+                </div>
+                <div className="slideshow-info">
+                  <div className="slideshow-header">
+                    <h2 className="slideshow-title">{project.title}</h2>
+                    {project.questCount && (
+                      <div className="slideshow-quest-count">
+                        <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                        {project.questCount} Quests
+                      </div>
+                    )}
+                  </div>
+                  <p className="slideshow-description">{project.description}</p>
+                  <button
+                    className="slideshow-start-button"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering slide click
+                      handleStartQuest(project.questLink);
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="5 12 10 17 20 7"/>
+                    </svg>
+                    Start Quest
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
-          <button 
-            className="slideshow-nav slideshow-next" 
-            onClick={goToNext} 
+
+          <button
+            className="slideshow-nav slideshow-next"
+            onClick={goToNext}
             aria-label="Next slide"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -551,18 +551,19 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
             </svg>
           </button>
 
-          {/* Mobile PNG Display inside slideshow */}
-          {isMobile && (
-            <div className="mobile-png-container">
-              <img
-                src="/coin_4-removebg-preview.png"
-                alt="TrustQuests Coin"
-                className="mobile-display-png"
-                onLoad={() => console.log('Mobile PNG loaded')}
-                onError={(e) => console.log('Mobile PNG failed to load:', e)}
-              />
+          <div className="slideshow-indicators">
+            <div className="slideshow-dots-container">
+              {projects.map((_, index) => (
+                <button
+                  key={`dot-${index}`}
+                  className={`slideshow-dot ${index === currentIndex ? 'active' : ''}`}
+                  onClick={() => goToSlide(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
             </div>
-          )}
+          </div>
+
         </div>
 
         {/* Admin Edit Button */}

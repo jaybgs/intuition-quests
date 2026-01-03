@@ -1632,8 +1632,11 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                       navigate(`/quest/${questId}`);
                     }}
                     onBuilderAccess={(spaceId) => {
+                      console.log('🔧 SpaceDetailView onBuilderAccess called with spaceId:', spaceId);
                       setSelectedSpaceId(spaceId);
+                      console.log('🔧 Set selectedSpaceId to:', spaceId);
                       navigateToTab('builder-dashboard');
+                      console.log('🔧 Navigated to builder-dashboard tab');
                     }}
                   />
                 );
@@ -1656,12 +1659,22 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
               }
               return null;
             })()}
-            {activeTab === 'builder-dashboard' && (
-              <BuilderDashboard 
-                spaceId={selectedSpaceId || ''}
-                onBack={() => navigateToTab('discover')}
-              />
-            )}
+            {activeTab === 'builder-dashboard' && (() => {
+              console.log('🔧 Rendering BuilderDashboard with selectedSpaceId:', selectedSpaceId);
+              return (
+                <BuilderDashboard
+                  spaceId={selectedSpaceId || ''}
+                  onBack={() => {
+                    console.log('🔧 BuilderDashboard onBack called, navigating to discover');
+                    navigateToTab('discover');
+                  }}
+                  onAdminLogin={() => {
+                    console.log('🔧 BuilderDashboard onAdminLogin called, showing admin modal');
+                    setShowAdminLogin(true);
+                  }}
+                />
+              );
+            })()}
             {activeTab === 'spaces' && (
               <Spaces
                 onSpaceClick={(space) => {

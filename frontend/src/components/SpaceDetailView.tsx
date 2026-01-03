@@ -19,7 +19,7 @@ interface SpaceDetailViewProps {
 
 export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }: SpaceDetailViewProps) {
   const { address } = useAccount();
-  const { isAdmin: isAdminUser } = useAdmin();
+  const { isAuthenticated: isAdminLoggedIn } = useAdmin();
   const { quests, isLoading: questsLoading } = useQuests();
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
@@ -43,7 +43,7 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
   
   // Check if current user is the owner of this space or an admin
   const isOwner = address && space.ownerAddress && address.toLowerCase() === space.ownerAddress.toLowerCase();
-  const canAccessBuilder = isOwner || isAdminUser;
+  const canAccessBuilder = isOwner || isAdminLoggedIn;
   
   // Filter and sort quests for this space (active first, then ended)
   const spaceQuests = useMemo(() => {
@@ -234,9 +234,9 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
               <button 
                 className="space-detail-follow-button"
                 onClick={() => onBuilderAccess(space.id)}
-                title={isAdminUser && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
+                title={isAdminLoggedIn && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
               >
-                {isAdminUser && !isOwner ? "Admin: Builder Dashboard" : "Builder Dashboard"}
+                {isAdminLoggedIn && !isOwner ? "Admin: Builder Dashboard" : "Builder Dashboard"}
               </button>
             )}
             {!isOwner && (
@@ -283,9 +283,9 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                 <button 
                   className="space-detail-follow-button"
                   onClick={() => onBuilderAccess(space.id)}
-                  title={isAdminUser && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
+                  title={isAdminLoggedIn && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
                 >
-                  {isAdminUser && !isOwner ? "Admin: Builder Dashboard" : "Builder Dashboard"}
+                  {isAdminLoggedIn && !isOwner ? "Admin: Builder Dashboard" : "Builder Dashboard"}
                 </button>
               )}
               {!isOwner && (

@@ -15,11 +15,14 @@ import './BuilderDashboard.css';
 interface BuilderDashboardProps {
   spaceId: string;
   onBack?: () => void;
+  onAdminLogin?: () => void;
 }
 
-export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
+export function BuilderDashboard({ spaceId, onBack, onAdminLogin }: BuilderDashboardProps) {
+  console.log('🔧 BuilderDashboard mounted with spaceId:', spaceId);
   const { address } = useAccount();
-  const { isAdmin: isAdminUser } = useAdmin();
+  const { isAuthenticated: isAdminLoggedIn, isAdmin: hasAdminRole } = useAdmin();
+  console.log('🔧 BuilderDashboard user state - address:', address, 'isAdminLoggedIn:', isAdminLoggedIn, 'hasAdminRole:', hasAdminRole);
   const [space, setSpace] = useState<Space | null>(null);
   const [activeNav, setActiveNav] = useState<'dashboard' | 'quests' | 'guide' | 'settings' | 'analytics'>('dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,17 +31,24 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   const { isPro } = useSubscription();
 
   useEffect(() => {
+    console.log('🔧 BuilderDashboard useEffect triggered with spaceId:', spaceId);
     // Handle empty string or null spaceId
     if (!spaceId || spaceId.trim() === '') {
+      console.log('🔧 No spaceId provided, trying to get user spaces');
       // If no spaceId provided, try to get user's first space
-      if (address) {
-        spaceService.getSpacesByOwner(address).then(userSpaces => {
+      // For admin users, they can access spaces even without a wallet connected
+      if (address || isAdminLoggedIn || hasAdminRole) {
+        const ownerAddress = address || 'admin'; // Use a placeholder for admin access
+        spaceService.getSpacesByOwner(ownerAddress).then(userSpaces => {
+          console.log('🔧 Found user spaces:', userSpaces.length);
           if (userSpaces.length > 0) {
             // Use the first space
             const firstSpace = userSpaces[0];
+            console.log('🔧 Using first user space:', firstSpace.name);
             setSpace(firstSpace);
             setIsAuthorized(true);
           } else {
+            console.log('🔧 No user spaces found');
             setIsAuthorized(false);
             if (onBack) {
               setTimeout(() => onBack(), 1000); // Give user time to see the message
@@ -52,6 +62,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
           }
         });
       } else {
+        console.log('🔧 No address available and not logged in as admin');
         setIsAuthorized(false);
         if (onBack) {
           setTimeout(() => onBack(), 1000);
@@ -60,18 +71,96 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
       return;
     }
 
-    if (spaceId && address) {
+    // Handle specific spaceId - check authorization
+    // Admin users can access any space even without a wallet connected
+    if (spaceId && (address || isAdminLoggedIn || hasAdminRole)) {
       spaceService.getSpaceById(spaceId).then(loadedSpace => {
         if (loadedSpace) {
           // Check if the space has ownerAddress
           if (!loadedSpace.ownerAddress) {
             console.error('Space does not have ownerAddress:', loadedSpace);
-            // Try to get user's first space instead
+            // For admin users, they can still access the space even if it doesn't have an ownerAddress
+            if (isAdminLoggedIn || hasAdminRole) {
+              console.log('✅ Admin access granted to space without ownerAddress');
+              setSpace(loadedSpace);
+              setIsAuthorized(true);
+              return;
+            }
+            // Try to get user's first space instead (for non-admin users)
+            if (address) {
+              spaceService.getSpacesByOwner(address).then(userSpaces => {
+                if (userSpaces.length > 0) {
+                  setSpace(userSpaces[0]);
+                  setIsAuthorized(true);
+                } else {
+                  setIsAuthorized(false);
+                  if (onBack) {
+                    setTimeout(() => onBack(), 1000);
+                  }
+                }
+              }).catch(error => {
+                console.error('Error loading user spaces:', error);
+                setIsAuthorized(false);
+                if (onBack) {
+                  setTimeout(() => onBack(), 1000);
+                }
+              });
+            } else {
+              setIsAuthorized(false);
+              if (onBack) {
+                setTimeout(() => onBack(), 1000);
+              }
+            }
+            return;
+          }
+          
+          // Check authorization: Admin users have access to ALL spaces, owners have access to their own spaces
+          const isOwner = address ? address.toLowerCase() === loadedSpace.ownerAddress.toLowerCase() : false;
+          const isAuthorized = (isAdminLoggedIn || hasAdminRole) || isOwner; // Note: Admin check comes first for clarity
+
+          console.log('🔍 BuilderDashboard Authorization Check:', {
+            spaceId,
+            userAddress: address?.toLowerCase(),
+            spaceOwner: loadedSpace.ownerAddress?.toLowerCase(),
+            isOwner,
+            isAdminLoggedIn,
+            hasAdminRole,
+            isAuthorized,
+            accessReason: (isAdminLoggedIn || hasAdminRole) ? 'ADMIN_ACCESS' : isOwner ? 'OWNER_ACCESS' : 'NO_ACCESS'
+          });
+
+          if (isAuthorized) {
+            console.log('✅ Authorization granted, setting space and authorized state');
+            setSpace(loadedSpace);
+            setIsAuthorized(true);
+          } else {
+            console.log('❌ Authorization denied, checking if admin login needed');
+            // User is not authorized - check if they might be an admin who needs to log in
+            console.log('❌ Unauthorized access attempt:', {
+              userAddress: address?.toLowerCase(),
+              spaceOwner: loadedSpace.ownerAddress?.toLowerCase(),
+              isAdminLoggedIn,
+              hasAdminRole,
+              reason: 'Not owner and not admin'
+            });
+
+            // Show admin login modal so they can log in as admin if they have credentials
+            if (onAdminLogin) {
+              console.log('🔑 Showing admin login modal');
+              onAdminLogin();
+              setIsAuthorized(false);
+              return;
+            }
+
+            // Fallback: try to redirect to user's own space
+            console.log('🔄 Trying to redirect to user\'s own space');
             spaceService.getSpacesByOwner(address).then(userSpaces => {
               if (userSpaces.length > 0) {
+                console.log('🔄 Found user spaces, using first one:', userSpaces[0].name);
                 setSpace(userSpaces[0]);
                 setIsAuthorized(true);
               } else {
+                console.log('❌ No user spaces found, showing unauthorized');
                 setIsAuthorized(false);
                 if (onBack) {
                   setTimeout(() => onBack(), 1000);
@@ -84,36 +173,38 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 setTimeout(() => onBack(), 1000);
               }
             });
-            return;
           }
-          
-          // Check if the connected wallet is the owner of this space or if user is admin
-          const isOwner = address.toLowerCase() === loadedSpace.ownerAddress.toLowerCase();
-          const isAuthorized = isOwner || isAdminUser;
-          console.log('🔍 BuilderDashboard Authorization Check:', {
-            spaceId,
-            userAddress: address?.toLowerCase(),
-            spaceOwner: loadedSpace.ownerAddress?.toLowerCase(),
-            isOwner,
-            isAdminUser,
-            isAuthorized
-          });
-          setIsAuthorized(isAuthorized);
-          
+
           if (isAuthorized) {
+            console.log('✅ Access granted to builder dashboard');
             setSpace(loadedSpace);
+            setIsAuthorized(true);
           } else {
-            console.error('Unauthorized access: User is not the owner of this space and not an admin', {
+            // User is not authorized - they need to be either the owner or logged in as admin
+            console.log('❌ Access denied to builder dashboard:', {
               userAddress: address.toLowerCase(),
               spaceOwner: loadedSpace.ownerAddress.toLowerCase(),
-              isAdmin: isAdminUser
+              isAdminLoggedIn,
+              hasAdminRole,
+              reason: 'Not owner and not logged in as admin'
             });
-            // Try to get user's first space instead
+
+            // Show admin login modal so they can log in as admin if they have credentials
+            if (onAdminLogin) {
+              console.log('🔑 Showing admin login modal');
+              onAdminLogin();
+              setIsAuthorized(false);
+              return;
+            }
+
+            // Fallback: try to redirect to user's own space
             spaceService.getSpacesByOwner(address).then(userSpaces => {
               if (userSpaces.length > 0) {
+                console.log('🔄 Redirecting to user\'s own space:', userSpaces[0].id);
                 setSpace(userSpaces[0]);
                 setIsAuthorized(true);
               } else {
+                console.log('❌ No spaces found for user, showing unauthorized message');
                 setIsAuthorized(false);
                 if (onBack) {
                   setTimeout(() => onBack(), 1000);
@@ -190,7 +281,18 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
         onBack();
       }
     }
-  }, [spaceId, address, onBack]);
+  }, [spaceId, address, onBack, isAdminLoggedIn]);
+
+  // Re-check authorization when admin status changes
+  useEffect(() => {
+    if (spaceId && address && space && isAuthorized === false) {
+      const isOwner = address.toLowerCase() === space.ownerAddress.toLowerCase();
+      const newIsAuthorized = isOwner || isAdminUser;
+      if (newIsAuthorized) {
+        setIsAuthorized(true);
+      }
+    }
+  }, [isAdminLoggedIn, spaceId, address, space, isAuthorized]);
 
   // Get quests for this space (filter by projectId matching space name or owner)
   const spaceQuests = useMemo(() => {

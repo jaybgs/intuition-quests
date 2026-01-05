@@ -16,7 +16,7 @@
   -webkit-backdrop-filter: blur(36px);
   border: none;
   border-radius: 24px;
-  padding: 40px;
+  padding: 24px;
   box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
               0 4px 14px rgba(0, 0, 0, 0.3),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -153,7 +153,9 @@
 .staking-logo {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  transform: scale(2.1);
+  transform-origin: center;
 }
 
 .rewards-card-content {
@@ -187,7 +189,7 @@
   .rewards-glass-container {
     width: 100%;
     max-width: 100%;
-    padding: 24px 20px;
+    padding: 16px 20px;
     border-radius: 16px;
     overflow-x: hidden;
   }
@@ -235,29 +237,61 @@
   .rewards-cards {
     grid-template-columns: 1fr;
     gap: 12px;
+    width: 300px;
+    height: 350px;
+    overflow-y: auto;
   }
 
   .rewards-card {
-    padding: 14px 16px;
-    min-height: 70px;
+    padding: 0;
+    margin: 0;
+    min-height: 150px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .rewards-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .rewards-card-content * {
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .rewards-card-icon {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
   }
 
   .rewards-card-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .rewards-card-label {
-    font-size: 13px;
+    font-size: 20px;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1;
   }
 
   .rewards-card-value {
-    font-size: 20px;
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .staking-logo {
+    transform: scale(6.0);
+    transform-origin: center;
   }
 
   .rewards-graphic {
@@ -271,7 +305,7 @@
   }
 
   .rewards-glass-container {
-    padding: 20px 16px;
+    padding: 12px 16px;
   }
 
   .rewards-title {
@@ -287,17 +321,26 @@
   }
 
   .rewards-card {
-    padding: 12px 14px;
-    min-height: 65px;
+    padding: 5px 14px;
+    min-height: 30px;
   }
 
   .rewards-card-icon {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .rewards-card-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .rewards-card-label {
+    font-size: 20px;
   }
 
   .rewards-card-value {
-    font-size: 18px;
+    font-size: 20px;
   }
 }
 

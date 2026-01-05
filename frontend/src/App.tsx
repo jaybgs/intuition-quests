@@ -1662,8 +1662,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             {activeTab === 'builder-dashboard' && (() => {
               console.log('🔧 Rendering BuilderDashboard with selectedSpaceId:', selectedSpaceId);
               return (
-                <BuilderDashboard
-                  spaceId={selectedSpaceId || ''}
+              <BuilderDashboard 
+                spaceId={selectedSpaceId || ''}
                   onBack={() => {
                     console.log('🔧 BuilderDashboard onBack called, navigating to discover');
                     navigateToTab('discover');
@@ -1672,7 +1672,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     console.log('🔧 BuilderDashboard onAdminLogin called, showing admin modal');
                     setShowAdminLogin(true);
                   }}
-                />
+              />
               );
             })()}
             {activeTab === 'spaces' && (

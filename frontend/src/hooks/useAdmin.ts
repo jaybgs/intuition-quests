@@ -36,7 +36,7 @@ export function useAdmin() {
       adminStatus,
       currentTime: Date.now()
     });
-
+    
     setIsAuthenticated(loggedIn);
     setAdminRole(session?.role || null);
     setIsLoading(false);

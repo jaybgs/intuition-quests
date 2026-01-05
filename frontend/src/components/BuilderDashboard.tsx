@@ -88,23 +88,23 @@ export function BuilderDashboard({ spaceId, onBack, onAdminLogin }: BuilderDashb
             }
             // Try to get user's first space instead (for non-admin users)
             if (address) {
-              spaceService.getSpacesByOwner(address).then(userSpaces => {
-                if (userSpaces.length > 0) {
-                  setSpace(userSpaces[0]);
-                  setIsAuthorized(true);
-                } else {
-                  setIsAuthorized(false);
-                  if (onBack) {
-                    setTimeout(() => onBack(), 1000);
-                  }
-                }
-              }).catch(error => {
-                console.error('Error loading user spaces:', error);
+            spaceService.getSpacesByOwner(address).then(userSpaces => {
+              if (userSpaces.length > 0) {
+                setSpace(userSpaces[0]);
+                setIsAuthorized(true);
+              } else {
                 setIsAuthorized(false);
                 if (onBack) {
                   setTimeout(() => onBack(), 1000);
                 }
-              });
+              }
+            }).catch(error => {
+              console.error('Error loading user spaces:', error);
+              setIsAuthorized(false);
+              if (onBack) {
+                setTimeout(() => onBack(), 1000);
+              }
+            });
             } else {
               setIsAuthorized(false);
               if (onBack) {
@@ -174,7 +174,7 @@ export function BuilderDashboard({ spaceId, onBack, onAdminLogin }: BuilderDashb
               }
             });
           }
-
+          
           if (isAuthorized) {
             console.log('✅ Access granted to builder dashboard');
             setSpace(loadedSpace);

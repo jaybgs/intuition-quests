@@ -192,8 +192,10 @@ export function Community({ onSeeMoreLeaderboard, onQuestClick, onCreateSpace, o
       </div>
 
       <CreateSpaceSection onCreateSpace={onCreateSpace} />
-      
-      <Leaderboard />
+
+      <div id="leaderboard">
+        <Leaderboard />
+      </div>
     </div>
   );
 }

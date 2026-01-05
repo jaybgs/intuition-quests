@@ -29,6 +29,7 @@ import { AdminLogin } from './components/AdminLogin';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { FAQButton } from './components/FAQButton';
 import { HighlightsEditor } from './components/HighlightsEditor';
+import Footer from './components/Footer';
 import { spaceService } from './services/spaceService';
 import { questServiceSupabase } from './services/questServiceSupabase';
 import { apiClient } from './services/apiClient';
@@ -1745,6 +1746,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           </>
         )}
       </main>
+
+      <Footer />
 
       <SignupModal 
         isOpen={showSignupModal}

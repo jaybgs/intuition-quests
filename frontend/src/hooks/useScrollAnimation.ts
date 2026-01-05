@@ -29,13 +29,20 @@ export function useScrollAnimation(options?: {
             if (!once || !hasAnimatedRef.current) {
               entry.target.classList.add('animate-in');
               hasAnimatedRef.current = true;
-              
+
               if (once) {
                 observer.unobserve(entry.target);
               }
+            } else if (!once) {
+              // Re-trigger animation when element comes back into view
+              entry.target.classList.remove('animate-in');
+              // Force reflow to restart animation
+              void entry.target.offsetWidth;
+              entry.target.classList.add('animate-in');
             }
           } else if (!once) {
             entry.target.classList.remove('animate-in');
+            hasAnimatedRef.current = false; // Reset for re-triggering
           }
         });
       },

@@ -70,6 +70,81 @@
   }
 }
 
+@keyframes fadePop {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadePopSubtle {
+  0% {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadePopGentle {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll animation classes */
+.slideshow-glass.animate-in {
+  animation: fadePop 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: forwards;
+}
+
+.space-card.animate-in {
+  animation: fadePopSubtle 1s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: forwards;
+}
+
+/* Staggered animations for space cards */
+.spaces-grid .space-card.animate-in:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.spaces-grid .space-card.animate-in:nth-child(2) {
+  animation-delay: 0.25s;
+}
+.spaces-grid .space-card.animate-in:nth-child(3) {
+  animation-delay: 0.35s;
+}
+.spaces-grid .space-card.animate-in:nth-child(4) {
+  animation-delay: 0.45s;
+}
+.spaces-grid .space-card.animate-in:nth-child(5) {
+  animation-delay: 0.55s;
+}
+.spaces-grid .space-card.animate-in:nth-child(6) {
+  animation-delay: 0.65s;
+}
+.spaces-grid .space-card.animate-in:nth-child(7) {
+  animation-delay: 0.75s;
+}
+.spaces-grid .space-card.animate-in:nth-child(8) {
+  animation-delay: 0.85s;
+}
+
+.spaces-section.animate-in {
+  animation: fadePopGentle 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: forwards;
+}
+
 
 .slideshow-glass {
   width: 100%;

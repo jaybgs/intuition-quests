@@ -37,12 +37,34 @@ export class BlockchainService {
 
     // Initialize wallet client for transactions (if private key is provided)
     if (process.env.PRIVATE_KEY) {
-      const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
-      this.walletClient = createWalletClient({
-        account,
-        chain: mainnet, // TODO: Replace with actual chain
-        transport: http(process.env.RPC_URL || 'https://eth.llamarpc.com'),
-      });
+      try {
+        // Validate private key format
+        const privateKey = process.env.PRIVATE_KEY;
+        if (!privateKey.startsWith('0x')) {
+          console.error('❌ PRIVATE_KEY must start with 0x');
+          console.error('Current format:', privateKey.substring(0, 10) + '...');
+          return;
+        }
+        if (privateKey.length !== 66) { // 0x + 64 hex chars
+          console.error('❌ PRIVATE_KEY must be 66 characters long (0x + 64 hex chars)');
+          console.error('Current length:', privateKey.length);
+          return;
+        }
+
+        const account = privateKeyToAccount(privateKey as `0x${string}`);
+        console.log('✅ Private key validated successfully for address:', account.address);
+
+        this.walletClient = createWalletClient({
+          account,
+          chain: mainnet, // TODO: Replace with actual chain
+          transport: http(process.env.RPC_URL || 'https://eth.llamarpc.com'),
+        });
+      } catch (error: any) {
+        console.error('❌ Invalid PRIVATE_KEY format:', error.message);
+        console.error('Expected: 0x followed by 64 hexadecimal characters');
+        console.error('Make sure the private key is exported correctly from your wallet');
+        return;
+      }
     }
 
     // Trust token contract address (from environment or default)

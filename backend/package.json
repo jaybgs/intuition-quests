@@ -16,7 +16,12 @@
     "delete:quests": "tsx scripts/deleteAllQuests.ts",
     "cleanup:all": "tsx scripts/deleteAllQuests.ts",
     "remove:quest-2024": "tsx scripts/remove-quest.ts",
-    "remove:quest-2024:local": "tsx scripts/remove-quest-local-db.ts"
+    "remove:quest-2024:local": "tsx scripts/remove-quest-local-db.ts",
+    "refund:deposits": "tsx scripts/refund-quest-deposits.ts",
+    "check:escrow": "tsx scripts/check-escrow-balance.ts",
+    "withdraw:all": "tsx scripts/withdraw-all-escrow.ts",
+    "find:deposits": "tsx scripts/find-escrow-deposits.ts",
+    "transfer:ownership": "tsx scripts/transfer-ownership.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",

@@ -104,23 +104,25 @@ export class QuestDraftService {
   }
 
   async getAllDraftsForUser(userAddress: string, spaceId?: string): Promise<QuestDraftListItem[]> {
-    let query = supabase
+    const { data, error } = await supabase
       .from('quest_drafts')
       .select('id, title, current_step, space_id, updated_at')
       .eq('user_address', userAddress.toLowerCase())
       .order('updated_at', { ascending: false });
 
-    if (spaceId) {
-      query = query.or(`space_id.eq.${spaceId},space_id.is.null`);
-    }
-
-    const { data, error } = await query;
-
     if (error) {
       throw new Error(`Failed to fetch quest drafts: ${error.message}`);
     }
 
-    return (data || []).map((draft: any) => ({
+    // Filter by spaceId in JavaScript to avoid Supabase .or() issues
+    let filteredData = data || [];
+    if (spaceId) {
+      filteredData = filteredData.filter((draft: any) =>
+        draft.space_id === spaceId || draft.space_id === null
+      );
+    }
+
+    return filteredData.map((draft: any) => ({
       id: draft.id,
       title: draft.title || 'Untitled Quest',
       updatedAt: new Date(draft.updated_at).getTime(),
@@ -161,4 +163,5 @@ export class QuestDraftService {
 }
 
 export const questDraftService = new QuestDraftService();
+
 

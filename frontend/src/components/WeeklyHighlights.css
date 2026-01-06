@@ -430,6 +430,7 @@
 
   .welcome-text {
     margin-bottom: 0; /* No margin, gap handles spacing */
+    padding: 0; /* Remove left and right padding on mobile */
   }
 
   .slideshow-glass {

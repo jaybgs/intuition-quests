@@ -185,13 +185,13 @@ export class QuestDraftService {
     }
 
     if (supabase) {
-      try {
+    try {
         // Fetch ALL drafts for this user first (most reliable approach)
         const { data: allDrafts, error: fetchError } = await supabase
-          .from('quest_drafts')
-          .select('id, title, current_step, space_id, updated_at')
-          .eq('user_address', userAddress.toLowerCase())
-          .order('updated_at', { ascending: false });
+        .from('quest_drafts')
+        .select('id, title, current_step, space_id, updated_at')
+        .eq('user_address', userAddress.toLowerCase())
+        .order('updated_at', { ascending: false });
 
         if (fetchError) {
           throw fetchError;
@@ -199,19 +199,19 @@ export class QuestDraftService {
 
         // Filter by spaceId in JavaScript (most reliable)
         let filteredData = allDrafts || [];
-        if (spaceId) {
+      if (spaceId) {
           filteredData = filteredData.filter((draft: any) =>
             draft.space_id === spaceId || draft.space_id === null
           );
-        }
+      }
 
         return filteredData.map((draft: any) => ({
-          id: draft.id,
-          title: draft.title || 'Untitled Quest',
-          updatedAt: new Date(draft.updated_at).getTime(),
-          currentStep: draft.current_step || 1,
-          spaceId: draft.space_id || null,
-        }));
+        id: draft.id,
+        title: draft.title || 'Untitled Quest',
+        updatedAt: new Date(draft.updated_at).getTime(),
+        currentStep: draft.current_step || 1,
+        spaceId: draft.space_id || null,
+      }));
 
       } catch (supabaseError: any) {
         console.error('❌ Supabase draft list fetch failed:', supabaseError?.message || supabaseError);

@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FAQ } from './FAQ';
 import './Footer.css';
 
 const Footer: React.FC = () => {
+  const navigate = useNavigate();
+  const [isFAQOpen, setIsFAQOpen] = useState(false);
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   return (
     <footer className="footer">
       <div className="footer-content">
@@ -20,27 +29,27 @@ const Footer: React.FC = () => {
         <div className="footer-links">
           <div className="footer-column">
             <h4 className="footer-column-title">Platform</h4>
-            <a href="#" className="footer-link">Discover & Earn</a>
-            <a href="#" className="footer-link">Community</a>
-            <a href="#" className="footer-link">Rewards</a>
-            <a href="#" className="footer-link">Bounties</a>
-            <a href="#" className="footer-link">Raids</a>
+            <span onClick={() => handleNavigation('/home')} className="footer-link-text">Discover & Earn</span>
+            <span onClick={() => handleNavigation('/community')} className="footer-link-text">Community</span>
+            <span onClick={() => handleNavigation('/rewards')} className="footer-link-text">Rewards</span>
+            <span onClick={() => handleNavigation('/bounties')} className="footer-link-text">Bounties</span>
+            <span onClick={() => handleNavigation('/raids')} className="footer-link-text">Raids</span>
           </div>
 
           <div className="footer-column">
             <h4 className="footer-column-title">Community</h4>
-            <a href="#" className="footer-link">Discord</a>
-            <a href="#" className="footer-link">Twitter</a>
-            <a href="#" className="footer-link">GitHub</a>
-            <a href="#" className="footer-link">Documentation</a>
+            <a href="https://discord.gg/TQrZjFH6" target="_blank" rel="noopener noreferrer" className="footer-community-link">Discord</a>
+            <a href="https://x.com/trustquests" target="_blank" rel="noopener noreferrer" className="footer-community-link">Twitter</a>
+            <a href="https://github.com/jaybgs/intuition-quests/" target="_blank" rel="noopener noreferrer" className="footer-community-link">GitHub</a>
+            <a href="https://github.com/jaybgs/intuition-quests/" target="_blank" rel="noopener noreferrer" className="footer-community-link">Documentation</a>
           </div>
 
           <div className="footer-column">
             <h4 className="footer-column-title">Support</h4>
-            <a href="#" className="footer-link">FAQ</a>
-            <a href="#" className="footer-link">Contact</a>
-            <a href="#" className="footer-link">Help Center</a>
-            <a href="#" className="footer-link">Bug Reports</a>
+            <span onClick={() => setIsFAQOpen(true)} className="footer-link-text">FAQ</span>
+            <span className="footer-link-text">Contact</span>
+            <span className="footer-link-text">Help Center</span>
+            <span className="footer-link-text">Bug Reports</span>
           </div>
         </div>
 
@@ -55,6 +64,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
       </div>
+      <FAQ isOpen={isFAQOpen} onClose={() => setIsFAQOpen(false)} />
     </footer>
   );
 };

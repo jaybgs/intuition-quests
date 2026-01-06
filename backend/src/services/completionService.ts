@@ -88,3 +88,5 @@ export class CompletionService {
     }
   }
 }
+
+export const completionService = new CompletionService();

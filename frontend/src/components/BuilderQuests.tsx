@@ -52,10 +52,9 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
         setIsLoadingDrafts(true);
         try {
           const draftsList = await questDraftService.getAllDrafts(address, spaceId);
-          console.log('📋 All drafts from Supabase:', draftsList);
           setDrafts(draftsList);
         } catch (error) {
-          console.error('❌ Error loading drafts from Supabase:', error);
+          console.error('❌ BuilderQuests: Error loading drafts:', error);
           setDrafts([]);
         } finally {
           setIsLoadingDrafts(false);

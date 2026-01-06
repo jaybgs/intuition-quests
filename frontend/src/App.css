@@ -3270,6 +3270,16 @@ body {
     min-height: 44px;
   }
 
+  /* Adjust padding for quest content on mobile */
+  .quest-content {
+    padding: 10px 20px 10px 20px;
+  }
+
+  /* Remove bottom margin from quest header on mobile */
+  .quest-header {
+    margin-bottom: 0;
+  }
+
   /* Better focus states for accessibility */
   *:focus-visible {
     outline: 2px solid var(--accent-blue);

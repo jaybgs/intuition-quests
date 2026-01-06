@@ -133,7 +133,9 @@ export class QuestServiceBackend {
     trustReward?: number,
     maxCompletions?: number,
     expiresAt?: Date,
-    twitterLink?: string // Creator's X profile URL
+    twitterLink?: string, // Creator's X profile URL
+    atomId?: string,
+    atomTransactionHash?: string
   ): Promise<Quest> {
     const quest = await apiClient.createQuest({
       title,
@@ -151,6 +153,8 @@ export class QuestServiceBackend {
       maxCompletions,
       expiresAt,
       twitterLink, // Include creator's X profile URL
+      atomId,
+      atomTransactionHash,
     });
 
     return this.transformQuest(quest);

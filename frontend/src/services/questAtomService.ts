@@ -6,6 +6,30 @@
 
 import { type Hash, formatEther, keccak256, stringToHex, toHex } from 'viem';
 import { MULTIVAULT_ADDRESS } from '../contracts/addresses';
+import { fetcher, configureClient } from '@0xintuition/graphql';
+
+// Configure GraphQL client for mainnet
+if (typeof window !== 'undefined') {
+  try {
+    configureClient({
+      apiUrl: 'https://mainnet.intuition.sh/v1/graphql',
+    });
+  } catch (error) {
+    console.error('Failed to configure GraphQL client:', error);
+  }
+}
+
+// GraphQL query to check if atom exists by data
+const GetAtomByDataDocument = `
+  query GetAtomByData($data: String!) {
+    atoms(where: { data: { _eq: $data } }, limit: 1) {
+      term_id
+      label
+      data
+      created_at
+    }
+  }
+`;
 
 const multiVaultAddress = MULTIVAULT_ADDRESS;
 
@@ -42,6 +66,21 @@ export interface CreateQuestAtomResult {
 }
 
 /**
+ * Check if an atom with the given data (name) already exists on Intuition
+ */
+export async function checkAtomExists(atomData: string): Promise<boolean> {
+  try {
+    const result = await fetcher<any>(GetAtomByDataDocument, { data: atomData });
+    return result.atoms && result.atoms.length > 0;
+  } catch (error) {
+    console.error('Error checking if atom exists:', error);
+    // If we can't check, assume it doesn't exist to allow creation
+    // This is safer than blocking creation due to API errors
+    return false;
+  }
+}
+
+/**
  * Convert quest ID string to bytes32
  */
 export function questIdToBytes32(questId: string): `0x${string}` {
@@ -73,14 +112,22 @@ export async function createQuestAtom(
     }
     
     // Create atom data - unique identifier for this quest
-    const atomData = `TrustQuests Quest: ${questTitle}`;
+    // Include quest ID to ensure uniqueness even with same titles
+    const atomData = `TrustQuests Quest: ${questTitle} [${questId}]`;
     const atomDataBytes = toHex(new TextEncoder().encode(atomData));
-    
+
     console.log('Creating quest atom...');
     console.log('  Quest ID:', questId);
     console.log('  Quest Title:', questTitle);
     console.log('  Space Atom ID:', spaceAtomId || 'none');
     console.log('  Cost:', formatEther(atomCost), 'TRUST');
+
+    // Check if atom already exists to prevent duplicate creation
+    console.log('  Checking if atom already exists...');
+    const atomExists = await checkAtomExists(atomData);
+    if (atomExists) {
+      throw new Error(`An atom with the name "${atomData}" already exists. Please choose a different quest title.`);
+    }
     
     // Create atom using MultiVault directly with correct ABI
     // createAtoms(bytes[] data, uint256[] assets)

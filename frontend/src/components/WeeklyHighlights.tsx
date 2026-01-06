@@ -436,9 +436,8 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     return { status, symbol };
   };
 
-  const slideshowRef = useScrollAnimation({ once: false });
-  const spacesRef = useScrollAnimation({ once: false });
-  const spacesGridRef = useScrollAnimation({ once: false });
+  const slideshowRef = useScrollAnimation();
+  const spacesRef = useScrollAnimation();
 
   if (isLoading || projects.length === 0) {
     return <DiscoverPageSkeleton />;
@@ -453,7 +452,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         Discover and complete blockchain quests on the Intuition network.
         Earn rewards, build your reputation, and connect with the Web3 community.
       </p>
-      <div ref={slideshowRef} className="slideshow-glass">
+      <div className="slideshow-glass">
           <button 
             className="slideshow-nav slideshow-prev" 
             onClick={goToPrevious} 
@@ -632,7 +631,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
           </button>
         </div>
 
-        <div ref={spacesGridRef} className="spaces-grid">
+        <div className="spaces-grid">
           {isSpacesLoading ? (
             <>
               {[...Array(maxSpaces)].map((_, index) => (
@@ -648,7 +647,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
               const questCount = getQuestCount(space.id);
               const followerCount = getFollowerCount(space.id);
               const tokenInfo = getTokenStatus(space.id);
-
+              
               return (
                 <div
                   key={space.id}

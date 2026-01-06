@@ -76,7 +76,7 @@ export function CreateSpaceSection({ onCreateSpace }: CreateSpaceSectionProps) {
         }}
       />
       <h2 className="create-space-heading">
-        Join hundreds of builders earning from their creations
+        <span className="join-highlight">Join</span> hundreds of builders earning from their creations
       </h2>
       
       <div className="create-space-steps">

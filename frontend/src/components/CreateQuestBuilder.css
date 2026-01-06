@@ -2193,7 +2193,7 @@
 @media (max-width: 768px) {
   .create-quest-builder-container {
     gap: 16px;
-    padding: 12px;
+    padding: 12px 0;
   }
 
   .create-quest-builder-title {
@@ -2213,7 +2213,11 @@
   }
 
   .create-quest-builder-form-card {
-    padding: 20px;
+    padding: 20px 0;
+  }
+
+  .create-quest-builder-action-item {
+    padding: 16px 10px;
   }
 
   .create-quest-builder-duration-grid {

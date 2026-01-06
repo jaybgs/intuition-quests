@@ -2,7 +2,7 @@
 .footer {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
-  padding: 20px 0 20px 0;
+  padding: 40px 0 20px 0;
   margin-top: 60px;
 }
 
@@ -26,14 +26,14 @@
 }
 
 .footer-brand-name {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
 
 .footer-brand-tagline {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-secondary);
   margin: 4px 0 0 0;
 }
@@ -41,45 +41,27 @@
 .footer-links {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  gap: 40px;
   margin-bottom: 40px;
 }
 
 .footer-column h4 {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 16px 0;
 }
 
 .footer-link {
   display: block;
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 14px;
   margin-bottom: 8px;
   transition: color 0.2s ease;
 }
 
 .footer-link:hover {
-  color: var(--accent-primary);
-}
-
-.footer-link-button {
-  display: block;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 16px;
-  margin-bottom: 8px;
-  transition: color 0.2s ease;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-}
-
-.footer-link-button:hover {
   color: var(--accent-primary);
 }
 
@@ -91,11 +73,10 @@
   border-top: 1px solid var(--border-color);
   flex-wrap: wrap;
   gap: 20px;
-  position: relative;
 }
 
 .footer-copyright {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-muted);
   margin: 0;
 }
@@ -107,7 +88,7 @@
 }
 
 .footer-legal-link {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.2s ease;
@@ -117,21 +98,10 @@
   color: var(--text-primary);
 }
 
-.footer-coin-image {
-  position: absolute;
-  right: -20px;
-  top: -560px;
-  width: 960px;
-  height: 960px;
-  object-fit: contain;
-  z-index: 1;
-  opacity: 0.8;
-}
-
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .footer {
-    padding: 15px 0 20px 0;
+    padding: 30px 0 20px 0;
     margin-top: 40px;
   }
 
@@ -171,12 +141,6 @@
   .footer-legal {
     gap: 16px;
   }
-
-  .footer-coin-image {
-    width: 320px;
-    height: 320px;
-    right: 16px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -200,10 +164,6 @@
     align-items: flex-start;
     gap: 12px;
   }
-
-  .footer-coin-image {
-    width: 256px;
-    height: 256px;
-    right: 12px;
-  }
 }
+
+

@@ -20,6 +20,10 @@ export interface QuestDraftData {
   distribution_type?: string | null;
   current_step?: number | null;
   deposit_status?: 'none' | 'approved' | 'deposited' | null;
+  status?: 'draft' | 'published' | 'failed' | null;
+  published_at?: string | null;
+  atom_id?: string | null;
+  atom_transaction_hash?: string | null;
 }
 
 export interface QuestDraftListItem {
@@ -28,6 +32,8 @@ export interface QuestDraftListItem {
   updatedAt: number;
   currentStep: number;
   spaceId?: string | null;
+  status?: 'draft' | 'published' | 'failed';
+  publishedAt?: number | null;
 }
 
 /**
@@ -41,6 +47,27 @@ export class QuestDraftService {
    * Returns info about where the draft was saved.
    */
   async saveDraft(draftData: QuestDraftData): Promise<{ savedTo: 'backend' | 'supabase' | 'localStorage' }> {
+    // Validate that we're saving with the correct user address
+    const authToken = localStorage.getItem('auth_token');
+    if (authToken) {
+      try {
+        const payload = JSON.parse(atob(authToken.split('.')[1]));
+        const authenticatedAddress = payload.address || payload.wallet;
+
+        if (authenticatedAddress && draftData.user_address.toLowerCase() !== authenticatedAddress.toLowerCase()) {
+          console.warn('⚠️ Draft user address mismatch detected!');
+          console.warn('   Authenticated user:', authenticatedAddress);
+          console.warn('   Draft user:', draftData.user_address);
+          console.warn('   Correcting to authenticated user address');
+
+          // Correct the user address to prevent ownership issues
+          draftData.user_address = authenticatedAddress;
+        }
+      } catch (error) {
+        console.warn('⚠️ Could not validate auth token for draft saving');
+      }
+    }
+
     // Always save to localStorage as backup first
       this.saveDraftToLocalStorage(draftData);
     
@@ -158,34 +185,83 @@ export class QuestDraftService {
     }
 
     if (supabase) {
-    try {
-      let query = supabase
-        .from('quest_drafts')
-        .select('id, title, current_step, space_id, updated_at')
-        .eq('user_address', userAddress.toLowerCase())
-        .order('updated_at', { ascending: false });
+      try {
+        // Fetch ALL drafts for this user first (most reliable approach)
+        const { data: allDrafts, error: fetchError } = await supabase
+          .from('quest_drafts')
+          .select('id, title, current_step, space_id, updated_at')
+          .eq('user_address', userAddress.toLowerCase())
+          .order('updated_at', { ascending: false });
 
-      if (spaceId) {
-        query = query.or(`space_id.eq.${spaceId},space_id.is.null`);
-      }
-
-        const { data, error: supabaseError } = await query;
-
-        if (!supabaseError && data) {
-      return (data || []).map((draft: any) => ({
-        id: draft.id,
-        title: draft.title || 'Untitled Quest',
-        updatedAt: new Date(draft.updated_at).getTime(),
-        currentStep: draft.current_step || 1,
-        spaceId: draft.space_id || null,
-      }));
+        if (fetchError) {
+          throw fetchError;
         }
-      } catch (supabaseError) {
-        console.warn('⚠️ Supabase draft list fetch failed, using localStorage', supabaseError);
+
+        // Filter by spaceId in JavaScript (most reliable)
+        let filteredData = allDrafts || [];
+        if (spaceId) {
+          filteredData = filteredData.filter((draft: any) =>
+            draft.space_id === spaceId || draft.space_id === null
+          );
+        }
+
+        return filteredData.map((draft: any) => ({
+          id: draft.id,
+          title: draft.title || 'Untitled Quest',
+          updatedAt: new Date(draft.updated_at).getTime(),
+          currentStep: draft.current_step || 1,
+          spaceId: draft.space_id || null,
+        }));
+
+      } catch (supabaseError: any) {
+        console.error('❌ Supabase draft list fetch failed:', supabaseError?.message || supabaseError);
+        console.warn('⚠️ Falling back to localStorage');
       }
     }
 
       return this.getAllDraftsFromLocalStorage(userAddress, spaceId);
+  }
+
+  /**
+   * Mark a draft as published
+   */
+  async markDraftAsPublished(draftId: string, userAddress: string, atomId?: string, atomTransactionHash?: string): Promise<void> {
+    try {
+      await apiClient.put(`/quest-drafts/${draftId}/publish`, {
+        atomId,
+        atomTransactionHash
+      });
+      this.markDraftAsPublishedInLocalStorage(draftId, userAddress, atomId, atomTransactionHash);
+      return;
+    } catch (error) {
+      console.warn('⚠️ Backend draft publish mark failed, trying Supabase/localStorage', error);
+    }
+
+    if (supabase) {
+      try {
+        const now = new Date().toISOString();
+        const { error: supabaseError } = await supabase
+          .from('quest_drafts')
+          .update({
+            status: 'published',
+            published_at: now,
+            atom_id: atomId,
+            atom_transaction_hash: atomTransactionHash,
+            updated_at: now
+          })
+          .eq('id', draftId)
+          .eq('user_address', userAddress.toLowerCase());
+
+        if (!supabaseError) {
+          this.markDraftAsPublishedInLocalStorage(draftId, userAddress, atomId, atomTransactionHash);
+          return;
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Supabase draft publish mark failed, updating localStorage', supabaseError);
+      }
+    }
+
+    this.markDraftAsPublishedInLocalStorage(draftId, userAddress, atomId, atomTransactionHash);
   }
 
   /**
@@ -243,6 +319,10 @@ export class QuestDraftService {
       distribution_type: dbDraft.distribution_type,
       current_step: dbDraft.current_step,
       deposit_status: dbDraft.deposit_status || null,
+      status: dbDraft.status || 'draft',
+      published_at: dbDraft.published_at,
+      atom_id: dbDraft.atom_id,
+      atom_transaction_hash: dbDraft.atom_transaction_hash,
     };
   }
 
@@ -270,6 +350,10 @@ export class QuestDraftService {
         distributionType: draftData.distribution_type,
         currentStep: draftData.current_step || 1,
         depositStatus: draftData.deposit_status || null,
+        status: draftData.status || 'draft',
+        publishedAt: draftData.published_at ? new Date(draftData.published_at).getTime() : null,
+        atomId: draftData.atom_id || null,
+        atomTransactionHash: draftData.atom_transaction_hash || null,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
@@ -286,6 +370,8 @@ export class QuestDraftService {
         updatedAt: Date.now(),
         currentStep: draftData.current_step || 1,
         spaceId: draftData.space_id || null,
+        status: draftData.status || 'draft',
+        publishedAt: draftData.published_at ? new Date(draftData.published_at).getTime() : null,
       };
 
       if (draftIndex >= 0) {
@@ -329,6 +415,10 @@ export class QuestDraftService {
         distribution_type: draft.distributionType || null,
         current_step: draft.currentStep || 1,
         deposit_status: draft.depositStatus || null,
+        status: draft.status || 'draft',
+        published_at: draft.publishedAt ? new Date(draft.publishedAt).toISOString() : null,
+        atom_id: draft.atomId || null,
+        atom_transaction_hash: draft.atomTransactionHash || null,
       };
     } catch (error) {
       console.error('Error reading draft from localStorage:', error);
@@ -350,10 +440,45 @@ export class QuestDraftService {
         ? draftsList.filter(d => d.spaceId === spaceId || !d.spaceId)
         : draftsList;
 
-      return filteredDrafts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      return filteredDrafts.map(draft => ({
+        ...draft,
+        status: draft.status || 'draft',
+        publishedAt: draft.publishedAt || null,
+      })).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
     } catch (error) {
       console.error('Error reading drafts from localStorage:', error);
       return [];
+    }
+  }
+
+  /**
+   * Fallback: Mark draft as published in localStorage
+   */
+  private markDraftAsPublishedInLocalStorage(draftId: string, userAddress: string, atomId?: string, atomTransactionHash?: string): void {
+    try {
+      const storageKey = `quest_draft_${draftId}_${userAddress.toLowerCase()}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const draft = JSON.parse(stored);
+        draft.status = 'published';
+        draft.publishedAt = Date.now();
+        draft.atomId = atomId || null;
+        draft.atomTransactionHash = atomTransactionHash || null;
+        draft.updatedAt = Date.now();
+        localStorage.setItem(storageKey, JSON.stringify(draft));
+      }
+
+      // Update in drafts list
+      const draftsListKey = `quest_drafts_${userAddress.toLowerCase()}`;
+      const existingDrafts = JSON.parse(localStorage.getItem(draftsListKey) || '[]');
+      const draftIndex = existingDrafts.findIndex((d: any) => d.id === draftId);
+      if (draftIndex >= 0) {
+        existingDrafts[draftIndex].status = 'published';
+        existingDrafts[draftIndex].publishedAt = Date.now();
+        localStorage.setItem(draftsListKey, JSON.stringify(existingDrafts));
+      }
+    } catch (error) {
+      console.error('Error marking draft as published in localStorage:', error);
     }
   }
 

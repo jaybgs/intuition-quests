@@ -127,8 +127,8 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       setSpaceTwitterUrl(quest.twitterLink);
     }
     
-    // Then try to get from space if projectId exists
-    if (quest.projectId) {
+    // Then try to get from space if projectId exists and looks like a valid space ID (UUID)
+    if (quest.projectId && quest.projectId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
       spaceService.getSpaceById(quest.projectId).then(space => {
         if (space?.twitterUrl) {
           setSpaceTwitterUrl(space.twitterUrl);
@@ -188,9 +188,74 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   }, [showDropdown]);
 
   useEffect(() => {
-    // Find quest by ID from real data
-    const foundQuest = quests.find(q => q.id === questId);
+    // Find quest by ID from cached data first
+    let foundQuest = quests.find(q => q.id === questId);
+
+    // If not found and questId looks like a slug (contains hyphens and no 'quest_' prefix),
+    // try to find by title slug match
+    if (!foundQuest && questId && questId.includes('-') && !questId.startsWith('quest_')) {
+      // This looks like a slug, try to find quest by title
+      const normalizedSlug = questId.toLowerCase().replace(/[^a-z0-9-]/g, '');
+      foundQuest = quests.find(q => {
+        if (!q.title) return false;
+        const questSlug = q.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        return questSlug === normalizedSlug;
+      });
+      if (foundQuest) {
+        console.log('Found quest by slug match:', foundQuest.title);
+      }
+    }
+
     if (foundQuest) {
+      // Process quest found in cache
+      processQuest(foundQuest);
+    } else if (questId) {
+      // If not found in cached data, try to fetch directly from API
+      console.log('Quest not found in cached data, trying direct API fetch:', questId);
+
+      // Check if questId looks like a valid quest ID (starts with 'quest_')
+      if (questId.startsWith('quest_')) {
+        // Fetch by ID
+        questServiceSupabase.getQuestById(questId).then(apiQuest => {
+          if (apiQuest) {
+            console.log('Found quest via direct API fetch by ID:', apiQuest.title);
+            processQuest(apiQuest);
+          } else {
+            console.log('Quest not found in API by ID either, showing not found');
+            setIsLoading(false);
+          }
+        }).catch(error => {
+          console.error('Error fetching quest from API by ID:', error);
+          setIsLoading(false);
+        });
+      } else {
+        // Try to find by title/slug - fetch all quests and find match
+        questServiceSupabase.getAllQuests().then(allQuests => {
+          const normalizedSlug = questId.toLowerCase().replace(/[^a-z0-9-]/g, '');
+          const matchingQuest = allQuests.find(q => {
+            if (!q.title) return false;
+            const questSlug = q.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            return questSlug === normalizedSlug;
+          });
+
+          if (matchingQuest) {
+            console.log('Found quest via API search by slug:', matchingQuest.title);
+            processQuest(matchingQuest);
+          } else {
+            console.log('Quest not found in API by slug either, showing not found');
+            setIsLoading(false);
+          }
+        }).catch(error => {
+          console.error('Error fetching quests from API for slug search:', error);
+          setIsLoading(false);
+        });
+      }
+    } else {
+      // No questId provided
+      setIsLoading(false);
+    }
+
+    function processQuest(foundQuest: any) {
       const questWithDescription = { ...foundQuest };
       
       // Convert requirements to steps if steps don't exist
@@ -425,7 +490,10 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       setQuest(questWithDescription);
       setCurrentStep(0); // Always start at step 0 (description)
       setIsLoading(false);
-    } else {
+    }
+
+    // If quest was not found at all, show not found
+    if (!foundQuest) {
       // Also check localStorage directly
       try {
         const keys = Object.keys(localStorage);
@@ -1273,8 +1341,8 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       <div className="quest-detail-title-section">
         <h1 className="quest-detail-page-title">{quest.title}'s Tasks</h1>
         <div className="quest-detail-metadata-row">
-          {quest.createdAt && (
-            <span className="quest-detail-date">{formatDate(quest.createdAt)}</span>
+          {quest.expiresAt && (
+            <span className="quest-detail-date">{formatDate(quest.expiresAt)}</span>
           )}
         </div>
 
@@ -1311,13 +1379,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                 }
               }}
             >
-              {/* Left: Triangle/Play Icon */}
-              <div className="quest-detail-task-play-icon">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </div>
-              
               {/* Middle: Platform Icon + Task Text */}
               <div className="quest-detail-task-content">
                 <div className="quest-detail-task-platform-icon">

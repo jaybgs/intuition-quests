@@ -18,6 +18,9 @@ class ApiClient {
       const token = this.getAuthToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+
+      } else {
+        console.log('⚠️ No auth token available for request');
       }
       return config;
     });
@@ -74,16 +77,43 @@ class ApiClient {
   }
 
   async createQuest(questData: {
+    // Basic quest fields
     title: string;
     description: string;
     projectId: string;
     projectName?: string;
+    spaceId?: string | null;
     xpReward: number;
-    trustReward?: number;
     requirements?: any[];
-    maxCompletions?: number;
-    expiresAt?: Date;
     twitterLink?: string; // Creator's X profile URL
+
+    // Publishing fields
+    id: string;
+    status: string;
+    createdAt: number;
+    startAt: number;
+    startDate?: string;
+    startTime?: string;
+    creatorAddress: string;
+    atomId?: string;
+    atomTransactionHash?: string;
+    distributionType: string;
+    tripleId?: string;
+    tripleTransactionHash?: string;
+    image?: string;
+    iqPoints: number;
+    numberOfWinners: number;
+    winnerPrizes: any[];
+    rewardDeposit?: string;
+    rewardToken?: string;
+    expiresAt?: number;
+    endDate?: string;
+    endTime?: string;
+
+    // Legacy fields (keeping for compatibility)
+    trustReward?: number;
+    maxCompletions?: number;
+    expiresAtDate?: Date;
   }) {
     const response = await this.client.post('/quests', questData);
     return response.data.quest;

@@ -14,6 +14,7 @@ import {
 } from '../services/questEscrowService';
 import { questDraftService } from '../services/questDraftService';
 import { createQuestAtom } from '../services/questAtomService';
+import { apiClient } from '../services/apiClient';
 import { parseEther } from 'viem';
 import { parseUnits, formatUnits, createPublicClient, http } from 'viem';
 import { intuitionChain } from '../config/wagmi';
@@ -1541,45 +1542,34 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
 
       // Step 7: Publish quest to backend with on-chain data
       showToast('Publishing quest...', 'info');
-      createQuest({
-        projectId,
-        projectName,
-        title: title.trim(),
-        description: description.trim(),
-        xpReward,
-        requirements,
-        twitterLink: space?.twitterUrl,
-      });
 
-      // Step 8: Store quest with on-chain data in localStorage
-      // Start date/time is set to current timestamp (when published on-chain)
+      // Prepare complete quest data for backend
       const publishedAt = Date.now();
       const startDateStr = new Date(publishedAt).toISOString().split('T')[0];
       const startTimeStr = new Date(publishedAt).toTimeString().split(' ')[0].slice(0, 5);
-      
-      // Note: tripleId is now undefined since we only create an atom (claim), not a triple
-      const questData = {
-        id: `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+
+      const completeQuestData = {
+        id: `quest_${publishedAt}_${Math.random().toString(36).substr(2, 9)}`,
         title: title.trim(),
         description: description.trim(),
         projectId,
         projectName,
-        spaceId: spaceId || null, // Include spaceId for quest count tracking
-        xpReward: iqPoints ? parseInt(iqPoints, 10) : xpReward, // Use iqPoints as xpReward if set
+        spaceId: spaceId || null,
+        xpReward: iqPoints ? parseInt(iqPoints, 10) : xpReward,
         requirements,
         status: 'active' as const,
         createdAt: publishedAt,
-        startAt: publishedAt, // Start time is when published on-chain
+        startAt: publishedAt,
         startDate: startDateStr,
         startTime: startTimeStr,
         creatorAddress: address.toLowerCase(),
         atomId,
         atomTransactionHash,
         distributionType,
-        tripleId,
-        tripleTransactionHash,
+        tripleId: undefined, // No triple for quest publishing
+        tripleTransactionHash: undefined,
         image: imageBase64,
-        iqPoints: iqPoints ? parseInt(iqPoints, 10) : (xpReward || 100), // Store iqPoints as set by creator
+        iqPoints: iqPoints ? parseInt(iqPoints, 10) : (xpReward || 100),
         numberOfWinners: numberOfWinners ? parseInt(numberOfWinners, 10) : 1,
         winnerPrizes,
         rewardDeposit,
@@ -1587,58 +1577,38 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         expiresAt: endDate && endTime ? new Date(`${endDate}T${endTime}`).getTime() : undefined,
         endDate,
         endTime,
+        twitterLink: space?.twitterUrl,
       };
 
-      // Save to database first
-      try {
-        console.log('💾 Saving quest to database...');
-        const response = await apiClient.post('/quests', questData);
-        console.log('✅ Quest saved to database:', response.data);
-      } catch (error) {
-        console.error('❌ Failed to save quest to database:', error);
-        // Continue with localStorage fallback for now
-      }
+      await apiClient.createQuest(completeQuestData);
+
+      // Step 8: Store quest with on-chain data in localStorage
 
       // Save to published quests - localStorage for immediate UI updates
       const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
       const existingPublished = JSON.parse(localStorage.getItem(publishedQuestsKey) || '[]');
-      existingPublished.push(questData);
+      existingPublished.push(completeQuestData);
       localStorage.setItem(publishedQuestsKey, JSON.stringify(existingPublished));
 
       // Dispatch event to refresh quest counts in space cards
-      window.dispatchEvent(new CustomEvent('questPublished', { detail: { spaceId, questData } }));
+      window.dispatchEvent(new CustomEvent('questPublished', { detail: { spaceId, questData: completeQuestData } }));
 
       // Dispatch event for real-time updates
-      window.dispatchEvent(new CustomEvent('questPublished', { detail: { quest: questData } }));
+      window.dispatchEvent(new CustomEvent('questPublished', { detail: { quest: completeQuestData } }));
       
       // Immediately invalidate and refetch quests to show new quest without lag
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       queryClient.refetchQueries({ queryKey: ['quests'] });
 
-      // Remove draft if it exists - from both Supabase and localStorage
+      // Mark draft as published instead of deleting it (keeps history)
+      // ONLY MARK AS PUBLISHED AFTER SUCCESSFUL PUBLISHING
       if (questDraftId && address) {
         try {
-          // Delete from Supabase
-          await questDraftService.deleteDraft(questDraftId, address);
+          // Mark as published in database
+          await questDraftService.markDraftAsPublished(questDraftId, address, atomId, atomTransactionHash);
         } catch (error) {
-          console.warn('Failed to delete draft from Supabase:', error);
-        }
-        
-        // Also remove from localStorage (fallback)
-        const draftKey = `quest_draft_${questDraftId}_${address.toLowerCase()}`;
-        localStorage.removeItem(draftKey);
-        
-        // Also remove from drafts list
-        const draftsListKey = `quest_drafts_${address.toLowerCase()}`;
-        const savedDrafts = localStorage.getItem(draftsListKey);
-        if (savedDrafts) {
-          try {
-            const draftsList: any[] = JSON.parse(savedDrafts);
-            const updatedDrafts = draftsList.filter(d => d.id !== questDraftId);
-            localStorage.setItem(draftsListKey, JSON.stringify(updatedDrafts));
-          } catch (error) {
-            console.error('Error removing draft from list:', error);
-          }
+          console.warn('Failed to mark draft as published:', error);
+          // Continue anyway - the quest is published on-chain
         }
       }
 
@@ -1647,7 +1617,23 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       onBack(); // Navigate back after publishing
     } catch (error: any) {
       console.error('Error publishing quest:', error);
-      showToast(error.message || 'Failed to publish quest. Please try again.', 'error');
+
+      // Provide more specific error messages
+      let errorMessage = 'Failed to publish quest. Please try again.';
+      if (error.message?.includes('atom') && error.message?.includes('already exists')) {
+        errorMessage = 'A quest with this title already exists. Please choose a different title.';
+      } else if (error.message?.includes('Insufficient balance')) {
+        errorMessage = 'Insufficient TRUST balance to create quest. You need at least 0.1 TRUST.';
+      } else if (error.message?.includes('Network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      showToast(errorMessage, 'error');
+
+      // Note: Draft is NOT deleted on failure, so user can retry
+      console.log('Quest draft preserved - user can retry publishing');
     } finally {
       setIsPublishing(false);
     }

@@ -392,8 +392,18 @@
 
 @media (max-width: 768px) {
   .community-container {
-    padding: clamp(1.25rem, 3vw, 1.75rem) clamp(0.75rem, 2vw, 1rem);
+    padding: clamp(1.25rem, 3vw, 1.75rem) 0;
     gap: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  /* Remove any padding from quest card wrapper on mobile */
+  .quest-card-wrapper {
+    padding: 0 !important;
+  }
+
+  /* Force remove padding from quest cards on mobile */
+  .community-quest-card {
+    padding: 0 !important;
   }
 
   .community-banner {

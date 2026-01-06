@@ -338,6 +338,10 @@
     margin-bottom: 32px;
   }
 
+  .join-highlight {
+    color: #000000 !important;
+  }
+
   .step-icon-wrapper {
     width: 100px;
     height: 100px;

@@ -442,7 +442,7 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
   min-width: 0;
   overflow: hidden;
 }
@@ -467,7 +467,7 @@
 }
 
 .quest-detail-task-text-exact {
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.4;
@@ -851,7 +851,7 @@
   }
 
   .quest-detail-tasks-container {
-    padding: 0 16px 80px;
+    padding: 0 0 80px !important;
     max-width: 100%;
     overflow-x: hidden;
   }
@@ -889,17 +889,15 @@
   }
 
   .quest-detail-task-item-exact {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 10px;
-    padding: 12px 14px;
+    padding: 12px 0;
     max-width: 100%;
     overflow-x: hidden;
   }
 
   .quest-detail-task-content {
-    flex: 1 1 100%;
-    min-width: 0;
-    overflow-x: hidden;
+    display: contents;
   }
 
   .quest-detail-claim-button-container {
@@ -910,6 +908,7 @@
 
   .quest-detail-task-platform-icon {
     flex-shrink: 0;
+    margin-right: 12px;
   }
 
   .quest-detail-task-play-icon {
@@ -983,7 +982,8 @@
   }
 
   .quest-detail-task-text-exact {
-    font-size: 13px;
+    font-size: 16px;
+    padding-top: 10px;
   }
 
   .quest-detail-title-section {
@@ -995,7 +995,7 @@
   }
 
   .quest-detail-tasks-container {
-    padding: 0 12px 60px;
+    padding: 0 0 60px !important;
   }
 
   .quest-detail-claim-button-container {
@@ -1046,7 +1046,8 @@
   }
 
   .quest-detail-task-text-exact {
-    font-size: 13px;
+    font-size: 16px;
+    padding-top: 10px;
   }
 
   .quest-detail-title-section {
@@ -1058,7 +1059,7 @@
   }
 
   .quest-detail-tasks-container {
-    padding: 0 12px 60px;
+    padding: 0 0 60px !important;
   }
 
   .quest-detail-claim-button-container {

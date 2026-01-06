@@ -1,0 +1,6 @@
+# Supabase Configuration (Frontend)
+VITE_SUPABASE_URL=https://cxelbkflhlrpboahxbkl.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_TQgrvIQsHEThWg18Ns4OKQ_Szsje89t
+
+
+

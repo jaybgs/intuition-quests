@@ -26,7 +26,7 @@ const TRUST_TOKEN_ABI = [
 export class BlockchainService {
   private publicClient;
   private walletClient;
-  private trustTokenAddress: `0x${string}`;
+  private trustTokenAddress: `0x${string}` = '0x0000000000000000000000000000000000000000';
 
   constructor() {
     // Initialize public client for reading

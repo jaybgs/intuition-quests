@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { completionService } from '../services/completionService';
 
 const router = Router();
 

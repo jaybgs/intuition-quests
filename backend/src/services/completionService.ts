@@ -71,6 +71,7 @@ export class CompletionService {
     try {
       const quest = await this.questService.getQuestById(questId);
       if (!quest) {
+        console.log(`Quest ${questId} not found, returning empty completions`);
         return [];
       }
 
@@ -82,6 +83,7 @@ export class CompletionService {
       }));
     } catch (error) {
       console.error('Error fetching quest completions:', error);
+      // Return empty array instead of throwing to prevent 500 errors
       return [];
     }
   }

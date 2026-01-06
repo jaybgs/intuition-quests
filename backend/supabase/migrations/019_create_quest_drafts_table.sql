@@ -39,4 +39,3 @@ BEGIN
     RAISE EXCEPTION 'Table quest_drafts was not created successfully';
   END IF;
 END $$;
-

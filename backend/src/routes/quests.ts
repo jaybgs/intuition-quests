@@ -70,6 +70,20 @@ const createQuestSchema = z.object({
   endTime: z.string().optional(),
 });
 
+// GET /api/quests/:questId/completions - Get completions for a specific quest
+router.get('/:questId/completions', async (req: Request, res: Response) => {
+  try {
+    const { questId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 100;
+
+    const completions = await completionService.getQuestCompletions(questId, limit);
+    res.json({ completions });
+  } catch (error: any) {
+    console.error('Error fetching quest completions:', error);
+    return res.status(500).json({ error: 'Failed to fetch quest completions' });
+  }
+});
+
 // GET /api/quests/completions/:walletAddress - Get completed quests for wallet
 router.get('/completions/:walletAddress', async (req: Request, res: Response) => {
   try {
@@ -87,6 +101,50 @@ router.get('/completions/:walletAddress', async (req: Request, res: Response) =>
     res.json({ completions: data || [] });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/quests - Get all published quests (with optional filters)
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const { status, projectId, spaceId, limit, offset } = req.query;
+
+    let query = supabase
+      .from('published_quests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (projectId) {
+      query = query.eq('project_id', projectId);
+    }
+
+    if (spaceId) {
+      query = query.eq('space_id', spaceId);
+    }
+
+    if (limit) {
+      query = query.limit(parseInt(limit as string));
+    }
+
+    if (offset) {
+      query = query.range(parseInt(offset as string), parseInt(offset as string) + (parseInt(limit as string) || 100) - 1);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching quests:', error);
+      return res.status(500).json({ error: 'Failed to fetch quests' });
+    }
+
+    res.json({ quests: data || [] });
+  } catch (error: any) {
+    console.error('Error in GET /api/quests:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch quests' });
   }
 });
 
@@ -114,8 +172,8 @@ router.post('/', authenticateWallet, async (req: Request, res: Response) => {
         xp_reward: validated.xpReward,
         requirements: validated.requirements,
         status: validated.status,
-        created_at: new Date(validated.createdAt).toISOString(),
-        start_at: new Date(validated.startAt).toISOString(),
+        created_at: validated.createdAt,
+        start_at: validated.startAt,
         start_date: validated.startDate || null,
         start_time: validated.startTime || null,
         creator_address: validated.creatorAddress,
@@ -130,7 +188,7 @@ router.post('/', authenticateWallet, async (req: Request, res: Response) => {
         winner_prizes: validated.winnerPrizes,
         reward_deposit: validated.rewardDeposit || null,
         reward_token: validated.rewardToken || null,
-        expires_at: validated.expiresAt ? new Date(validated.expiresAt).toISOString() : null,
+        expires_at: validated.expiresAt || null,
         end_date: validated.endDate || null,
         end_time: validated.endTime || null,
       })
@@ -213,6 +271,57 @@ router.get('/stats/:walletAddress', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/quests/reset-all - Reset all published quests (admin only)
+router.delete('/reset-all', async (req, res) => {
+  try {
+    console.log('🗑️ Admin request: Resetting all published quests...');
+
+    // Get count before deletion
+    const { count: questCount, error: countError } = await supabase
+      .from('published_quests')
+      .select('*', { count: 'exact', head: true });
+
+    if (countError) {
+      console.error('Error counting quests:', countError);
+      return res.status(500).json({ error: 'Failed to count quests' });
+    }
+
+    console.log(`📊 Found ${questCount} published quests to delete...`);
+
+    // Delete all quests
+    const { error: deleteError } = await supabase
+      .from('published_quests')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Matches all records
+
+    if (deleteError) {
+      console.error('Error deleting quests:', deleteError);
+      return res.status(500).json({ error: 'Failed to delete quests' });
+    }
+
+    console.log(`✅ Successfully deleted ${questCount} quests`);
+
+    // Verify deletion
+    const { count: verifyCount, error: verifyError } = await supabase
+      .from('published_quests')
+      .select('*', { count: 'exact', head: true });
+
+    if (verifyError) {
+      console.error('Error verifying deletion:', verifyError);
+    }
+
+    res.json({
+      success: true,
+      message: `Reset quest launch counts for all users. Deleted ${questCount} quests.`,
+      verification: `${verifyCount} quests remaining`
+    });
+
+  } catch (error: any) {
+    console.error('Error resetting quests:', error);
+    res.status(500).json({ error: error.message || 'Failed to reset quests' });
   }
 });
 

@@ -120,9 +120,9 @@
 .footer-coin-image {
   position: absolute;
   right: -20px;
-  top: -260px;
-  width: 240px;
-  height: 240px;
+  top: -560px;
+  width: 960px;
+  height: 960px;
   object-fit: contain;
   z-index: 1;
   opacity: 0.8;
@@ -131,7 +131,7 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .footer {
-    padding: 30px 0 20px 0;
+    padding: 15px 0 20px 0;
     margin-top: 40px;
   }
 
@@ -173,8 +173,8 @@
   }
 
   .footer-coin-image {
-    width: 80px;
-    height: 80px;
+    width: 320px;
+    height: 320px;
     right: 16px;
   }
 }
@@ -202,8 +202,8 @@
   }
 
   .footer-coin-image {
-    width: 64px;
-    height: 64px;
+    width: 256px;
+    height: 256px;
     right: 12px;
   }
 }

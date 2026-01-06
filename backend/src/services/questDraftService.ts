@@ -129,6 +129,24 @@ export class QuestDraftService {
     }));
   }
 
+  async markDraftAsPublished(draftId: string, userAddress: string, atomId?: string, atomTransactionHash?: string): Promise<void> {
+    const { error } = await supabase
+      .from('quest_drafts')
+      .update({
+        status: 'published',
+        published_at: new Date().toISOString(),
+        atom_id: atomId,
+        atom_transaction_hash: atomTransactionHash,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', draftId)
+      .eq('user_address', userAddress.toLowerCase());
+
+    if (error) {
+      throw new Error(`Failed to mark quest draft as published: ${error.message}`);
+    }
+  }
+
   async deleteDraft(draftId: string, userAddress: string): Promise<void> {
     const { error } = await supabase
       .from('quest_drafts')

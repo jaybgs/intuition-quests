@@ -93,5 +93,20 @@ router.delete('/:id', authenticateWallet, async (req: AuthRequest, res) => {
   }
 });
 
+// PUT /api/quest-drafts/:id/publish - mark draft as published
+router.put('/:id/publish', authenticateWallet, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { atomId, atomTransactionHash } = req.body;
+    await questDraftService.markDraftAsPublished(req.params.id, req.user.address, atomId, atomTransactionHash);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to mark quest draft as published' });
+  }
+});
+
 export default router;
 

@@ -1,3 +1,4 @@
+
 -- Setup Row Level Security (RLS) policies for quest_drafts table
 -- This ensures users can only access their own drafts
 
@@ -37,4 +38,3 @@ BEGIN
     RAISE EXCEPTION 'Table quest_drafts does not exist. Please run migration 019_create_quest_drafts_table.sql first.';
   END IF;
 END $$;
-

@@ -1450,14 +1450,19 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     }
 
     // Check authentication before publishing
+    console.log('🔐 Publish check - isAuthenticated:', isAuthenticated, 'address:', address);
     if (!isAuthenticated) {
+      console.log('🔐 User not authenticated, starting authentication...');
       showToast('Authenticating with your wallet...', 'info');
       const authSuccess = await authenticate();
+      console.log('🔐 Authentication result:', authSuccess);
       if (!authSuccess) {
         showToast('Authentication failed. Please try again.', 'error');
         return;
       }
       showToast('Authentication successful!', 'success');
+    } else {
+      console.log('🔐 User already authenticated, proceeding...');
     }
 
     setIsPublishing(true);

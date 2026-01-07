@@ -536,17 +536,6 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
                         <span className="space-token-status">{tokenInfo.status}</span>
                       )}
                     </div>
-                    {space.userType === 'project' && space.projectType && (
-                      <div className="space-project-type">
-                        {space.projectType === 'other' && space.projectTypeOther
-                          ? space.projectTypeOther
-                          : space.projectType === 'defi'
-                          ? 'DeFi'
-                          : space.projectType === 'infofi'
-                          ? 'InfoFi'
-                          : 'Undisclosed'}
-                      </div>
-                    )}
                   </div>
                 </div>
               );

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { spaceService } from '../services/spaceService';
 import { questServiceBackend } from '../services/questServiceBackend';
+import { isPCDevice } from '../utils/deviceDetection';
 import type { Space, Quest } from '../types';
 import './Search.css';
 
@@ -171,7 +172,7 @@ export function Search({
                           <div className="search-result-slug">@{space.slug}</div>
                         </div>
                       </div>
-                      {isAdmin && onBuilderAccess && (
+                      {isAdmin && onBuilderAccess && isPCDevice() && (
                         <button
                           className="search-result-admin-button"
                           onClick={(e) => {

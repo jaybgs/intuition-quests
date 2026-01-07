@@ -39,6 +39,7 @@ import { useSubscription } from './hooks/useSubscription';
 import { useAuth } from './hooks/useAuth';
 import { wagmiConfig } from './config/wagmi';
 import { getDiceBearAvatar } from './utils/avatar';
+import { isPCDevice } from './utils/deviceDetection';
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -971,9 +972,14 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     return () => window.removeEventListener('adminLoginAutoLogout', handleAdminLoginAutoLogout);
   }, [isConnected, disconnect]);
 
-  // Hidden admin login/logout via keyboard shortcut (Ctrl+Shift+A or Cmd+Shift+A on Mac)
+  // Hidden admin login/logout via keyboard shortcut (Ctrl+Shift+A or Cmd+Shift+A on Mac) - PC only
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Only allow admin access on PC devices
+      if (!isPCDevice()) {
+        return;
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
         e.preventDefault();
         if (isAdminAuthenticated) {
@@ -1258,7 +1264,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             </div>
           )}
 
-          {isAdminAuthenticated && (
+          {isAdminAuthenticated && isPCDevice() && (
             <button
               onClick={() => {
                 adminLogout();
@@ -1663,15 +1669,11 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             {activeTab === 'builder-dashboard' && (() => {
               console.log('🔧 Rendering BuilderDashboard with selectedSpaceId:', selectedSpaceId);
               return (
-              <BuilderDashboard 
+              <BuilderDashboard
                 spaceId={selectedSpaceId || ''}
                   onBack={() => {
                     console.log('🔧 BuilderDashboard onBack called, navigating to discover');
                     navigateToTab('discover');
-                  }}
-                  onAdminLogin={() => {
-                    console.log('🔧 BuilderDashboard onAdminLogin called, showing admin modal');
-                    setShowAdminLogin(true);
                   }}
               />
               );

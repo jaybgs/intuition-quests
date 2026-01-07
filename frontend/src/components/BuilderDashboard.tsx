@@ -15,10 +15,9 @@ import './BuilderDashboard.css';
 interface BuilderDashboardProps {
   spaceId: string;
   onBack?: () => void;
-  onAdminLogin?: () => void;
 }
 
-export function BuilderDashboard({ spaceId, onBack, onAdminLogin }: BuilderDashboardProps) {
+export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   console.log('🔧 BuilderDashboard mounted with spaceId:', spaceId);
   const { address } = useAccount();
   const { isAuthenticated: isAdminLoggedIn, isAdmin: hasAdminRole } = useAdmin();
@@ -144,13 +143,8 @@ export function BuilderDashboard({ spaceId, onBack, onAdminLogin }: BuilderDashb
               reason: 'Not owner and not admin'
             });
 
-            // Show admin login modal so they can log in as admin if they have credentials
-            if (onAdminLogin) {
-              console.log('🔑 Showing admin login modal');
-              onAdminLogin();
-              setIsAuthorized(false);
-              return;
-            }
+            // Admin access is only available via keyboard shortcut (Ctrl+Shift+A) on PC devices
+            console.log('🔒 Admin access denied - only available via Ctrl+Shift+A on PC devices');
 
             // Fallback: try to redirect to user's own space
             console.log('🔄 Trying to redirect to user\'s own space');
@@ -189,13 +183,8 @@ export function BuilderDashboard({ spaceId, onBack, onAdminLogin }: BuilderDashb
               reason: 'Not owner and not logged in as admin'
             });
 
-            // Show admin login modal so they can log in as admin if they have credentials
-            if (onAdminLogin) {
-              console.log('🔑 Showing admin login modal');
-              onAdminLogin();
-              setIsAuthorized(false);
-              return;
-            }
+            // Admin access is only available via keyboard shortcut (Ctrl+Shift+A) on PC devices
+            console.log('🔒 Admin access denied - only available via Ctrl+Shift+A on PC devices');
 
             // Fallback: try to redirect to user's own space
             spaceService.getSpacesByOwner(address).then(userSpaces => {

@@ -7,6 +7,7 @@ import { questServiceSupabase } from '../services/questServiceSupabase';
 import { DiscoverPageSkeleton, SpaceCardSkeleton, DAppCardSkeleton } from './Skeleton';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import { highlightsServiceSupabase } from '../services/highlightsServiceSupabase';
+import { isPCDevice } from '../utils/deviceDetection';
 import type { Space } from '../types';
 import type { Quest } from '../types';
 import './WeeklyHighlights.css';
@@ -567,7 +568,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         </div>
 
         {/* Admin Edit Button */}
-        {isAdmin && onEditHighlights && (
+        {isAdmin && onEditHighlights && isPCDevice && (
           <div className="highlights-admin-controls">
             <button
               className="highlights-edit-button"

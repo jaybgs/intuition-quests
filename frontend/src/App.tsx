@@ -1590,8 +1590,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                   navigateToTab(previousTab);
                 }}
                 onNavigateToProfile={() => {
-                  // Navigate to user profile if needed
-                  // Profile navigation can be implemented here
+                  // Navigate to user dashboard
+                  navigateToTab('dashboard');
                 }}
               />
               );

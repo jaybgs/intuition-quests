@@ -96,11 +96,13 @@ export function Spaces({ onSpaceClick, onCreateSpace }: SpacesProps) {
     return parseInt(localStorage.getItem(`space_followers_${spaceId}`) || '0');
   };
 
-  // Get token status for a space
+  // Get token status for a space from Supabase project_type column
   const getTokenStatus = (spaceId: string): { status: string; symbol?: string } => {
-    const status = localStorage.getItem(`space_token_status_${spaceId}`) || 'Undisclosed';
-    const symbol = localStorage.getItem(`space_token_symbol_${spaceId}`) || undefined;
-    return { status, symbol };
+    const space = spaces.find(s => s.id === spaceId);
+    const status = space?.projectType || 'undisclosed';
+    // Capitalize first letter for display
+    const displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
+    return { status: displayStatus, symbol: undefined };
   };
 
   // Filter and sort spaces
@@ -275,14 +277,6 @@ export function Spaces({ onSpaceClick, onCreateSpace }: SpacesProps) {
                     {tokenInfo.symbol ? (
                       <div className="space-token-with-symbol">
                         <span className="space-token-symbol">{tokenInfo.symbol}</span>
-                      </div>
-                    ) : tokenInfo.status === 'TGE Upcoming' ? (
-                      <div className="space-token-upcoming">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10"/>
-                          <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        TGE Upcoming
                       </div>
                     ) : (
                       <span className="space-token-status">{tokenInfo.status}</span>

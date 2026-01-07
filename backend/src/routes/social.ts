@@ -422,6 +422,38 @@ router.get('/connect/:provider', authenticateWallet, async (req: Request, res: R
   }
 });
 
+// DELETE /api/social/disconnect/:provider - Disconnect social account
+router.delete('/disconnect/:provider', authenticateWallet, async (req: Request, res: Response) => {
+  try {
+    const { provider } = req.params;
+    const walletAddress = req.walletAddress!;
+
+    if (!['twitter', 'discord', 'github', 'google'].includes(provider)) {
+      return res.status(400).json({ error: 'Unsupported OAuth provider' });
+    }
+
+    // Remove social connection from database
+    const { error } = await supabase
+      .from('wallet_socials')
+      .delete()
+      .eq('wallet_address', walletAddress)
+      .eq('provider', provider);
+
+    if (error) {
+      console.error('Database delete error:', error);
+      return res.status(500).json({ error: 'Failed to disconnect social account' });
+    }
+
+    res.json({
+      success: true,
+      message: `${provider} account disconnected successfully`
+    });
+  } catch (error: any) {
+    console.error('Social disconnect error:', error);
+    res.status(500).json({ error: error.message || 'Failed to disconnect social account' });
+  }
+});
+
 // POST /api/social/callback - Handle OAuth callback
 router.post('/callback', async (req: Request, res: Response) => {
   try {

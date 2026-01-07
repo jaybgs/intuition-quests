@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { useXP } from '../hooks/useXP';
+import { useSocialConnections } from '../hooks/useSocialConnections';
 import { useIntuition } from '../hooks/useIntuition';
 import { useIntuitionData, IntuitionAtom, IntuitionTriple } from '../hooks/useIntuitionData';
 import { LeaderboardService } from '../services/leaderboardService';
@@ -39,6 +40,7 @@ export function UserProfile() {
   const { totalXP, questsCompleted, claims } = useXP();
   const { claims: intuitionClaims } = useIntuition();
   const { getAtoms, getClaimsByCreator } = useIntuitionData();
+  const { connections, connectSocialAccount, disconnectSocialAccount, isLoading: socialLoading, error: socialError } = useSocialConnections();
 
   const [fetchedAtoms, setFetchedAtoms] = useState<IntuitionAtom[]>([]);
   const [fetchedTriples, setFetchedTriples] = useState<IntuitionTriple[]>([]);
@@ -147,36 +149,30 @@ export function UserProfile() {
   };
 
   // Social connections state
-  const connectedAccounts = {
-    twitter: null,
-    discord: null,
-    email: null,
-    github: null,
+  const handleConnectSocial = async (platform: 'twitter' | 'discord' | 'github' | 'google') => {
+    try {
+      // Use the social connections hook to connect
+      await connectSocialAccount(platform);
+    } catch (error: any) {
+      console.error(`Failed to connect ${platform}:`, error);
+      // Show error to user
+    }
   };
 
-  const handleConnectTwitter = () => {
-    // Implement Twitter connection via Privy
-    console.log('Connect Twitter');
-  };
-
-  const handleConnectDiscord = () => {
-    // Implement Discord connection via Privy
-    console.log('Connect Discord');
-  };
-
-  const handleConnectEmail = () => {
-    // Implement Email connection via Privy
-    console.log('Connect Email');
-  };
-
-  const handleConnectGithub = () => {
-    // Implement GitHub connection via Privy
-    console.log('Connect GitHub');
-  };
-
-  const handleDisconnectSocial = (platform: 'twitter' | 'discord' | 'email' | 'github') => {
-    // Implement disconnect logic
-    console.log(`Disconnect ${platform}`);
+  const handleDisconnectSocial = async (platform: 'twitter' | 'discord' | 'github' | 'google') => {
+    try {
+      const result = await disconnectSocialAccount(platform);
+      if (result.success) {
+        console.log(`Successfully disconnected ${platform}`);
+        // Optionally show success message
+      } else {
+        console.error(`Failed to disconnect ${platform}:`, result.error);
+        // Show error to user
+      }
+    } catch (error: any) {
+      console.error(`Error disconnecting ${platform}:`, error);
+      // Show error to user
+    }
   };
 
   const userProfileRef = useScrollAnimation();
@@ -354,20 +350,20 @@ export function UserProfile() {
                 </div>
                 <div className="social-details">
                   <span className="social-name">Twitter</span>
-                  {connectedAccounts.twitter ? (
+                  {connections.twitter ? (
                     <span className="social-status connected">
-                      Connected as @{connectedAccounts.twitter.username}
+                      Connected as @{connections.twitter.username}
                     </span>
                   ) : (
                     <span className="social-status disconnected">Not connected</span>
                   )}
                 </div>
               </div>
-              <button 
+              <button
                 className="connect-button"
-                onClick={connectedAccounts.twitter ? () => handleDisconnectSocial('twitter') : handleConnectTwitter}
+                onClick={connections.twitter ? () => handleDisconnectSocial('twitter') : () => handleConnectSocial('twitter')}
               >
-                {connectedAccounts.twitter ? 'Disconnect' : 'Connect'}
+                {connections.twitter ? 'Disconnect' : 'Connect'}
               </button>
             </div>
 
@@ -381,20 +377,20 @@ export function UserProfile() {
                 </div>
                 <div className="social-details">
                   <span className="social-name">Discord</span>
-                  {connectedAccounts.discord ? (
+                  {connections.discord ? (
                     <span className="social-status connected">
-                      Connected as {connectedAccounts.discord.username}
+                      Connected as {connections.discord.username}
                     </span>
                   ) : (
                     <span className="social-status disconnected">Not connected</span>
                   )}
                 </div>
               </div>
-              <button 
+              <button
                 className="connect-button"
-                onClick={connectedAccounts.discord ? () => handleDisconnectSocial('discord') : handleConnectDiscord}
+                onClick={connections.discord ? () => handleDisconnectSocial('discord') : () => handleConnectSocial('discord')}
               >
-                {connectedAccounts.discord ? 'Disconnect' : 'Connect'}
+                {connections.discord ? 'Disconnect' : 'Connect'}
               </button>
             </div>
 
@@ -436,20 +432,20 @@ export function UserProfile() {
                 </div>
                 <div className="social-details">
                   <span className="social-name">GitHub</span>
-                  {connectedAccounts.github ? (
+                  {connections.github ? (
                     <span className="social-status connected">
-                      Connected as @{connectedAccounts.github.username}
+                      Connected as @{connections.github.username}
                     </span>
                   ) : (
                     <span className="social-status disconnected">Not connected</span>
                   )}
                 </div>
               </div>
-              <button 
+              <button
                 className="connect-button"
-                onClick={connectedAccounts.github ? () => handleDisconnectSocial('github') : handleConnectGithub}
+                onClick={connections.github ? () => handleDisconnectSocial('github') : () => handleConnectSocial('github')}
               >
-                {connectedAccounts.github ? 'Disconnect' : 'Connect'}
+                {connections.github ? 'Disconnect' : 'Connect'}
               </button>
             </div>
           </div>

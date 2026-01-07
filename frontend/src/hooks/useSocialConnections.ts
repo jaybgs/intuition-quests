@@ -147,13 +147,19 @@ export function useSocialConnections() {
     if (!address) return { success: false, error: 'No wallet connected' };
 
     try {
-      // Call backend to disconnect (if implemented)
-      // For now, just remove from local state
+      // Call backend to disconnect social account
+      await apiClient.delete(`/social/disconnect/${provider}`);
+
+      // Update local state to reflect the disconnection
       setState(prev => ({
         ...prev,
-        connections: prev.connections.filter(c => c.provider !== provider)
+        connections: {
+          ...prev.connections,
+          [provider]: null
+        }
       }));
-        return { success: true };
+
+      return { success: true };
     } catch (error: any) {
       setState(prev => ({ ...prev, error: error.message }));
       return { success: false, error: error.message };

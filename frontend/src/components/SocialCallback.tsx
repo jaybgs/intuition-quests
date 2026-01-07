@@ -13,7 +13,10 @@ export function SocialCallback() {
   const [hasProcessed, setHasProcessed] = useState(false);
 
   useEffect(() => {
-    console.log('🔄 SocialCallback useEffect triggered, hasProcessed:', hasProcessed, 'globalProcessing:', globalOauthProcessing);
+    console.log('🔄 SocialCallback useEffect triggered');
+    console.log('   URL:', window.location.href);
+    console.log('   Search params:', searchParams.toString());
+    console.log('   hasProcessed:', hasProcessed, 'globalProcessing:', globalOauthProcessing);
 
     // Prevent duplicate processing (both local and global)
     if (hasProcessed || globalOauthProcessing) {
@@ -26,6 +29,9 @@ export function SocialCallback() {
 
     const handleCallback = async () => {
       console.log('🚀 Starting OAuth callback processing');
+      console.log('   Code present:', !!searchParams.get('code'));
+      console.log('   State present:', !!searchParams.get('state'));
+      console.log('   Error present:', !!searchParams.get('error'));
       setHasProcessed(true);
       try {
         const code = searchParams.get('code');
@@ -38,7 +44,7 @@ export function SocialCallback() {
           setTimeout(() => {
             console.log('Redirecting to dashboard after OAuth error');
             globalOauthProcessing = false; // Reset global flag
-            window.location.href = '/dashboard';
+            navigate('/dashboard', { replace: true });
           }, 2000);
           return;
         }
@@ -49,7 +55,7 @@ export function SocialCallback() {
           setTimeout(() => {
             console.log('Redirecting to dashboard after missing parameters error');
             globalOauthProcessing = false; // Reset global flag
-            window.location.href = '/dashboard';
+            navigate('/dashboard', { replace: true });
           }, 2000);
           return;
         }
@@ -72,11 +78,11 @@ export function SocialCallback() {
           setIsSuccess(true);
           setStatus(`Successfully connected ${response.data.provider}!`);
 
-          // Redirect back to dashboard after success (force full page reload)
+          // Redirect back to dashboard after success
           setTimeout(() => {
             console.log('Redirecting to dashboard after OAuth success');
             globalOauthProcessing = false; // Reset global flag
-            window.location.href = '/dashboard';
+            navigate('/dashboard', { replace: true });
           }, 1500);
         } else {
           console.log('Backend returned success=false, throwing error');
@@ -90,11 +96,11 @@ export function SocialCallback() {
         console.log('Setting status to:', `OAuth failed: ${errorMessage}`);
         setStatus(`OAuth failed: ${errorMessage}`);
 
-        // Show error and redirect back to dashboard (force full page reload)
+        // Show error and redirect back to dashboard
         setTimeout(() => {
           console.log('Redirecting to dashboard after OAuth error');
           globalOauthProcessing = false; // Reset global flag
-          window.location.href = '/dashboard';
+          navigate('/dashboard', { replace: true });
         }, 8000); // Increased to 8 seconds so user can see the error
       }
     };

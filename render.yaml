@@ -9,6 +9,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: FRONTEND_URL
+        value: https://intuition-quests-frontend.onrender.com
       - key: JWT_SECRET
         value: 149d925f6d94c2320267d36d5798ff5bbeaf0fda91578e72243d64e3864f750d4250d0069cefc9fb1eb5d32c86d654ec4908cd8498b4952bf717d7fc0cdb59d7
       - key: RPC_URL

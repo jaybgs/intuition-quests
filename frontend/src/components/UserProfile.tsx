@@ -8,6 +8,7 @@ import { LeaderboardService } from '../services/leaderboardService';
 import { QuestService } from '../services/questService';
 import { useQuery } from '@tanstack/react-query';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
+import { showToast } from './Toast';
 import './UserProfile.css';
 
 const leaderboardService = new LeaderboardService(new QuestService());
@@ -161,17 +162,18 @@ export function UserProfile() {
 
   const handleDisconnectSocial = async (platform: 'twitter' | 'discord' | 'github' | 'google') => {
     try {
+      console.log(`Attempting to disconnect ${platform}...`);
       const result = await disconnectSocialAccount(platform);
       if (result.success) {
         console.log(`Successfully disconnected ${platform}`);
-        // Optionally show success message
+        showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} account disconnected successfully`, 'success');
       } else {
         console.error(`Failed to disconnect ${platform}:`, result.error);
-        // Show error to user
+        showToast(`Failed to disconnect ${platform}: ${result.error}`, 'error');
       }
     } catch (error: any) {
       console.error(`Error disconnecting ${platform}:`, error);
-      // Show error to user
+      showToast(`Error disconnecting ${platform}: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -394,33 +396,6 @@ export function UserProfile() {
               </button>
             </div>
 
-            {/* Email */}
-            <div className="social-item">
-              <div className="social-info">
-                <div className="social-icon email-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                </div>
-                <div className="social-details">
-                  <span className="social-name">Gmail</span>
-                  {connectedAccounts.email ? (
-                    <span className="social-status connected">
-                      Connected as {connectedAccounts.email.address}
-                    </span>
-                  ) : (
-                    <span className="social-status disconnected">Not connected</span>
-                  )}
-                </div>
-              </div>
-              <button 
-                className="connect-button"
-                onClick={connectedAccounts.email ? () => handleDisconnectSocial('email') : handleConnectEmail}
-              >
-                {connectedAccounts.email ? 'Disconnect' : 'Connect'}
-              </button>
-            </div>
 
             {/* GitHub */}
             <div className="social-item">

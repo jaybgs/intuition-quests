@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChain } from 'wagmi';
+import { useAuth } from '../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
 import { useActiveQuestCount } from '../hooks/useActiveQuestCount';
 import { useQuests } from '../hooks/useQuests';
@@ -966,6 +967,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const { isFree, isPro } = useSubscription();
+  const { isAuthenticated, authenticate } = useAuth();
   const activeQuestCount = useActiveQuestCount(spaceId);
   const { createQuest, isCreating } = useQuests();
   const queryClient = useQueryClient();
@@ -1445,6 +1447,17 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     if (!address) {
       showToast('Please connect your wallet first', 'warning');
       return;
+    }
+
+    // Check authentication before publishing
+    if (!isAuthenticated) {
+      showToast('Authenticating with your wallet...', 'info');
+      const authSuccess = await authenticate();
+      if (!authSuccess) {
+        showToast('Authentication failed. Please try again.', 'error');
+        return;
+      }
+      showToast('Authentication successful!', 'success');
     }
 
     setIsPublishing(true);

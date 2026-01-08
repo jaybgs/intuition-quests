@@ -252,8 +252,18 @@ router.post('/verify', authenticateWallet, async (req: Request, res: Response) =
 
     // Decrypt access token
     console.log('🔐 Decrypting access token...');
-    const accessToken = decryptToken(connection.access_token);
-    console.log('✅ Token decrypted successfully');
+    let accessToken: string;
+    try {
+      accessToken = decryptToken(connection.access_token);
+      console.log('✅ Token decrypted successfully');
+    } catch (decryptError: any) {
+      console.error('❌ Token decryption failed:', decryptError.message);
+      return res.status(500).json({
+        success: false,
+        completed: false,
+        error: 'Failed to decrypt access token'
+      });
+    }
 
     let completed = false;
     let verificationError: string | null = null;

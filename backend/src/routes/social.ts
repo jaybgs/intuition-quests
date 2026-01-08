@@ -210,11 +210,14 @@ function decryptToken(encryptedText: string): string {
 // POST /api/social/verify - Verify social task completion
 router.post('/verify', authenticateWallet, async (req: Request, res: Response) => {
   try {
+    console.log('🔍 Social verification request:', JSON.stringify(req.body, null, 2));
     const validated = socialVerificationSchema.parse(req.body);
     const { provider, action, params } = validated;
     const walletAddress = req.walletAddress;
+    console.log('✅ Validation passed for:', { provider, action, params, walletAddress });
 
     // Get stored connection for this wallet and provider
+    console.log('🔍 Querying database for connection:', { walletAddress, provider });
     const { data: connection, error: fetchError } = await supabase
       .from('wallet_socials')
       .select('access_token, refresh_token, token_expires_at, provider_user_id, provider_username')
@@ -222,7 +225,10 @@ router.post('/verify', authenticateWallet, async (req: Request, res: Response) =
       .eq('provider', provider)
       .single();
 
+    console.log('📊 Database query result:', { hasConnection: !!connection, fetchError });
+
     if (fetchError || !connection) {
+      console.error('❌ No connection found:', { fetchError, walletAddress, provider });
       return res.status(404).json({
         success: false,
         completed: false,
@@ -231,6 +237,7 @@ router.post('/verify', authenticateWallet, async (req: Request, res: Response) =
     }
 
     if (!connection.access_token) {
+      console.error('❌ No access token available:', { provider, walletAddress });
       return res.status(400).json({
         success: false,
         completed: false,
@@ -239,15 +246,19 @@ router.post('/verify', authenticateWallet, async (req: Request, res: Response) =
     }
 
     // Decrypt access token
+    console.log('🔐 Decrypting access token...');
     const accessToken = decryptToken(connection.access_token);
+    console.log('✅ Token decrypted successfully');
 
     let completed = false;
     let verificationError: string | null = null;
 
     try {
+      console.log('🔍 Starting verification for:', { provider, action, params });
       // Perform verification based on provider and action
       switch (provider) {
         case 'twitter':
+          console.log('🐦 Twitter verification for action:', action);
           if (action === 'follow') {
             const targetUsername = params.username;
             if (!targetUsername) {

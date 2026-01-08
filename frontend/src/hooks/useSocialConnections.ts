@@ -159,7 +159,7 @@ export function useSocialConnections() {
         }
       }));
 
-      return { success: true };
+        return { success: true };
     } catch (error: any) {
       setState(prev => ({ ...prev, error: error.message }));
       return { success: false, error: error.message };
@@ -167,15 +167,17 @@ export function useSocialConnections() {
   };
 
   const hasConnectedProvider = (provider: string): boolean => {
-    return state.connections.some(c => c.provider === provider);
+    return state.connections[provider as keyof SocialConnections] !== null;
   };
 
   const getConnectedProviders = (): string[] => {
-    return state.connections.map(c => c.provider);
+    return Object.keys(state.connections).filter(provider =>
+      state.connections[provider as keyof SocialConnections] !== null
+    );
   };
 
-  const getConnectionForProvider = (provider: string): SocialConnection | null => {
-    return state.connections.find(c => c.provider === provider) || null;
+  const getConnectionForProvider = (provider: string): ConnectedAccount | null => {
+    return state.connections[provider as keyof SocialConnections] || null;
   };
 
   return {

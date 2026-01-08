@@ -457,19 +457,25 @@ router.delete('/disconnect/:provider', authenticateWallet, async (req: Request, 
 // POST /api/social/callback - Handle OAuth callback
 router.post('/callback', async (req: Request, res: Response) => {
   try {
+    console.log('🔄 OAuth Callback Received:');
+    console.log('   Body:', JSON.stringify(req.body, null, 2));
+
     const { code, state } = req.body;
 
     if (!code || !state) {
+      console.error('❌ Missing required parameters:', { code: !!code, state: !!state });
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
     // Verify state parameter
     const stateData = verifyState(state);
     if (!stateData) {
+      console.error('❌ Invalid state parameter');
       return res.status(400).json({ error: 'Invalid or expired state parameter' });
     }
 
     const { walletAddress, provider } = stateData;
+    console.log('✅ State verified for:', { walletAddress, provider });
 
     // Retrieve codeVerifier from global store (only for Twitter)
     let codeVerifier: string | undefined;
@@ -481,6 +487,7 @@ router.post('/callback', async (req: Request, res: Response) => {
 
       codeVerifier = global.pkceStore?.get(state);
       console.log('   Code verifier found:', !!codeVerifier);
+      console.log('   Code verifier value:', codeVerifier ? codeVerifier.substring(0, 20) + '...' : 'undefined');
 
       if (!codeVerifier) {
         console.error('❌ Missing PKCE code verifier for state:', state);
@@ -502,24 +509,60 @@ router.post('/callback', async (req: Request, res: Response) => {
     // Exchange code for access token (provider-specific)
     let fetchResponse: globalThis.Response;
 
+    console.log('🔄 Starting token exchange for provider:', provider);
+    console.log('   Client ID:', config.clientId ? '✅ Set' : '❌ Missing');
+    console.log('   Client Secret:', config.clientSecret ? '✅ Set' : '❌ Missing');
+    console.log('   Redirect URI:', config.redirectUri);
+
     if (provider === 'twitter') {
-      // Twitter uses PKCE with Basic Auth (confidential client)
-      console.log('🐦 Twitter OAuth: Using PKCE token exchange with Basic Auth');
-      const authString = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
-      fetchResponse = await fetch(config.tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${authString}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json'
-        },
-        body: new URLSearchParams({
+      // Twitter uses PKCE (Confidential Client) - REQUIRES Authorization header
+      console.log('🐦 Twitter OAuth: Using PKCE token exchange (Confidential Client - Basic Auth Required)');
+      console.log('   Code Verifier:', codeVerifier ? '✅ Available' : '❌ Missing');
+
+      const authHeader = Buffer.from(
+        `${config.clientId}:${config.clientSecret}`
+      ).toString('base64');
+
+      const body = new URLSearchParams({
           grant_type: 'authorization_code',
           code,
           redirect_uri: config.redirectUri,
-          ...(codeVerifier && { code_verifier: codeVerifier })
-        })
+        code_verifier: codeVerifier
       });
+
+      console.log('🐦 Twitter token request details:');
+      console.log('   URL:', config.tokenUrl);
+      console.log('   Method: POST');
+      console.log('   Headers:');
+      console.log('     Authorization: Basic', authHeader.substring(0, 20) + '...');
+      console.log('     Content-Type: application/x-www-form-urlencoded');
+      console.log('   Body params:');
+      console.log('     grant_type: authorization_code');
+      console.log('     code:', code.substring(0, 20) + '...');
+      console.log('     redirect_uri:', config.redirectUri);
+      console.log('     code_verifier:', codeVerifier ? codeVerifier.substring(0, 20) + '... (length: ' + codeVerifier.length + ')' : 'undefined');
+
+      // Also log the expected codeChallenge for debugging
+      if (codeVerifier) {
+        const expectedChallenge = crypto
+          .createHash('sha256')
+          .update(codeVerifier)
+          .digest('base64url');
+        console.log('     Expected code_challenge (for verification):', expectedChallenge);
+      }
+
+      // Use axios for the request as specified
+      const axios = (await import('axios')).default;
+      fetchResponse = await axios.post(
+        config.tokenUrl,
+        body.toString(),
+        {
+          headers: {
+            'Authorization': `Basic ${authHeader}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
     } else {
       // Other providers use Basic Auth
       console.log(`🔄 ${provider} OAuth: Using Basic Auth token exchange`);
@@ -539,13 +582,40 @@ router.post('/callback', async (req: Request, res: Response) => {
       });
     }
 
-    if (!fetchResponse.ok) {
-      const errorData = await fetchResponse.text();
-      console.error('Token exchange failed:', errorData);
+    // Handle response (axios vs fetch)
+    if (fetchResponse.status !== 200) {
+      console.error('❌ Token exchange failed for', provider, ':');
+      console.error('   Response status:', fetchResponse.status);
+      console.error('   Response status text:', fetchResponse.statusText);
+
+      // Handle error response differently for axios vs fetch
+      let errorData: any = null;
+      if (provider === 'twitter') {
+        // axios response
+        errorData = (fetchResponse as any).data;
+      } else {
+        // fetch response - try to get error text
+        try {
+          errorData = await (fetchResponse as Response).text();
+        } catch (e) {
+          errorData = 'Failed to read error response';
+        }
+      }
+
+      console.error('   Error data:', errorData);
+      console.error('   Request URL was:', config.tokenUrl);
       return res.status(400).json({ error: 'Failed to exchange authorization code' });
     }
 
-    const tokenData = await fetchResponse.json() as TokenData;
+    // Extract token data (axios vs fetch)
+    let tokenData: TokenData;
+    if (provider === 'twitter') {
+      // axios response
+      tokenData = (fetchResponse as any).data as TokenData;
+    } else {
+      // fetch response
+      tokenData = await (fetchResponse as Response).json() as TokenData;
+    }
 
     // Get user profile data
     let profileData: any = {};

@@ -280,6 +280,7 @@ router.post('/verify', authenticateWallet, async (req: Request, res: Response) =
               return res.status(400).json({ error: 'Missing target username for Twitter follow verification' });
             }
 
+            console.log('🐦 Checking if target user exists:', targetUsername);
             // Check if user follows the target
             const followResponse = await fetch(
               `https://api.twitter.com/2/users/by/username/${targetUsername}`,
@@ -288,11 +289,15 @@ router.post('/verify', authenticateWallet, async (req: Request, res: Response) =
               }
             );
 
+            console.log('🐦 Target user lookup response:', followResponse.status, followResponse.statusText);
+
             if (followResponse.ok) {
               const targetData = await followResponse.json() as TwitterResponse;
               const targetId = targetData.data?.id;
+              console.log('🐦 Target user found:', { username: targetUsername, id: targetId });
 
               if (targetId) {
+                console.log('🐦 Checking following relationship for user:', connection.provider_user_id);
                 // Check following relationship
                 const relationshipResponse = await fetch(
                   `https://api.twitter.com/2/users/${connection.provider_user_id}/following`,
@@ -301,11 +306,22 @@ router.post('/verify', authenticateWallet, async (req: Request, res: Response) =
                   }
                 );
 
+                console.log('🐦 Following relationship response:', relationshipResponse.status, relationshipResponse.statusText);
+
                 if (relationshipResponse.ok) {
                   const followingData = await relationshipResponse.json() as FollowingResponse;
                   completed = followingData.data?.some((user: TwitterUser) => user.id === targetId) || false;
+                  console.log('🐦 Verification result:', { targetUsername, targetId, userId: connection.provider_user_id, isFollowing: completed });
+                } else {
+                  console.error('🐦 Failed to get following relationship:', relationshipResponse.status, relationshipResponse.statusText);
                 }
+              } else {
+                console.log('🐦 Target user not found or no ID:', targetUsername);
               }
+            } else {
+              console.error('🐦 Failed to lookup target user:', followResponse.status, followResponse.statusText);
+              const errorText = await followResponse.text();
+              console.error('🐦 Twitter API error response:', errorText);
             }
           }
           break;

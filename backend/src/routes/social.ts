@@ -210,6 +210,11 @@ function decryptToken(encryptedText: string): string {
 // POST /api/social/verify - Verify social task completion
 router.post('/verify', authenticateWallet, async (req: Request, res: Response) => {
   try {
+    console.log('🔍 Raw request body:', req.body);
+    console.log('🔍 Request headers:', {
+      'content-type': req.headers['content-type'],
+      'content-length': req.headers['content-length']
+    });
     console.log('🔍 Social verification request:', JSON.stringify(req.body, null, 2));
     const validated = socialVerificationSchema.parse(req.body);
     const { provider, action, params } = validated;

@@ -756,6 +756,8 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     const title = step.title.toLowerCase();
     const description = step.description?.toLowerCase() || '';
 
+    console.log('🔍 Verifying task:', { title, description, step });
+
     // Determine provider and action from step
     let provider: 'twitter' | 'discord' | 'github' | 'google' | null = null;
     let action: string = '';
@@ -786,8 +788,11 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       action = 'connect'; // Basic connection verification
     }
 
+    console.log('🔍 Determined provider and action:', { provider, action, params });
+
     // If it's a social task, verify with backend
     if (provider && action) {
+      console.log('🚀 Making social verification request:', { provider, action, params });
       try {
         const response = await apiClient.post('/social/verify', {
           provider,

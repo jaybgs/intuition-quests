@@ -21,9 +21,19 @@ export class CompletionService {
       throw new Error('Quest not found');
     }
 
-    // Check if already completed
-    const completedBy = quest.completedBy || [];
-    if (completedBy.includes(userAddress.toLowerCase())) {
+    // Check if already completed in user_quests table
+    const { data: existing, error: checkError } = await supabase
+      .from('user_quests')
+      .select('quest_id')
+      .eq('wallet_address', userAddress.toLowerCase())
+      .eq('quest_id', questId)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+      throw new Error(`Error checking quest completion: ${checkError.message}`);
+    }
+
+    if (existing) {
       throw new Error('Quest already completed by this user');
     }
 
@@ -89,17 +99,23 @@ export class CompletionService {
 
   async getQuestCompletions(questId: string, limit = 100) {
     try {
-      const quest = await this.questService.getQuestById(questId);
-      if (!quest) {
-        console.log(`Quest ${questId} not found, returning empty completions`);
+      // Get completions from user_quests table
+      const { data: completions, error } = await supabase
+        .from('user_quests')
+        .select('wallet_address, completed_at')
+        .eq('quest_id', questId)
+        .order('completed_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('Error fetching quest completions:', error);
         return [];
       }
 
-      const completedBy = quest.completedBy || [];
-      return completedBy.slice(0, limit).map((address: string) => ({
-        userAddress: address,
+      return (completions || []).map((completion: any) => ({
+        userAddress: completion.wallet_address,
         questId,
-        completedAt: null, // We don't track individual completion times in this model
+        completedAt: completion.completed_at,
       }));
     } catch (error) {
       console.error('Error fetching quest completions:', error);

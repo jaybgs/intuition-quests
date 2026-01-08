@@ -150,17 +150,12 @@ export function useSocialConnections() {
       // Call backend to disconnect social account
       await apiClient.delete(`/social/disconnect/${provider}`);
 
-      // Update local state to reflect the disconnection
-      setState(prev => ({
-        ...prev,
-        connections: {
-          ...prev.connections,
-          [provider]: null
-        }
-      }));
+      // Reload connections from server to ensure UI is in sync
+      await loadConnections();
 
-        return { success: true };
+      return { success: true };
     } catch (error: any) {
+      console.error('Error disconnecting social account:', error);
       setState(prev => ({ ...prev, error: error.message }));
       return { success: false, error: error.message };
     }

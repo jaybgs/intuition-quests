@@ -261,6 +261,23 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   const handleConnectGithub = () => handleConnectSocial('github');
   const handleConnectGoogle = () => handleConnectSocial('google');
 
+  const handleDisconnectSocial = async (platform: 'twitter' | 'discord' | 'github' | 'google') => {
+    try {
+      console.log(`Attempting to disconnect ${platform}...`);
+      const result = await disconnectSocialAccount(platform);
+      if (result.success) {
+        console.log(`Successfully disconnected ${platform}`);
+        showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} account disconnected successfully`, 'success');
+      } else {
+        console.error(`Failed to disconnect ${platform}:`, result.error);
+        showToast(`Failed to disconnect ${platform}: ${result.error}`, 'error');
+      }
+    } catch (error: any) {
+      console.error(`Error disconnecting ${platform}:`, error);
+      showToast(`Error disconnecting ${platform}: ${error.message || 'Unknown error'}`, 'error');
+    }
+  };
+
   // Update connected wallets when address changes
   useEffect(() => {
     if (address) {

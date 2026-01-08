@@ -771,9 +771,22 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
 
     const title = step.title.toLowerCase();
     const description = step.description?.toLowerCase() || '';
-    const fullText = `${step.title} ${step.description || ''}`;
 
-    console.log('🔍 Verifying task:', { title, description, fullText, step });
+    // Search through all text fields that might contain links
+    const allTextFields = [
+      step.title || '',
+      step.description || '',
+      step.content || '',
+      step.instructions || '',
+      step.details || '',
+      step.text || '',
+      step.body || '',
+      step.link || '' // This is where Twitter/Discord URLs are stored!
+    ].filter(field => field.length > 0);
+
+    const fullText = allTextFields.join(' ').toLowerCase();
+
+    console.log('🔍 Verifying task:', { title, description, allTextFields, fullText, step });
 
     // Determine provider and action from step
     let provider: 'twitter' | 'discord' | 'github' | 'google' | null = null;
@@ -787,6 +800,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         // Extract Twitter username from embedded links in quest text
         const extractedUsername = extractTwitterUsername(fullText);
         params.username = extractedUsername || step.twitterUsername || step.targetUsername;
+        console.log('🐦 Twitter verification - searched text:', fullText);
         console.log('🐦 Twitter verification - extracted username:', extractedUsername, 'using:', params.username);
       }
     } else if (title.includes('discord')) {
@@ -796,6 +810,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         // Extract Discord server ID from embedded invite links in quest text
         const extractedServerId = extractDiscordServerId(fullText);
         params.serverId = extractedServerId || step.discordServerId || step.serverId;
+        console.log('🎮 Discord verification - searched text:', fullText);
         console.log('🎮 Discord verification - extracted server ID:', extractedServerId, 'using:', params.serverId);
       }
     } else if (title.includes('github')) {

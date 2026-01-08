@@ -317,23 +317,21 @@ router.post('/verify', authenticateWallet, async (req: Request, res: Response) =
 
                   // Check if it's a permissions issue (403)
                   if (relationshipResponse.status === 403) {
-                    console.log('🐦 403 Forbidden - likely missing follows.read scope permission');
-                    console.log('🐦 Falling back to basic Twitter connection verification');
-
-                    // As a fallback, since we know the user has a valid Twitter connection
-                    // and can access the API, we'll consider this a successful verification
-                    // This is not ideal but works when follows.read permission is not available
-                    completed = true; // Fallback: user has Twitter connected and can access API
-                    console.log('🐦 Fallback verification result: true (user has valid Twitter connection)');
+                    console.log('🐦 403 Forbidden - missing follows.read scope permission');
+                    verificationError = 'Twitter follow verification requires follows.read permission. Please re-connect your Twitter account with updated permissions.';
+                  } else {
+                    verificationError = `Failed to check following relationship: ${relationshipResponse.status} ${relationshipResponse.statusText}`;
                   }
                 }
-              } else {
-                console.log('🐦 Target user not found or no ID:', targetUsername);
-              }
+            } else {
+              console.log('🐦 Target user not found or no ID:', targetUsername);
+              verificationError = `Target Twitter user '${targetUsername}' not found or inaccessible`;
+            }
             } else {
               console.error('🐦 Failed to lookup target user:', followResponse.status, followResponse.statusText);
               const errorText = await followResponse.text();
               console.error('🐦 Twitter API error response:', errorText);
+              verificationError = `Failed to lookup Twitter user '${targetUsername}': ${followResponse.status} ${followResponse.statusText}`;
             }
           }
           break;

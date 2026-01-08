@@ -523,12 +523,17 @@ router.post('/callback', async (req: Request, res: Response) => {
         `${config.clientId}:${config.clientSecret}`
       ).toString('base64');
 
-      const body = new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: config.redirectUri,
-        code_verifier: codeVerifier
-      });
+      const params: Record<string, string> = {
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: config.redirectUri
+      };
+
+      if (codeVerifier) {
+        params.code_verifier = codeVerifier;
+      }
+
+      const body = new URLSearchParams(params);
 
       console.log('🐦 Twitter token request details:');
       console.log('   URL:', config.tokenUrl);
@@ -592,11 +597,13 @@ router.post('/callback', async (req: Request, res: Response) => {
       let errorData: any = null;
       if (provider === 'twitter') {
         // axios response
-        errorData = (fetchResponse as any).data;
+        const axiosResponse = fetchResponse as any;
+        errorData = axiosResponse.data;
       } else {
         // fetch response - try to get error text
         try {
-          errorData = await (fetchResponse as Response).text();
+          const fetchResponseTyped = fetchResponse as globalThis.Response;
+          errorData = await fetchResponseTyped.text();
         } catch (e) {
           errorData = 'Failed to read error response';
         }
@@ -611,10 +618,12 @@ router.post('/callback', async (req: Request, res: Response) => {
     let tokenData: TokenData;
     if (provider === 'twitter') {
       // axios response
-      tokenData = (fetchResponse as any).data as TokenData;
+      const axiosResponse = fetchResponse as any;
+      tokenData = axiosResponse.data as TokenData;
     } else {
       // fetch response
-      tokenData = await (fetchResponse as Response).json() as TokenData;
+      const fetchResponseTyped = fetchResponse as globalThis.Response;
+      tokenData = await fetchResponseTyped.json() as TokenData;
     }
 
     // Get user profile data

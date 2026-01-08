@@ -3,6 +3,7 @@ import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChai
 import { useQuests } from '../hooks/useQuests';
 import { useQueryClient } from '@tanstack/react-query';
 import { Quest } from '../types';
+import { apiClient } from '../services/apiClient';
 // Contract services disabled - contracts deleted
 // import { createQuestCompletionTriple } from '../services/questAtomService';
 import { intuitionChain } from '../config/wagmi';

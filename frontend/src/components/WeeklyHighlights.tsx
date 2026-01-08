@@ -570,7 +570,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         </div>
 
         {/* Admin Edit Button */}
-        {isAdmin && onEditHighlights && isPCDevice && (
+        {isAdmin && onEditHighlights && isPCDevice() && (
           <div className="highlights-admin-controls">
             <button
               className="highlights-edit-button"

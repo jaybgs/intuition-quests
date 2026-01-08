@@ -46,25 +46,45 @@ export class CompletionService {
   }
 
   async getUserCompletions(userAddress: string, limit = 50) {
-    // Get all quests and filter by those completed by user
-    const { data: quests, error } = await supabase
-      .from('published_quests')
-      .select('*')
-      .contains('completed_by', [userAddress.toLowerCase()])
-      .order('updated_at', { ascending: false })
+    // Get quest IDs completed by user from user_quests table
+    const { data: userQuests, error: userQuestsError } = await supabase
+      .from('user_quests')
+      .select('quest_id, completed_at')
+      .eq('wallet_address', userAddress.toLowerCase())
+      .order('completed_at', { ascending: false })
       .limit(limit);
 
-    if (error) {
-      console.error('Error fetching user completions:', error);
+    if (userQuestsError) {
+      console.error('Error fetching user quest completions:', userQuestsError);
       return [];
     }
 
-    return (quests || []).map((quest: any) => ({
-      questId: quest.id,
-      questTitle: quest.title,
-      xpEarned: quest.xp_reward,
-      completedAt: quest.updated_at,
-    }));
+    if (!userQuests || userQuests.length === 0) {
+      return [];
+    }
+
+    // Get the actual quest data for completed quests
+    const questIds = userQuests.map(uq => uq.quest_id);
+    const { data: quests, error: questsError } = await supabase
+      .from('published_quests')
+      .select('*')
+      .in('id', questIds);
+
+    if (questsError) {
+      console.error('Error fetching completed quests:', questsError);
+      return [];
+    }
+
+    // Map to the expected format with completion timestamps
+    return (quests || []).map((quest: any) => {
+      const userQuest = userQuests.find(uq => uq.quest_id === quest.id);
+      return {
+        questId: quest.id,
+        questTitle: quest.title,
+        xpEarned: quest.xp_reward,
+        completedAt: userQuest?.completed_at || quest.updated_at,
+      };
+    });
   }
 
   async getQuestCompletions(questId: string, limit = 100) {

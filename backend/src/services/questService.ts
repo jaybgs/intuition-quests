@@ -84,7 +84,6 @@ export class QuestService {
         estimated_time: input.estimatedTime || null,
         expires_at: input.expiresAt || null,
         requirements: input.requirements || [],
-        completed_by: [],
         image: input.image || null,
       })
       .select()
@@ -106,7 +105,6 @@ export class QuestService {
     if (updates.xpReward) updateData.xp_reward = updates.xpReward;
     if (updates.status) updateData.status = updates.status;
     if (updates.requirements) updateData.requirements = updates.requirements;
-    if (updates.completedBy) updateData.completed_by = updates.completedBy;
 
     const { data: quest, error } = await supabase
       .from('published_quests')
@@ -136,18 +134,18 @@ export class QuestService {
   }
 
   async getQuestCompletions(questId: string) {
-    const { data: quest, error } = await supabase
-      .from('published_quests')
-      .select('completed_by')
-      .eq('id', questId)
-      .single();
+    const { data: completions, error } = await supabase
+      .from('user_quests')
+      .select('wallet_address, completed_at')
+      .eq('quest_id', questId)
+      .order('completed_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching quest completions:', error);
       return [];
     }
 
-    return quest?.completed_by || [];
+    return completions?.map(c => c.wallet_address) || [];
   }
 
   async deleteQuestsBySpaceId(spaceId: string): Promise<boolean> {
@@ -170,34 +168,39 @@ export class QuestService {
   }
 
   async addQuestCompletion(questId: string, userAddress: string) {
-    // Get current completions
-    const { data: quest, error: fetchError } = await supabase
-      .from('published_quests')
-      .select('completed_by')
-      .eq('id', questId)
+    // Check if completion already exists
+    const { data: existing, error: checkError } = await supabase
+      .from('user_quests')
+      .select('quest_id')
+      .eq('wallet_address', userAddress.toLowerCase())
+      .eq('quest_id', questId)
       .single();
 
-    if (fetchError) {
-      console.error('Error fetching quest:', fetchError);
-      throw new Error(fetchError.message);
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error checking existing completion:', checkError);
+      throw new Error(checkError.message);
     }
 
-    const completedBy = quest?.completed_by || [];
-    if (!completedBy.includes(userAddress.toLowerCase())) {
-      completedBy.push(userAddress.toLowerCase());
-
-      const { error: updateError } = await supabase
-        .from('published_quests')
-        .update({ completed_by: completedBy })
-        .eq('id', questId);
-
-      if (updateError) {
-        console.error('Error updating completions:', updateError);
-        throw new Error(updateError.message);
-      }
+    if (existing) {
+      // Already completed
+      return [userAddress.toLowerCase()];
     }
 
-    return completedBy;
+    // Add new completion
+    const { error: insertError } = await supabase
+      .from('user_quests')
+      .insert({
+        wallet_address: userAddress.toLowerCase(),
+        quest_id: questId,
+        completed_at: new Date().toISOString()
+      });
+
+    if (insertError) {
+      console.error('Error adding quest completion:', insertError);
+      throw new Error(insertError.message);
+    }
+
+    return [userAddress.toLowerCase()];
   }
 
   private mapQuestFromDb(row: any) {
@@ -223,7 +226,6 @@ export class QuestService {
       estimatedTime: row.estimated_time,
       expiresAt: row.expires_at,
       requirements: row.requirements || [],
-      completedBy: row.completed_by || [],
       winnerPrizes: row.winner_prizes || [],
       image: row.image,
       createdAt: row.created_at,

@@ -749,14 +749,31 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   };
 
+  // Helper function to extract Discord server ID from invite links
+  const extractDiscordServerId = (text: string): string | null => {
+    // Match patterns like discord.gg/ABC123, discord.com/invite/ABC123
+    const discordRegex = /(?:discord\.(?:gg|com)\/(?:invite\/)?)([A-Za-z0-9]+)/i;
+    const match = text.match(discordRegex);
+    return match ? match[1] : null;
+  };
+
+  // Helper function to extract Twitter username from profile links
+  const extractTwitterUsername = (text: string): string | null => {
+    // Match patterns like twitter.com/username, x.com/username
+    const twitterRegex = /(?:twitter\.com|x\.com)\/([A-Za-z0-9_]+)/i;
+    const match = text.match(twitterRegex);
+    return match ? match[1] : null;
+  };
+
   // Verify task completion using social APIs
   const verifyTaskCompletion = async (step: any) => {
     if (!address) return { success: false, completed: false, error: 'No wallet connected' };
 
     const title = step.title.toLowerCase();
     const description = step.description?.toLowerCase() || '';
+    const fullText = `${step.title} ${step.description || ''}`;
 
-    console.log('🔍 Verifying task:', { title, description, step });
+    console.log('🔍 Verifying task:', { title, description, fullText, step });
 
     // Determine provider and action from step
     let provider: 'twitter' | 'discord' | 'github' | 'google' | null = null;
@@ -767,13 +784,19 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       provider = 'twitter';
       if (title.includes('follow') || description.includes('follow')) {
         action = 'follow';
-        params.username = step.twitterUsername || step.targetUsername || 'targetaccount';
+        // Extract Twitter username from embedded links in quest text
+        const extractedUsername = extractTwitterUsername(fullText);
+        params.username = extractedUsername || step.twitterUsername || step.targetUsername;
+        console.log('🐦 Twitter verification - extracted username:', extractedUsername, 'using:', params.username);
       }
     } else if (title.includes('discord')) {
       provider = 'discord';
       if (title.includes('join') || description.includes('join server')) {
         action = 'join_server';
-        params.serverId = step.discordServerId || step.serverId || '123456789';
+        // Extract Discord server ID from embedded invite links in quest text
+        const extractedServerId = extractDiscordServerId(fullText);
+        params.serverId = extractedServerId || step.discordServerId || step.serverId;
+        console.log('🎮 Discord verification - extracted server ID:', extractedServerId, 'using:', params.serverId);
       }
     } else if (title.includes('github')) {
       provider = 'github';

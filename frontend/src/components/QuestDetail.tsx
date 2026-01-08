@@ -831,12 +831,14 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     // If it's a social task, verify with backend
     if (provider && action) {
       console.log('🚀 Making social verification request:', { provider, action, params });
+      const requestBody = {
+        provider,
+        action,
+        params
+      };
+      console.log('📤 Request body being sent:', JSON.stringify(requestBody, null, 2));
       try {
-        const response = await apiClient.post('/social/verify', {
-          provider,
-          action,
-          params
-        });
+        const response = await apiClient.post('/social/verify', requestBody);
 
         return {
           success: response.data.success,

@@ -21,19 +21,9 @@ export class CompletionService {
       throw new Error('Quest not found');
     }
 
-    // Check if already completed in user_quests table
-    const { data: existing, error: checkError } = await supabase
-      .from('user_quests')
-      .select('quest_id')
-      .eq('wallet_address', userAddress.toLowerCase())
-      .eq('quest_id', questId)
-      .single();
-
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
-      throw new Error(`Error checking quest completion: ${checkError.message}`);
-    }
-
-    if (existing) {
+    // Check if already completed
+    const completedBy = quest.completedBy || [];
+    if (completedBy.includes(userAddress.toLowerCase())) {
       throw new Error('Quest already completed by this user');
     }
 
@@ -56,66 +46,40 @@ export class CompletionService {
   }
 
   async getUserCompletions(userAddress: string, limit = 50) {
-    // Get quest IDs completed by user from user_quests table
-    const { data: userQuests, error: userQuestsError } = await supabase
-      .from('user_quests')
-      .select('quest_id, completed_at')
-      .eq('wallet_address', userAddress.toLowerCase())
-      .order('completed_at', { ascending: false })
-      .limit(limit);
-
-    if (userQuestsError) {
-      console.error('Error fetching user quest completions:', userQuestsError);
-      return [];
-    }
-
-    if (!userQuests || userQuests.length === 0) {
-      return [];
-    }
-
-    // Get the actual quest data for completed quests
-    const questIds = userQuests.map(uq => uq.quest_id);
-    const { data: quests, error: questsError } = await supabase
+    // Get all quests and filter by those completed by user
+    const { data: quests, error } = await supabase
       .from('published_quests')
       .select('*')
-      .in('id', questIds);
+      .contains('completed_by', [userAddress.toLowerCase()])
+      .order('updated_at', { ascending: false })
+      .limit(limit);
 
-    if (questsError) {
-      console.error('Error fetching completed quests:', questsError);
+    if (error) {
+      console.error('Error fetching user completions:', error);
       return [];
     }
 
-    // Map to the expected format with completion timestamps
-    return (quests || []).map((quest: any) => {
-      const userQuest = userQuests.find(uq => uq.quest_id === quest.id);
-      return {
-        questId: quest.id,
-        questTitle: quest.title,
-        xpEarned: quest.xp_reward,
-        completedAt: userQuest?.completed_at || quest.updated_at,
-      };
-    });
+    return (quests || []).map((quest: any) => ({
+      questId: quest.id,
+      questTitle: quest.title,
+      xpEarned: quest.xp_reward,
+      completedAt: quest.updated_at,
+    }));
   }
 
   async getQuestCompletions(questId: string, limit = 100) {
     try {
-      // Get completions from user_quests table
-      const { data: completions, error } = await supabase
-        .from('user_quests')
-        .select('wallet_address, completed_at')
-        .eq('quest_id', questId)
-        .order('completed_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching quest completions:', error);
+      const quest = await this.questService.getQuestById(questId);
+      if (!quest) {
+        console.log(`Quest ${questId} not found, returning empty completions`);
         return [];
       }
 
-      return (completions || []).map((completion: any) => ({
-        userAddress: completion.wallet_address,
+      const completedBy = quest.completedBy || [];
+      return completedBy.slice(0, limit).map((address: string) => ({
+        userAddress: address,
         questId,
-        completedAt: completion.completed_at,
+        completedAt: null, // We don't track individual completion times in this model
       }));
     } catch (error) {
       console.error('Error fetching quest completions:', error);

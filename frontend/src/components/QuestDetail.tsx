@@ -3,13 +3,11 @@ import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChai
 import { useQuests } from '../hooks/useQuests';
 import { useQueryClient } from '@tanstack/react-query';
 import { Quest } from '../types';
-import { apiClient } from '../services/apiClient';
 // Contract services disabled - contracts deleted
 // import { createQuestCompletionTriple } from '../services/questAtomService';
 import { intuitionChain } from '../config/wagmi';
 import { showToast } from './Toast';
 import { saveQuestCompletion } from '../utils/raffle';
-import { useSocialConnections } from '../hooks/useSocialConnections';
 // Removed questClaimSurchargeService - claiming is now free
 // Removed CONTRACT_ADDRESSES and formatUnits - no longer needed for free claiming
 import { useSubscription } from '../hooks/useSubscription';
@@ -36,7 +34,6 @@ interface StepVerificationState {
 
 export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilder = false, onEdit }: QuestDetailProps) {
   const { address } = useAccount();
-  const { hasConnectedProvider } = useSocialConnections();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
   const chainId = useChainId();
@@ -749,44 +746,12 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   };
 
-  // Helper function to extract Discord server ID from invite links
-  const extractDiscordServerId = (text: string): string | null => {
-    // Match patterns like discord.gg/ABC123, discord.com/invite/ABC123
-    const discordRegex = /(?:discord\.(?:gg|com)\/(?:invite\/)?)([A-Za-z0-9]+)/i;
-    const match = text.match(discordRegex);
-    return match ? match[1] : null;
-  };
-
-  // Helper function to extract Twitter username from profile links
-  const extractTwitterUsername = (text: string): string | null => {
-    // Match patterns like twitter.com/username, x.com/username
-    const twitterRegex = /(?:twitter\.com|x\.com)\/([A-Za-z0-9_]+)/i;
-    const match = text.match(twitterRegex);
-    return match ? match[1] : null;
-  };
-
   // Verify task completion using social APIs
   const verifyTaskCompletion = async (step: any) => {
     if (!address) return { success: false, completed: false, error: 'No wallet connected' };
 
     const title = step.title.toLowerCase();
     const description = step.description?.toLowerCase() || '';
-
-    // Search through all text fields that might contain links
-    const allTextFields = [
-      step.title || '',
-      step.description || '',
-      step.content || '',
-      step.instructions || '',
-      step.details || '',
-      step.text || '',
-      step.body || '',
-      step.link || '' // This is where Twitter/Discord URLs are stored!
-    ].filter(field => field.length > 0);
-
-    const fullText = allTextFields.join(' ').toLowerCase();
-
-    console.log('🔍 Verifying task:', { title, description, allTextFields, fullText, step });
 
     // Determine provider and action from step
     let provider: 'twitter' | 'discord' | 'github' | 'google' | null = null;
@@ -797,21 +762,13 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       provider = 'twitter';
       if (title.includes('follow') || description.includes('follow')) {
         action = 'follow';
-        // Extract Twitter username from embedded links in quest text
-        const extractedUsername = extractTwitterUsername(fullText);
-        params.username = extractedUsername || step.twitterUsername || step.targetUsername;
-        console.log('🐦 Twitter verification - searched text:', fullText);
-        console.log('🐦 Twitter verification - extracted username:', extractedUsername, 'using:', params.username);
+        params.username = step.twitterUsername || step.targetUsername || 'targetaccount';
       }
     } else if (title.includes('discord')) {
       provider = 'discord';
       if (title.includes('join') || description.includes('join server')) {
         action = 'join_server';
-        // Extract Discord server ID from embedded invite links in quest text
-        const extractedServerId = extractDiscordServerId(fullText);
-        params.serverId = extractedServerId || step.discordServerId || step.serverId;
-        console.log('🎮 Discord verification - searched text:', fullText);
-        console.log('🎮 Discord verification - extracted server ID:', extractedServerId, 'using:', params.serverId);
+        params.serverId = step.discordServerId || step.serverId || '123456789';
       }
     } else if (title.includes('github')) {
       provider = 'github';
@@ -826,19 +783,14 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       action = 'connect'; // Basic connection verification
     }
 
-    console.log('🔍 Determined provider and action:', { provider, action, params });
-
     // If it's a social task, verify with backend
     if (provider && action) {
-      console.log('🚀 Making social verification request:', { provider, action, params });
-      const requestBody = {
-        provider,
-        action,
-        params
-      };
-      console.log('📤 Request body being sent:', JSON.stringify(requestBody, null, 2));
       try {
-        const response = await apiClient.post('/social/verify', requestBody);
+        const response = await apiClient.post('/social/verify', {
+          provider,
+          action,
+          params
+        });
 
         return {
           success: response.data.success,
@@ -859,36 +811,10 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     return { success: true, completed: true };
   };
 
-  // Check if social task is completed (connection exists)
+  // Check if social task is completed (social auth removed, so always false)
   const checkSocialTaskCompletion = async (step: any): Promise<boolean> => {
-    if (!address) return false;
-
-    const title = step.title.toLowerCase();
-    const description = step.description?.toLowerCase() || '';
-
-    try {
-      // Check if user has connected the required social provider
-    if (title.includes('twitter') || title.includes('x')) {
-      return hasConnectedProvider('twitter');
-      }
-
-      if (title.includes('discord')) {
-      return hasConnectedProvider('discord');
-      }
-
-      if (title.includes('github')) {
-      return hasConnectedProvider('github');
-      }
-
-      if (title.includes('google')) {
-      return hasConnectedProvider('google');
-    }
-
-      return true; // Other tasks don't require social verification
-    } catch (error) {
-      console.error('Error checking social task completion:', error);
-      return false;
-    }
+    // Social authentication has been removed, so social tasks cannot be completed
+    return false;
   };
 
   const handleRefresh = async (stepId: string) => {

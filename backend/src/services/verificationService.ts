@@ -10,20 +10,9 @@ export class VerificationService {
     verificationData: Record<string, any>,
     userData: {
       address: string;
-      twitterHandle?: string;
-      discordId?: string;
     }
   ): Promise<VerificationResult> {
     switch (type) {
-      case RequirementType.FOLLOW:
-        return this.verifyFollow(verificationData, userData);
-      
-      case RequirementType.RETWEET:
-        return this.verifyRetweet(verificationData, userData);
-      
-      case RequirementType.LIKE:
-        return this.verifyLike(verificationData, userData);
-      
       case RequirementType.VISIT:
         return this.verifyVisit(verificationData, userData);
       
@@ -51,83 +40,6 @@ export class VerificationService {
           error: `Verification type ${type} not implemented`,
         };
     }
-  }
-
-  /**
-   * Verify Twitter follow
-   */
-  private async verifyFollow(
-    verificationData: Record<string, any>,
-    userData: { twitterHandle?: string }
-  ): Promise<VerificationResult> {
-    const { accountToFollow } = verificationData;
-
-    if (!userData.twitterHandle) {
-      return { verified: false, error: 'Twitter account not connected' };
-    }
-
-    // TODO: Integrate with Twitter API to verify follow
-    // For now, return mock verification
-    // In production, use Twitter API v2 with OAuth 2.0
-    try {
-      // Example: Check if user follows the account
-      // const follows = await twitterAPI.checkFollow(userData.twitterHandle, accountToFollow);
-      // return { verified: follows, data: { accountToFollow } };
-      
-      return {
-        verified: true, // Mock - replace with actual API call
-        data: { accountToFollow, follower: userData.twitterHandle },
-      };
-    } catch (error: any) {
-      return { verified: false, error: error.message };
-    }
-  }
-
-  /**
-   * Verify Twitter retweet
-   */
-  private async verifyRetweet(
-    verificationData: Record<string, any>,
-    userData: { twitterHandle?: string }
-  ): Promise<VerificationResult> {
-    const { tweetId } = verificationData;
-
-    if (!userData.twitterHandle) {
-      return { verified: false, error: 'Twitter account not connected' };
-    }
-
-    // TODO: Integrate with Twitter API
-    try {
-      // const retweeted = await twitterAPI.checkRetweet(userData.twitterHandle, tweetId);
-      // return { verified: retweeted, data: { tweetId } };
-      
-      return {
-        verified: true, // Mock
-        data: { tweetId, user: userData.twitterHandle },
-      };
-    } catch (error: any) {
-      return { verified: false, error: error.message };
-    }
-  }
-
-  /**
-   * Verify Twitter like
-   */
-  private async verifyLike(
-    verificationData: Record<string, any>,
-    userData: { twitterHandle?: string }
-  ): Promise<VerificationResult> {
-    const { tweetId } = verificationData;
-
-    if (!userData.twitterHandle) {
-      return { verified: false, error: 'Twitter account not connected' };
-    }
-
-    // TODO: Integrate with Twitter API
-    return {
-      verified: true, // Mock
-      data: { tweetId, user: userData.twitterHandle },
-    };
   }
 
   /**

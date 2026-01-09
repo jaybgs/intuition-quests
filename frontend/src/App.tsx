@@ -1669,7 +1669,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             {activeTab === 'builder-dashboard' && (() => {
               console.log('🔧 Rendering BuilderDashboard with selectedSpaceId:', selectedSpaceId);
               return (
-              <BuilderDashboard 
+              <BuilderDashboard
                 spaceId={selectedSpaceId || ''}
                   onBack={() => {
                     console.log('🔧 BuilderDashboard onBack called, navigating to discover');

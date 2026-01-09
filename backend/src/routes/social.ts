@@ -22,6 +22,12 @@ const supabase = createClient(
 );
 
 // OAuth provider configurations
+console.log('🔧 Loading OAuth providers with env vars:', {
+  DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
+  FRONTEND_URL: process.env.FRONTEND_URL,
+  TWITTER_CLIENT_ID: process.env.TWITTER_CLIENT_ID
+});
+
 const OAUTH_PROVIDERS = {
   twitter: {
     clientId: process.env.TWITTER_CLIENT_ID!,

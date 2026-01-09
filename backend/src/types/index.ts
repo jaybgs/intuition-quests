@@ -20,6 +20,9 @@ export interface QuestRequirementInput {
 }
 
 export enum RequirementType {
+  FOLLOW = 'FOLLOW',
+  RETWEET = 'RETWEET',
+  LIKE = 'LIKE',
   COMMENT = 'COMMENT',
   MENTION = 'MENTION',
   VISIT = 'VISIT',

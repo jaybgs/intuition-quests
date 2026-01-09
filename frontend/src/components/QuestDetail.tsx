@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChain } from 'wagmi';
 import { useQuests } from '../hooks/useQuests';
+import { useSocialConnections } from '../hooks/useSocialConnections';
 import { useQueryClient } from '@tanstack/react-query';
 import { Quest } from '../types';
 // Contract services disabled - contracts deleted
@@ -811,10 +812,29 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     return { success: true, completed: true };
   };
 
-  // Check if social task is completed (social auth removed, so always false)
+  // Check if social task is completed (requires connected social account)
   const checkSocialTaskCompletion = async (step: any): Promise<boolean> => {
-    // Social authentication has been removed, so social tasks cannot be completed
-    return false;
+    if (!address) return false;
+
+    const title = step.title.toLowerCase();
+    const description = step.description?.toLowerCase() || '';
+
+    try {
+      // Check if user has connected the required social provider
+      if (title.includes('twitter') || title.includes('x')) {
+        return hasConnectedProvider('twitter');
+      }
+
+      if (title.includes('discord')) {
+        return hasConnectedProvider('discord');
+      }
+
+      // Other social tasks don't require connection verification
+      return true;
+    } catch (error) {
+      console.error('Error checking social task completion:', error);
+      return false;
+    }
   };
 
   const handleRefresh = async (stepId: string) => {

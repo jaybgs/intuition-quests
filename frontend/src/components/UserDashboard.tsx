@@ -6,7 +6,9 @@ import { apiClient } from '../services/apiClient';
 import { useUserXP } from '../hooks/useUserXP';
 import { useUserActivity } from '../hooks/useUserActivity';
 import { useIntuitionData, IntuitionAtom, IntuitionTriple } from '../hooks/useIntuitionData';
+import { useSocialConnections } from '../hooks/useSocialConnections';
 import { showToast } from './Toast';
+import './UserDashboard.css';
 import { truncateUsername } from '../utils/usernameUtils';
 import { getDiceBearAvatar } from '../utils/avatar';
 
@@ -94,7 +96,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   const { balance, isLoading: isBalanceLoading, contractNotFound, contractNotDeployed, isUsingNativeBalance } = useTrustBalance();
   const { userXP: userXPData, isLoading: isXPLoading } = useUserXP();
   const { getAtoms, getClaimsByCreator, getIdentityByAddress, getTriples, getStakedClaimsCount } = useIntuitionData();
-  // Social connections
+  const { connections, connectSocialAccount, disconnectSocialAccount, loadConnections, isLoading: socialLoading, isConnecting, error: socialError } = useSocialConnections();
 
   // Track connected wallets
   const [connectedWallets, setConnectedWallets] = useState<ConnectedWallet[]>(() => {
@@ -236,6 +238,33 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   const storedUsername = getStoredUsername(address);
   const username = truncateUsername(storedUsername);
 
+  // Social connections state
+  const handleConnectSocial = async (platform: 'twitter' | 'discord') => {
+    try {
+      // Use the social connections hook to connect
+      await connectSocialAccount(platform);
+    } catch (error: any) {
+      console.error(`Failed to connect ${platform}:`, error);
+      // Show error to user
+    }
+  };
+
+  const handleDisconnectSocial = async (platform: 'twitter' | 'discord') => {
+    try {
+      console.log(`Attempting to disconnect ${platform}...`);
+      const result = await disconnectSocialAccount(platform);
+      if (result.success) {
+        console.log(`Successfully disconnected ${platform}`);
+        showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} account disconnected successfully`, 'success');
+      } else {
+        console.error(`Failed to disconnect ${platform}:`, result.error);
+        showToast(`Failed to disconnect ${platform}: ${result.error}`, 'error');
+      }
+    } catch (error: any) {
+      console.error(`Error disconnecting ${platform}:`, error);
+      showToast(`Error disconnecting ${platform}: ${error.message || 'Unknown error'}`, 'error');
+    }
+  };
 
   // Update connected wallets when address changes
   useEffect(() => {
@@ -247,6 +276,13 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       setExpandedWallets(prev => new Set([...prev, address.toLowerCase()]));
     }
   }, [address]);
+
+  // Load social connections when address changes
+  useEffect(() => {
+    if (address) {
+      loadConnections();
+    }
+  }, [address, loadConnections]);
 
   // Fetch Intuition data for all connected wallets
   useEffect(() => {
@@ -478,6 +514,94 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
 
 
 
+
+        {/* Social Connections Section */}
+        <div className="section-no-bg">
+          <div className="section-header-with-tabs">
+            <h3 className="section-title">Social Connections</h3>
+          </div>
+          <div className="social-connections-grid">
+            {/* Twitter */}
+            <div className="social-connection-item">
+              <div className="social-connection-header">
+                <div className="social-connection-icon twitter">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </div>
+                <div className="social-connection-info">
+                  <h3 className="social-connection-name">Twitter</h3>
+                  {connections.twitter ? (
+                    <p className="social-connection-status connected">
+                      @{connections.twitter.username}
+                    </p>
+                  ) : (
+                    <p className="social-connection-status">Not connected</p>
+                  )}
+                </div>
+              </div>
+              <div className="social-connection-actions">
+                {connections.twitter ? (
+                  <button
+                    onClick={() => handleDisconnectSocial('twitter')}
+                    className="social-disconnect-button"
+                    disabled={socialLoading || isConnecting === 'twitter'}
+                  >
+                    Disconnect
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleConnectSocial('twitter')}
+                    className="social-connect-button twitter"
+                    disabled={socialLoading || isConnecting === 'twitter'}
+                  >
+                    {isConnecting === 'twitter' ? 'Connecting...' : 'Connect'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Discord */}
+            <div className="social-connection-item">
+              <div className="social-connection-header">
+                <div className="social-connection-icon discord">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.299 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.032-.0542c.5-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0189 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/>
+                  </svg>
+                </div>
+                <div className="social-connection-info">
+                  <h3 className="social-connection-name">Discord</h3>
+                  {connections.discord ? (
+                    <p className="social-connection-status connected">
+                      @{connections.discord.username}
+                    </p>
+                  ) : (
+                    <p className="social-connection-status">Not connected</p>
+                  )}
+                </div>
+              </div>
+              <div className="social-connection-actions">
+                {connections.discord ? (
+                  <button
+                    onClick={() => handleDisconnectSocial('discord')}
+                    className="social-disconnect-button"
+                    disabled={socialLoading || isConnecting === 'discord'}
+                  >
+                    Disconnect
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleConnectSocial('discord')}
+                    className="social-connect-button discord"
+                    disabled={socialLoading || isConnecting === 'discord'}
+                  >
+                    {isConnecting === 'discord' ? 'Connecting...' : 'Connect'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Intuition Chain Identity Section - Multi-Wallet Display */}
         <div className="section-no-bg">
@@ -760,6 +884,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
             )}
           </div>
         </div>
+
       </div>
     </div>
   );

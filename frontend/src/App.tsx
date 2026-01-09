@@ -79,7 +79,9 @@ if (typeof window !== 'undefined') {
       message.includes('Failed to set window.ethereum') ||
       message.includes('MetaMask encountered an error') ||
       message.includes('Receiving end does not exist') ||
-      message.includes('runtime.lastError')
+      message.includes('runtime.lastError') ||
+      message.includes('Cannot set property ethereum') ||
+      message.includes('which has only a getter')
     ) {
       return;
     }
@@ -1669,7 +1671,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             {activeTab === 'builder-dashboard' && (() => {
               console.log('🔧 Rendering BuilderDashboard with selectedSpaceId:', selectedSpaceId);
               return (
-              <BuilderDashboard
+              <BuilderDashboard 
                 spaceId={selectedSpaceId || ''}
                   onBack={() => {
                     console.log('🔧 BuilderDashboard onBack called, navigating to discover');

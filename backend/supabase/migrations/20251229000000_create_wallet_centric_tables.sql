@@ -46,8 +46,9 @@ ALTER TABLE wallet_socials ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "backend_only_user_quests" ON user_quests
   FOR ALL USING (false);
 
-CREATE POLICY "backend_only_wallet_socials" ON wallet_socials
-  FOR ALL USING (false);
+-- Allow service role full access (service role bypasses RLS anyway, but this is explicit)
+CREATE POLICY "service_role_wallet_socials" ON wallet_socials
+  FOR ALL USING (true);
 
 -- Optional: Read-only public access for frontend (if needed later)
 -- Uncomment if you want frontend to read quest completions

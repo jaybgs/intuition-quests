@@ -1,0 +1,139 @@
+/* Social Connections Styles for UserDashboard */
+
+.social-connections-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.social-connection-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: rgba(26, 31, 53, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.social-connection-item:hover {
+  background: rgba(26, 31, 53, 0.4);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.social-connection-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.social-connection-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.social-connection-icon.twitter {
+  background: linear-gradient(135deg, #1da1f2, #0d95e8);
+  color: white;
+}
+
+.social-connection-icon.discord {
+  background: linear-gradient(135deg, #5865f2, #4752c4);
+  color: white;
+}
+
+.social-connection-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.social-connection-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+  margin: 0;
+}
+
+.social-connection-status {
+  font-size: 14px;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.social-connection-status.connected {
+  color: #10b981;
+}
+
+.social-connection-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.social-connect-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.social-connect-button.twitter {
+  background: linear-gradient(135deg, #1da1f2, #0d95e8);
+  color: white;
+}
+
+.social-connect-button.twitter:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0d95e8, #0c85d0);
+  transform: translateY(-1px);
+}
+
+.social-connect-button.discord {
+  background: linear-gradient(135deg, #5865f2, #4752c4);
+  color: white;
+}
+
+.social-connect-button.discord:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4752c4, #3c45b0);
+  transform: translateY(-1px);
+}
+
+.social-connect-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.social-disconnect-button {
+  padding: 10px 20px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.social-disconnect-button:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.social-disconnect-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -321,12 +321,14 @@ router.post('/callback', async (req: Request, res: Response) => {
     }
 
     console.log('👤 Retrieved user data:', { userId, username });
+    console.log('🏦 Wallet address from JWT state:', walletAddress);
+    console.log('💾 Attempting to save to database:', { walletAddress, provider, userId, username });
 
-    // Store in database
+    // Store in database (normalize wallet address to lowercase)
     const { data, error } = await supabase
       .from('wallet_socials')
       .upsert({
-        wallet_address: walletAddress,
+        wallet_address: walletAddress.toLowerCase(),
         provider: provider,
         provider_user_id: userId,
         provider_username: username,
@@ -340,11 +342,12 @@ router.post('/callback', async (req: Request, res: Response) => {
       });
 
     if (error) {
-      console.error('Database upsert error:', error);
+      console.error('❌ Database upsert error:', error);
+      console.error('❌ Error details:', JSON.stringify(error, null, 2));
       return res.status(500).json({ error: 'Failed to store social connection' });
     }
 
-    console.log('💾 Social connection stored successfully');
+    console.log('✅ Social connection stored successfully:', data);
 
     res.json({
       success: true,
@@ -393,11 +396,12 @@ router.delete('/disconnect/:provider', async (req: Request, res: Response) => {
 router.get('/connections/:walletAddress', async (req: Request, res: Response) => {
   try {
     const { walletAddress } = req.params;
+    console.log('🔍 Frontend requesting connections for wallet:', walletAddress);
 
     const { data, error } = await supabase
       .from('wallet_socials')
       .select('provider, provider_username, provider_data, verified_at')
-      .eq('wallet_address', walletAddress);
+      .ilike('wallet_address', walletAddress.toLowerCase());
 
     if (error) {
       console.error('Database query error:', error);

@@ -24,7 +24,11 @@ export function SocialCallback() {
         if (global.oauthProcessing) {
           console.log('❌ OAuth callback already processed (global), skipping');
           setStatus('OAuth already processed. Redirecting...');
-          setTimeout(() => navigate('/dashboard'), 2000);
+          // Reset flag after redirect to allow future OAuth attempts
+          setTimeout(() => {
+            global.oauthProcessing = false;
+            navigate('/dashboard');
+          }, 2000);
           return;
         }
 
@@ -113,6 +117,11 @@ export function SocialCallback() {
     };
 
     handleCallback();
+
+    // Cleanup: Reset processing flag when component unmounts
+    return () => {
+      global.oauthProcessing = false;
+    };
   }, [searchParams, navigate]);
 
   return (

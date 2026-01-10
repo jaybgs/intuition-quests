@@ -40,11 +40,19 @@ export function useSocialConnections() {
   const loadConnections = useCallback(async () => {
     if (!address) return;
 
+    console.log('🔍 Frontend loadConnections - using wallet address:', address);
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
+      console.log('📡 Fetching connections from:', `/social/connections/${address}`);
       const response = await apiClient.get(`/social/connections/${address}`);
       const { connections } = response.data;
+
+      console.log('📊 Raw connections response:', connections);
+      console.log('📊 Processed connections:', {
+        twitter: connections.twitter || null,
+        discord: connections.discord || null
+      });
 
       setState(prev => ({
         ...prev,
@@ -55,7 +63,8 @@ export function useSocialConnections() {
         isLoading: false
       }));
     } catch (error: any) {
-      console.error('Failed to load social connections:', error);
+      console.error('❌ Failed to load social connections:', error);
+      console.error('❌ Error details:', error.response?.data || error.message);
       setState(prev => ({
         ...prev,
         connections: {
@@ -136,10 +145,14 @@ export function useSocialConnections() {
       throw new Error('Wallet not connected');
     }
 
+    console.log('🔗 Frontend connectSocialAccount - using wallet address:', address);
+    console.log('🔗 Connecting to provider:', provider);
+
     setState(prev => ({ ...prev, isConnecting: provider }));
 
     try {
       // Get OAuth URL from backend
+      console.log('📡 Requesting OAuth URL from:', `/social/connect/${provider}?walletAddress=${address}`);
       const response = await apiClient.get(`/social/connect/${provider}?walletAddress=${address}`);
 
       if (response.data.authUrl) {

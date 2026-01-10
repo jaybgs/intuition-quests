@@ -1,7 +1,7 @@
 import { RequirementType, VerificationResult } from '../types/index.js';
 import axios from 'axios';
 import crypto from 'crypto';
-import { supabase } from '../supabase.js';
+import { supabase } from '../config/supabase.js';
 
 export class VerificationService {
   /**
@@ -259,7 +259,7 @@ export class VerificationService {
         return { verified: false, error: 'Could not find target Twitter account' };
       }
 
-      const targetData = await targetResponse.json();
+      const targetData: any = await targetResponse.json();
       const targetId = targetData.data?.id;
 
       if (!targetId) {
@@ -278,7 +278,7 @@ export class VerificationService {
         return { verified: false, error: 'Could not check follow relationship' };
       }
 
-      const followingData = await followResponse.json();
+      const followingData: any = await followResponse.json();
       const isFollowing = followingData.data?.some((user: any) => user.id === targetId) || false;
 
       return {
@@ -357,7 +357,7 @@ export class VerificationService {
       // Get stored Twitter connection
       const { data: connection, error } = await supabase
         .from('wallet_socials')
-        .select('access_token')
+        .select('access_token, provider_user_id')
         .eq('wallet_address', userData.address.toLowerCase())
         .eq('provider', 'twitter')
         .single();
@@ -380,7 +380,7 @@ export class VerificationService {
         return { verified: false, error: 'Could not check like status' };
       }
 
-      const likedData = await likeResponse.json();
+      const likedData: any = await likeResponse.json();
       const hasLiked = likedData.data?.some((tweet: any) => tweet.id === tweetId) || false;
 
       return {

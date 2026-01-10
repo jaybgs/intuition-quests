@@ -4,6 +4,9 @@ import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase.js';
 
+// Type for fetch Response
+type FetchResponse = globalThis.Response;
+
 const router = express.Router();
 
 // OAuth provider configurations
@@ -213,7 +216,7 @@ router.post('/callback', async (req: Request, res: Response) => {
     console.log('   Client Secret:', config.clientSecret ? '✅ Set' : '❌ Missing');
     console.log('   Redirect URI:', config.redirectUri);
 
-    let tokenResponse: Response;
+    let tokenResponse: FetchResponse;
 
     if (provider === 'twitter') {
       // Twitter OAuth 2.0 v2 with PKCE and Basic Auth
@@ -268,7 +271,7 @@ router.post('/callback', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Failed to exchange authorization code' });
     }
 
-    const tokenData = await tokenResponse.json();
+    const tokenData: any = await tokenResponse.json();
     console.log('✅ Token exchange successful for', provider);
 
     // Get user profile data based on provider
@@ -287,7 +290,7 @@ router.post('/callback', async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to get user information' });
       }
 
-      const userData = await userResponse.json();
+      const userData: any = await userResponse.json();
       userId = userData.data.id;
       username = userData.data.username;
       profileData = {
@@ -307,7 +310,7 @@ router.post('/callback', async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to get user information' });
       }
 
-      const userData = await userResponse.json();
+      const userData: any = await userResponse.json();
       userId = userData.id;
       username = userData.username;
       profileData = {

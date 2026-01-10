@@ -5,7 +5,33 @@
 
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import { authenticateWallet, AuthRequest } from '../middleware/auth.js';
+
+// Define AuthRequest interface locally
+interface AuthRequest extends Request {
+  walletAddress?: string;
+}
+
+// Import authenticateWallet from quests.ts since it adds req.walletAddress
+const authenticateWallet = (req: AuthRequest, res: Response, next: any) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET!) as any;
+
+    if (!decoded.wallet) {
+      return res.status(401).json({ error: 'Invalid token: no wallet address' });
+    }
+
+    req.walletAddress = decoded.wallet.toLowerCase();
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
 import { proSubscriptionService } from '../services/proSubscriptionService.js';
 
 const router = Router();
@@ -30,7 +56,7 @@ router.post('/pro-payment', authenticateWallet, [
       });
     }
 
-    const authenticatedWallet = req.user?.address!;
+    const authenticatedWallet = req.walletAddress!;
     const { txHash, amount, timestamp } = req.body;
 
     console.log('💰 Processing pro payment for:', authenticatedWallet, 'TX:', txHash);
@@ -84,7 +110,7 @@ router.post('/pro-payment', authenticateWallet, [
  */
 router.get('/status', authenticateWallet, async (req: AuthRequest, res: Response) => {
   try {
-    const walletAddress = req.user?.address!;
+    const walletAddress = req.walletAddress!;
 
     console.log('🔍 Checking pro status for:', walletAddress);
 

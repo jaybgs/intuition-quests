@@ -1,5 +1,16 @@
 // Shared types for backend
 
+import { Request } from 'express';
+
+// Extend Express Request interface to include walletAddress
+declare global {
+  namespace Express {
+    interface Request {
+      walletAddress?: string;
+    }
+  }
+}
+
 export interface QuestCreateInput {
   title: string;
   description: string;

@@ -362,7 +362,7 @@ export function UserProfile() {
                   )}
                 </div>
               </div>
-              <button
+              <button 
                 className="connect-button"
                 onClick={connections.twitter ? () => handleDisconnectSocial('twitter') : () => handleConnectSocial('twitter')}
               >
@@ -389,7 +389,7 @@ export function UserProfile() {
                   )}
                 </div>
               </div>
-              <button
+              <button 
                 className="connect-button"
                 onClick={connections.discord ? () => handleDisconnectSocial('discord') : () => handleConnectSocial('discord')}
               >

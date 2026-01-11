@@ -3,9 +3,10 @@ import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChai
 import { useQuests } from '../hooks/useQuests';
 import { useSocialConnections } from '../hooks/useSocialConnections';
 import { useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../services/apiClient';
 import { Quest } from '../types';
-// Contract services disabled - contracts deleted
-// import { createQuestCompletionTriple } from '../services/questAtomService';
+// ClaimIQ contract service for 1 TRUST fee and IQ awarding
+// import { claimQuestViaContract, checkClaimStatus } from '../services/claimIQContractService';
 import { intuitionChain } from '../config/wagmi';
 import { showToast } from './Toast';
 import { saveQuestCompletion } from '../utils/raffle';
@@ -42,6 +43,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   const { quests, completeQuest, isCompleting } = useQuests();
   const queryClient = useQueryClient();
   const { isPro } = useSubscription();
+  const { hasConnectedProvider } = useSocialConnections();
   const [quest, setQuest] = useState<Quest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
@@ -763,7 +765,41 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       provider = 'twitter';
       if (title.includes('follow') || description.includes('follow')) {
         action = 'follow';
-        params.username = step.twitterUsername || step.targetUsername || 'targetaccount';
+
+        // Extract Twitter username from task configuration
+        let twitterUsername = '';
+
+        // Priority 1: Extract from step.accountUrl
+        if (step.accountUrl) {
+          // Extract from URL like https://twitter.com/username or https://x.com/username
+          const urlMatch = step.accountUrl.match(/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
+          if (urlMatch) {
+            twitterUsername = urlMatch[1];
+          } else if (step.accountUrl.startsWith('@')) {
+            // Handle @username format
+            twitterUsername = step.accountUrl.substring(1);
+          } else if (!step.accountUrl.includes('/') && !step.accountUrl.includes('.')) {
+            // Plain username
+            twitterUsername = step.accountUrl;
+          }
+        }
+
+        // Priority 2: Extract from step.link (fallback)
+        if (!twitterUsername && step.link) {
+          const urlMatch = step.link.match(/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
+          if (urlMatch) {
+            twitterUsername = urlMatch[1];
+          }
+        }
+
+        // Priority 3: Fallback to other sources
+        if (!twitterUsername) {
+          twitterUsername = step.twitterUsername || step.targetUsername ||
+                           (quest?.title?.toLowerCase().includes('follow us on social media') ? 'IntuitionSystems' : 'targetaccount');
+        }
+
+        params.targetUsername = twitterUsername;
+        console.log('🔍 Extracted Twitter username:', twitterUsername, 'from step data:', step);
       }
     } else if (title.includes('discord')) {
       provider = 'discord';
@@ -821,12 +857,12 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
 
     try {
       // Check if user has connected the required social provider
-      if (title.includes('twitter') || title.includes('x')) {
-        return hasConnectedProvider('twitter');
+    if (title.includes('twitter') || title.includes('x')) {
+      return hasConnectedProvider('twitter');
       }
 
       if (title.includes('discord')) {
-        return hasConnectedProvider('discord');
+      return hasConnectedProvider('discord');
       }
 
       // Other social tasks don't require connection verification
@@ -1020,53 +1056,21 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       return;
     }
 
-    // Claim quest (no fee required - claiming is now free)
+    // Complete quest and award IQ points
     try {
-      showToast('Claiming quest...', 'info');
-      
-      // Step 1: Create triple [User][completed][Quest Atom] if quest has atomId
-      let tripleId: string | undefined;
-      let tripleTransactionHash: string | undefined;
-      
-      // Contract functionality disabled - contracts deleted
-      if (quest.atomId) {
-        try {
-          // const tripleResult = await createQuestCompletionTriple(
-          //   address as `0x${string}`,
-          //   quest.atomId as `0x${string}`,
-          //   walletClient,
-          //   publicClient
-          // );
-          // tripleId = tripleResult.tripleId;
-          // tripleTransactionHash = tripleResult.transactionHash;
-          tripleId = undefined; // Disabled
-          tripleTransactionHash = undefined; // Disabled
-          
-          // Register participant for raffle/FCFS with their connected wallet address
-          // This happens even without on-chain transaction now
-          if (address) {
-            saveQuestCompletion(quest.id, address);
-            console.log('✅ Participant registered for quest:', quest.id, 'Address:', address);
-          }
-        } catch (tripleError: any) {
-          console.warn('On-chain completion disabled - contracts deleted:', tripleError);
-          // Still register participant even if on-chain fails
-          if (address) {
-            saveQuestCompletion(quest.id, address);
-          }
-        }
-      } else {
-        // Even if quest doesn't have atomId, register participant when they complete
-        // This ensures they're registered for raffle/FCFS
-        if (address) {
-          saveQuestCompletion(quest.id, address);
-          console.log('✅ Participant registered for quest (no atomId):', quest.id, 'Address:', address);
-        }
-      }
-      
-      // Step 2: Complete the quest - this will trigger onSuccess in useQuests which invalidates and refetches user XP
-      showToast('Claiming IQ...', 'info');
+      showToast('Completing quest...', 'info');
+
+      // Step 1: Complete the quest (save to database, award IQ points)
       await completeQuest(quest.id);
+
+      // Step 2: Only after successful completion, register for raffle
+      if (address) {
+        saveQuestCompletion(quest.id, address);
+        console.log('✅ Quest completed and participant registered:', quest.id, 'Address:', address);
+      }
+
+      // Step 3: Show success message
+      showToast('Successfully completed quest and claimed IQ!', 'success');
       
       // Step 3: Store completion triple data if created
       if (tripleId && tripleTransactionHash) {

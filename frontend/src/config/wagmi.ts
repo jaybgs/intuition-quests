@@ -38,8 +38,7 @@ export const multiVaultAddress = getMultiVaultAddressFromChainId(intuitionChain.
 // Get WalletConnect Project ID from environment
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
 
-// Create connectors - use only injected() to avoid conflicts with multiple wallet extensions
-// injected() automatically detects and uses whatever wallet is available
+// Create connectors with better wallet compatibility
 const connectors: any[] = [
   injected({
     shimDisconnect: true, // Properly handle disconnect state
@@ -65,17 +64,18 @@ export const wagmiConfig = createConfig({
   ssr: false, // Disable SSR to prevent hydration issues
   syncConnectedChain: true, // Sync connected chain state
   multiInjectedProviderDiscovery: true, // Better handling of multiple wallet extensions
+  batch: {
+    multicall: true, // Enable multicall for better performance
+  },
 });
 
-// Create Web3Modal only if projectId is provided
-if (projectId) {
-  createWeb3Modal({
-    wagmiConfig,
-    projectId,
-    chains: [intuitionChain],
-    themeMode: 'dark',
-    themeVariables: {
-      '--w3m-accent': '#3b82f6',
-    },
-  });
-}
+// Create and export Web3Modal instance
+export const web3Modal = projectId ? createWeb3Modal({
+  wagmiConfig,
+  projectId,
+  chains: [intuitionChain],
+  themeMode: 'dark',
+  themeVariables: {
+    '--w3m-accent': '#3b82f6',
+  },
+}) : null;

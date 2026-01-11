@@ -6,8 +6,19 @@ CREATE TABLE IF NOT EXISTS user_quests (
   wallet_address TEXT NOT NULL,
   quest_id TEXT NOT NULL,
   completed_at TIMESTAMPTZ DEFAULT NOW(),
+  iq_earned INTEGER DEFAULT 20,
   PRIMARY KEY (wallet_address, quest_id)
 );
+
+-- Add iq_earned column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'user_quests'
+                   AND column_name = 'iq_earned') THEN
+        ALTER TABLE user_quests ADD COLUMN iq_earned INTEGER DEFAULT 20;
+    END IF;
+END $$;
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_user_quests_wallet ON user_quests(wallet_address);
@@ -57,6 +68,16 @@ CREATE POLICY "service_role_wallet_socials" ON wallet_socials
 
 -- Functions for updating timestamps
 CREATE OR REPLACE FUNCTION update_wallet_socials_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_wallet_socials_updated_at_trigger
+  BEFORE UPDATE ON wallet_socials
+  FOR EACH ROW EXECUTE FUNCTION update_wallet_socials_updated_at();
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();

@@ -36,7 +36,7 @@ const authenticateWallet = (req: Request, res: Response, next: any) => {
 
 // Complete quest schema
 const completeQuestSchema = z.object({
-  questId: z.string().uuid(),
+  questId: z.string().min(1), // Allow any non-empty string (supports both UUIDs and custom IDs)
 });
 
 // Create quest schema
@@ -231,16 +231,66 @@ router.post('/complete', authenticateWallet, async (req: Request, res: Response)
       return res.json({ success: true, message: 'Quest already completed' });
     }
 
-    // Insert completion
-    const { error } = await supabase
+    // Insert completion to user_quests (primary completion tracking)
+    console.log('Attempting to save quest completion:', { walletAddress, questId });
+    const { data: userQuestData, error: userQuestError } = await supabase
       .from('user_quests')
       .insert({
         wallet_address: walletAddress,
         quest_id: questId
-      });
+      })
+      .select();
 
-    if (error) {
-      return res.status(500).json({ error: 'Failed to complete quest' });
+    if (userQuestError) {
+      console.error('Database error completing quest (user_quests):', userQuestError);
+      return res.status(500).json({
+        error: 'Failed to complete quest',
+        details: userQuestError.message,
+        code: userQuestError.code
+      });
+    }
+
+    console.log('Quest completion saved to user_quests:', userQuestData);
+
+    // Also save to quest_completions for stats/analytics (if user exists)
+    try {
+      const user = await supabase
+        .from('users')
+        .select('id')
+        .eq('address', walletAddress.toLowerCase())
+        .maybeSingle();
+
+      if (user?.data) {
+        // Check if already exists in quest_completions
+        const { data: existing } = await supabase
+          .from('quest_completions')
+          .select('id')
+          .eq('quest_id', questId)
+          .eq('user_id', user.data.id)
+          .maybeSingle();
+
+        if (!existing?.data) {
+          const { error: questCompletionError } = await supabase
+            .from('quest_completions')
+            .insert({
+              quest_id: questId,
+              user_id: user.data.id,
+              xp_earned: 20, // IQ points earned
+              verified: true,
+              verification_data: { completed_via: 'wallet_claim' }
+            });
+
+          if (questCompletionError) {
+            console.warn('Failed to save to quest_completions (non-critical):', questCompletionError);
+            // Don't fail the request - user_quests is the primary table
+          } else {
+            console.log('Quest completion also saved to quest_completions for stats');
+          }
+        }
+      }
+    } catch (statsError) {
+      console.warn('Error saving quest completion stats (non-critical):', statsError);
+      // Don't fail the request - stats are secondary to completion
     }
 
     res.json({ success: true, message: 'Quest completed successfully' });
@@ -277,6 +327,56 @@ router.get('/stats/:walletAddress', async (req: Request, res: Response) => {
 
 // DELETE /api/quests/reset-all - Reset all published quests (admin only)
 router.delete('/reset-all', async (req, res) => {
+  try {
+    console.log('🗑️ Admin request: Resetting all published quests...');
+
+    // Get count before deletion
+    const { count: questCount, error: countError } = await supabase
+      .from('published_quests')
+      .select('*', { count: 'exact', head: true });
+
+    if (countError) {
+      console.error('Error counting quests:', countError);
+      return res.status(500).json({ error: 'Failed to count quests' });
+    }
+
+    console.log(`📊 Found ${questCount} published quests to delete...`);
+
+    // Delete all quests
+    const { error: deleteError } = await supabase
+      .from('published_quests')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Matches all records
+
+    if (deleteError) {
+      console.error('Error deleting quests:', deleteError);
+      return res.status(500).json({ error: 'Failed to delete quests' });
+    }
+
+    console.log(`✅ Successfully deleted ${questCount} quests`);
+
+    // Verify deletion
+    const { count: verifyCount, error: verifyError } = await supabase
+      .from('published_quests')
+      .select('*', { count: 'exact', head: true });
+
+    if (verifyError) {
+      console.error('Error verifying deletion:', verifyError);
+    }
+
+    res.json({
+      success: true,
+      message: `Reset quest launch counts for all users. Deleted ${questCount} quests.`,
+      verification: `${verifyCount} quests remaining`
+    });
+
+  } catch (error: any) {
+    console.error('Error resetting quests:', error);
+    res.status(500).json({ error: error.message || 'Failed to reset quests' });
+  }
+});
+
+export default router;
   try {
     console.log('🗑️ Admin request: Resetting all published quests...');
 

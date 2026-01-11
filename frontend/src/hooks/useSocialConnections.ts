@@ -190,7 +190,7 @@ export function useSocialConnections() {
         }
       }));
 
-      return { success: true };
+        return { success: true };
     } catch (error: any) {
       setState(prev => ({ ...prev, error: error.message }));
       return { success: false, error: error.message };

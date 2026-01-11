@@ -24,12 +24,12 @@ export function QuestCardSkeleton() {
 
 export function LeaderboardRowSkeleton() {
   return (
-    <div className="leaderboard-row-skeleton">
-      <Skeleton className="skeleton-rank" />
-      <Skeleton className="skeleton-avatar" />
-      <Skeleton className="skeleton-name" />
-      <Skeleton className="skeleton-xp" />
-    </div>
+    <tr className="leaderboard-row-skeleton">
+      <td><Skeleton className="skeleton-rank" /></td>
+      <td><Skeleton className="skeleton-avatar" /></td>
+      <td><Skeleton className="skeleton-name" /></td>
+      <td><Skeleton className="skeleton-xp" /></td>
+    </tr>
   );
 }
 

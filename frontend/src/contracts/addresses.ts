@@ -30,7 +30,7 @@ export const CONTRACT_ADDRESSES = {
   
   // Contract 4: Claim IQ
   // NOW USES SDK DIRECTLY - Creates completion triples via SDK
-  CLAIM_IQ: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+  CLAIM_IQ: '0x999Ac582091Bf7Dd52449ee1eBD319Ece1D5A92D' as `0x${string}`,
 
   // Trust Quests Payment - PRO SUBSCRIPTION (Native TRUST tokens)
   // Updated: Dec 31, 2025 - Added reset functions for testing

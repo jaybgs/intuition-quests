@@ -29,6 +29,42 @@ const OAUTH_PROVIDERS = {
   }
 };
 
+// Cache for Twitter Bearer token
+let twitterBearerToken: string | null = null;
+let bearerTokenExpiry: number | null = null;
+
+// Get Twitter Bearer token (app-only authentication)
+async function getTwitterBearerToken(): Promise<string> {
+  // Check if we have a valid cached token
+  if (twitterBearerToken && bearerTokenExpiry && Date.now() < bearerTokenExpiry) {
+    return twitterBearerToken;
+  }
+
+  const authString = Buffer.from(`${process.env.TWITTER_CLIENT_ID}:${process.env.TWITTER_CLIENT_SECRET}`).toString('base64');
+
+  const response = await fetch('https://api.twitter.com/oauth2/token', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${authString}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials'
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get Twitter Bearer token: ${response.status}`);
+  }
+
+  const data: any = await response.json();
+  twitterBearerToken = data.access_token;
+  // Token expires in 2 hours, set expiry to 1.5 hours from now for safety
+  bearerTokenExpiry = Date.now() + (1.5 * 60 * 60 * 1000);
+
+  return twitterBearerToken!;
+}
+
 // Global PKCE store
 declare global {
   var pkceStore: Map<string, string> | undefined;
@@ -87,19 +123,19 @@ function encryptToken(text: string): string {
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag();
   return iv.toString('hex') + ':' + encrypted + ':' + authTag.toString('hex');
-}
+  }
 
 function decryptToken(encryptedText: string): string {
-  const parts = encryptedText.split(':');
-  const iv = Buffer.from(parts[0], 'hex');
-  const encrypted = parts[1];
+    const parts = encryptedText.split(':');
+    const iv = Buffer.from(parts[0], 'hex');
+    const encrypted = parts[1];
   const authTag = Buffer.from(parts[2], 'hex');
 
   const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
   decipher.setAuthTag(authTag);
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
 }
 
 // GET /api/social/connect/:provider - Initiate OAuth flow
@@ -282,8 +318,8 @@ router.post('/callback', async (req: Request, res: Response) => {
     if (provider === 'twitter') {
       // Get Twitter user info
       const userResponse = await fetch('https://api.twitter.com/2/users/me', {
-        headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
-      });
+            headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+          });
 
       if (!userResponse.ok) {
         console.error('Failed to get Twitter user info');
@@ -302,13 +338,13 @@ router.post('/callback', async (req: Request, res: Response) => {
     } else if (provider === 'discord') {
       // Get Discord user info
       const userResponse = await fetch('https://discord.com/api/users/@me', {
-        headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
-      });
+            headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+          });
 
       if (!userResponse.ok) {
         console.error('Failed to get Discord user info');
         return res.status(500).json({ error: 'Failed to get user information' });
-      }
+          }
 
       const userData: any = await userResponse.json();
       userId = userData.id;
@@ -427,6 +463,194 @@ router.get('/connections/:walletAddress', async (req: Request, res: Response) =>
   } catch (error: any) {
     console.error('Social connections fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch social connections' });
+  }
+});
+
+// POST /api/social/verify - Verify social actions (follow, like, etc.)
+router.post('/verify', async (req: Request, res: Response) => {
+  try {
+    const { provider, action, params } = req.body;
+    const authHeader = req.headers.authorization;
+
+    console.log('🔍 Social verify request received:', { provider, action, params });
+
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.substring(7);
+    let decoded: any;
+    let walletAddress: string;
+
+    try {
+      // Try to verify as JWT first
+      decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+      if (!decoded.wallet) {
+        throw new Error('No wallet in JWT');
+      }
+      walletAddress = decoded.wallet.toLowerCase();
+    } catch (jwtError) {
+      // If JWT verification fails, try fallback token (base64 encoded JSON)
+      try {
+        const decodedJson = JSON.parse(atob(token));
+        if (!decodedJson.address) {
+          throw new Error('No address in fallback token');
+        }
+        walletAddress = decodedJson.address.toLowerCase();
+        console.log('🔓 Using fallback token for wallet:', walletAddress);
+      } catch (fallbackError) {
+        console.error('Both JWT and fallback token verification failed:', jwtError, fallbackError);
+        return res.status(401).json({ error: 'Invalid token format' });
+      }
+    }
+    console.log('🔍 Verifying social action:', { provider, action, walletAddress });
+
+    // Get stored connection for this provider
+    const { data: connection, error } = await supabase
+      .from('wallet_socials')
+      .select('access_token, provider_user_id')
+      .eq('wallet_address', walletAddress)
+      .eq('provider', provider)
+      .single();
+
+    if (error || !connection || !connection.access_token) {
+      console.error('Connection not found:', error);
+      return res.status(400).json({
+        success: false,
+        error: `${provider} account not connected`
+      });
+    }
+
+    const accessToken = decryptToken(connection.access_token);
+    let verified = false;
+
+    // Verify based on provider and action
+    if (provider === 'twitter') {
+      if (action === 'follow') {
+        try {
+          // Check if user follows the target account
+          const targetUsername = params.targetUsername;
+          console.log('🐦 Checking if user follows:', targetUsername);
+
+          // Try to get target user ID using user's access token (should work for basic user lookup)
+          let targetId = null;
+
+          try {
+            const targetResponse = await fetch(
+              `https://api.twitter.com/2/users/by/username/${targetUsername}`,
+              {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+              }
+            );
+
+            console.log('🐦 Target user lookup response status:', targetResponse.status);
+
+            if (targetResponse.ok) {
+              const targetData: any = await targetResponse.json();
+              targetId = targetData.data?.id;
+              console.log('🐦 Target user ID:', targetId);
+            } else {
+              console.warn('🐦 Could not get target user with access token, this is expected for some tokens');
+            }
+          } catch (targetError: any) {
+            console.warn('🐦 Target user lookup failed:', targetError.message);
+          }
+
+          // If we couldn't get the target ID, assume it's a valid username and proceed
+          // Twitter API v2 following endpoint can work with usernames directly in some cases
+          console.log('🐦 User provider_user_id:', connection.provider_user_id);
+
+          // Check if user follows the target using user's access token
+          const followingResponse = await fetch(
+            `https://api.twitter.com/2/users/${connection.provider_user_id}/following`,
+            {
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            }
+          );
+
+          console.log('🐦 Following API response status:', followingResponse.status);
+
+          if (followingResponse.ok) {
+            const followingData: any = await followingResponse.json();
+            console.log('🐦 Following data:', followingData);
+
+            if (targetId) {
+              // If we have the target ID, check if user follows this specific ID
+              verified = followingData.data?.some((user: any) => user.id === targetId) || false;
+            } else {
+              // If we don't have target ID, check if user follows anyone with similar username
+              verified = followingData.data?.some((user: any) =>
+                user.username?.toLowerCase() === targetUsername.toLowerCase()
+              ) || false;
+            }
+
+            console.log('🐦 Verification result:', verified);
+          } else {
+            const errorText = await followingResponse.text();
+            console.error('🐦 Following API error:', followingResponse.status, errorText);
+
+            // If access token is expired (401), suggest reconnecting
+            if (followingResponse.status === 401) {
+              return res.status(400).json({
+                success: false,
+                error: 'Twitter access token expired. Please reconnect your Twitter account.',
+                code: 'TOKEN_EXPIRED'
+              });
+            }
+
+            return res.status(400).json({
+              success: false,
+              error: `Could not check following status: ${followingResponse.status}`,
+              twitterError: errorText,
+              details: "Check Twitter Developer Portal - app may need Project enrollment"
+            });
+          }
+        } catch (error: any) {
+          console.error('🐦 Twitter verification error:', error);
+          return res.status(400).json({
+            success: false,
+            error: `Twitter verification failed: ${error.message}`
+          });
+        }
+
+      } else if (action === 'like') {
+        // Check if user liked the tweet
+        const tweetId = params.tweetId;
+        console.log('🐦 Checking if user liked tweet:', tweetId);
+
+        const likeResponse = await fetch(
+          `https://api.twitter.com/2/users/${connection.provider_user_id}/liked_tweets`,
+          {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          }
+        );
+
+        if (likeResponse.ok) {
+          const likedData: any = await likeResponse.json();
+          verified = likedData.data?.some((tweet: any) => tweet.id === tweetId) || false;
+        }
+      }
+
+    } else if (provider === 'discord') {
+      // Discord verification logic would go here
+      // For now, just return success if connected
+      verified = true;
+    }
+
+    console.log('✅ Verification result:', { provider, action, verified });
+
+    return res.json({
+      success: true,
+      completed: verified,
+      data: { provider, action, verified }
+    });
+
+  } catch (error: any) {
+    console.error('Social verification error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Verification failed'
+    });
   }
 });
 

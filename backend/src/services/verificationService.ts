@@ -19,13 +19,13 @@ export class VerificationService {
     switch (type) {
       case RequirementType.FOLLOW:
         return this.verifyFollow(verificationData, userData);
-
+      
       case RequirementType.RETWEET:
         return this.verifyRetweet(verificationData, userData);
-
+      
       case RequirementType.LIKE:
         return this.verifyLike(verificationData, userData);
-
+      
       case RequirementType.VISIT:
         return this.verifyVisit(verificationData, userData);
       

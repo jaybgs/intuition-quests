@@ -377,53 +377,5 @@ router.delete('/reset-all', async (req, res) => {
 });
 
 export default router;
-  try {
-    console.log('🗑️ Admin request: Resetting all published quests...');
-
-    // Get count before deletion
-    const { count: questCount, error: countError } = await supabase
-      .from('published_quests')
-      .select('*', { count: 'exact', head: true });
-
-    if (countError) {
-      console.error('Error counting quests:', countError);
-      return res.status(500).json({ error: 'Failed to count quests' });
-    }
-
-    console.log(`📊 Found ${questCount} published quests to delete...`);
-
-    // Delete all quests
-    const { error: deleteError } = await supabase
-      .from('published_quests')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Matches all records
-
-    if (deleteError) {
-      console.error('Error deleting quests:', deleteError);
-      return res.status(500).json({ error: 'Failed to delete quests' });
-    }
-
-    console.log(`✅ Successfully deleted ${questCount} quests`);
-
-    // Verify deletion
-    const { count: verifyCount, error: verifyError } = await supabase
-      .from('published_quests')
-      .select('*', { count: 'exact', head: true });
-
-    if (verifyError) {
-      console.error('Error verifying deletion:', verifyError);
-    }
-
-    res.json({
-      success: true,
-      message: `Reset quest launch counts for all users. Deleted ${questCount} quests.`,
-      verification: `${verifyCount} quests remaining`
-    });
-
-  } catch (error: any) {
-    console.error('Error resetting quests:', error);
-    res.status(500).json({ error: error.message || 'Failed to reset quests' });
-  }
-});
 
 export default router;

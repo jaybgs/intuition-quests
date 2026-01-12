@@ -1059,16 +1059,16 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     // Complete quest and award IQ points
     try {
       showToast('Completing quest...', 'info');
-
+      
       // Step 1: Complete the quest (save to database, award IQ points)
       await completeQuest(quest.id);
 
       // Step 2: Only after successful completion, register for raffle
-      if (address) {
-        saveQuestCompletion(quest.id, address);
+          if (address) {
+            saveQuestCompletion(quest.id, address);
         console.log('✅ Quest completed and participant registered:', quest.id, 'Address:', address);
       }
-
+      
       // Step 3: Show success message
       showToast('Successfully completed quest and claimed IQ!', 'success');
       

@@ -71,11 +71,11 @@ export const wagmiConfig = createConfig({
 
 // Create and export Web3Modal instance
 export const web3Modal = projectId ? createWeb3Modal({
-  wagmiConfig,
-  projectId,
-  chains: [intuitionChain],
-  themeMode: 'dark',
-  themeVariables: {
-    '--w3m-accent': '#3b82f6',
-  },
+    wagmiConfig,
+    projectId,
+    chains: [intuitionChain],
+    themeMode: 'dark',
+    themeVariables: {
+      '--w3m-accent': '#3b82f6',
+    },
 }) : null;

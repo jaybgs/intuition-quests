@@ -259,22 +259,22 @@ router.post('/complete', authenticateWallet, async (req: Request, res: Response)
         return res.json({ success: true, message: 'Quest completed successfully' });
       }
 
-      const user = await supabase
+      const { data: user, error: userError } = await supabase
         .from('users')
         .select('id')
         .eq('address', walletAddress.toLowerCase())
         .maybeSingle();
 
-      if (user) {
+      if (user && !userError) {
         // Check if already exists in quest_completions
-        const existing = await supabase
+        const { data: existing, error: existingError } = await supabase
           .from('quest_completions')
           .select('id')
           .eq('quest_id', questId)
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (!existing) {
+        if (!existing && !existingError) {
           const { error: questCompletionError } = await supabase
             .from('quest_completions')
             .insert({

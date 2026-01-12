@@ -254,27 +254,32 @@ router.post('/complete', authenticateWallet, async (req: Request, res: Response)
 
     // Also save to quest_completions for stats/analytics (if user exists)
     try {
+      if (!walletAddress) {
+        console.warn('No wallet address available for quest_completions tracking');
+        return res.json({ success: true, message: 'Quest completed successfully' });
+      }
+
       const user = await supabase
         .from('users')
         .select('id')
         .eq('address', walletAddress.toLowerCase())
         .maybeSingle();
 
-      if (user?.data) {
+      if (user) {
         // Check if already exists in quest_completions
-        const { data: existing } = await supabase
+        const existing = await supabase
           .from('quest_completions')
           .select('id')
           .eq('quest_id', questId)
-          .eq('user_id', user.data.id)
+          .eq('user_id', user.id)
           .maybeSingle();
 
-        if (!existing?.data) {
+        if (!existing) {
           const { error: questCompletionError } = await supabase
             .from('quest_completions')
             .insert({
               quest_id: questId,
-              user_id: user.data.id,
+              user_id: user.id,
               xp_earned: 20, // IQ points earned
               verified: true,
               verification_data: { completed_via: 'wallet_claim' }
@@ -375,7 +380,5 @@ router.delete('/reset-all', async (req, res) => {
     res.status(500).json({ error: error.message || 'Failed to reset quests' });
   }
 });
-
-export default router;
 
 export default router;

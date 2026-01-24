@@ -1,214 +1,455 @@
 /**
  * Quest Escrow Service
- * Handles deposits to QuestEscrow contract for quest rewards
- * No fees - direct payment to escrow only
- */
-
-import { type Address, type Hash, parseEther, formatEther, keccak256, stringToHex } from 'viem';
-import { CONTRACT_ADDRESSES, isContractDeployed } from '../contracts/addresses';
-import { QUEST_ESCROW_ABI } from '../contracts/abis';
-
-export interface DepositToEscrowParams {
-  questId: string;
-  numberOfWinners: number;
-  expiresAt: number; // Unix timestamp
-  distributionType: 'raffle' | 'first-come-first-served' | 'merit-based';
-}
-
-export interface DepositToEscrowResult {
-  transactionHash: Hash;
-}
-
-/**
- * Convert quest ID string to bytes32
- */
-export function questIdToBytes32(questId: string): `0x${string}` {
-  return keccak256(stringToHex(questId)) as `0x${string}`;
-}
-
-/**
- * Deposit TRUST tokens to escrow for quest rewards
+ * Frontend service for interacting with QuestEscrow smart contract
  * 
- * @param params - Quest deposit parameters
- * @param amount - The exact amount of TRUST tokens the user entered (as a string, e.g., "0.1")
- *                 This exact amount will be deducted from the user's wallet and sent to the escrow contract
- * @param walletClient - Wallet client for signing transactions
- * @param publicClient - Public client for reading blockchain state
+ * Features:
+ * - Deposit TRUST for quest rewards
+ * - Distribute rewards to winners
+ * - Refund deposits after grace period
+ * - Check deposit status
+ */
+
+import { formatEther, parseEther, keccak256, toHex, type Hash } from 'viem';
+import { CONTRACT_ADDRESSES } from '../contracts/addresses';
+
+// Export the escrow address for use in other components
+export const QUEST_ESCROW_ADDRESS = CONTRACT_ADDRESSES.QUEST_ESCROW;
+
+// QuestEscrow ABI
+const QUEST_ESCROW_ABI = [
+  // Deposit functions
+  {
+    name: 'depositReward',
+    type: 'function',
+    stateMutability: 'payable',
+    inputs: [
+      { name: 'questId', type: 'bytes32' },
+      { name: 'expiresAt', type: 'uint256' }
+    ],
+    outputs: [],
+  },
+  {
+    name: 'addToDeposit',
+    type: 'function',
+    stateMutability: 'payable',
+    inputs: [{ name: 'questId', type: 'bytes32' }],
+    outputs: [],
+  },
+  // Distribution functions
+  {
+    name: 'distributeRewards',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'questId', type: 'bytes32' },
+      { name: 'winners', type: 'address[]' },
+      { name: 'amounts', type: 'uint256[]' }
+    ],
+    outputs: [],
+  },
+  {
+    name: 'distributeSingleReward',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'questId', type: 'bytes32' },
+      { name: 'winner', type: 'address' },
+      { name: 'amount', type: 'uint256' }
+    ],
+    outputs: [],
+  },
+  // Refund
+  {
+    name: 'refundDeposit',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'questId', type: 'bytes32' }],
+    outputs: [],
+  },
+  // View functions
+  {
+    name: 'getQuestDeposit',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'questId', type: 'bytes32' }],
+    outputs: [
+      { name: 'creator', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'distributed', type: 'uint256' },
+      { name: 'remaining', type: 'uint256' },
+      { name: 'depositedAt', type: 'uint256' },
+      { name: 'expiresAt', type: 'uint256' },
+      { name: 'isActive', type: 'bool' },
+      { name: 'completionCount', type: 'uint256' }
+    ],
+  },
+  {
+    name: 'hasActiveDeposit',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'questId', type: 'bytes32' }],
+    outputs: [{ type: 'bool' }],
+  },
+  {
+    name: 'getRemainingBalance',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'questId', type: 'bytes32' }],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    name: 'canRefund',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'questId', type: 'bytes32' }],
+    outputs: [{ type: 'bool' }],
+  },
+  {
+    name: 'getWinnerPayout',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'questId', type: 'bytes32' },
+      { name: 'winner', type: 'address' }
+    ],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    name: 'getContractBalance',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+  },
+  // Constants
+  {
+    name: 'GRACE_PERIOD',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
+    name: 'MIN_DEPOSIT',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+  },
+] as const;
+
+// Helper to convert quest ID string to bytes32
+export function questIdToBytes32(questId: string): `0x${string}` {
+  return keccak256(toHex(questId));
+}
+
+/**
+ * Deposit options interface
+ */
+interface DepositOptions {
+  questId: string;
+  numberOfWinners?: number;
+  expiresAt: number;
+  distributionType?: string;
+}
+
+/**
+ * Deposit TRUST tokens for a quest reward
  */
 export async function depositToEscrow(
-  params: DepositToEscrowParams,
-  amount: string, // Amount in TRUST (e.g., "0.1") - this is the EXACT amount the user entered
+  options: DepositOptions,
+  amount: string, // Amount in TRUST (e.g., "10")
   walletClient: any,
   publicClient: any
-): Promise<DepositToEscrowResult> {
-  const { questId, numberOfWinners, expiresAt, distributionType } = params;
-  
-  if (!isContractDeployed(CONTRACT_ADDRESSES.QUEST_ESCROW)) {
-    throw new Error('QuestEscrow contract is not deployed');
+): Promise<{ hash: `0x${string}`; questIdBytes32: `0x${string}`; transactionHash: `0x${string}` }> {
+  const { questId, expiresAt } = options;
+  const questIdBytes32 = questIdToBytes32(questId);
+  const amountWei = parseEther(amount);
+
+  // Convert expiresAt from milliseconds to seconds if needed
+  const expiresAtSeconds = expiresAt > 1e12 ? Math.floor(expiresAt / 1000) : expiresAt;
+
+  console.log('💰 Depositing to QuestEscrow...');
+  console.log('  Quest ID:', questId);
+  console.log('  Quest ID (bytes32):', questIdBytes32);
+  console.log('  Amount:', amount, 'TRUST');
+  console.log('  Expires:', new Date(expiresAtSeconds * 1000).toISOString());
+  console.log('  Contract:', QUEST_ESCROW_ADDRESS);
+
+  const hash = await walletClient.writeContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'depositReward',
+    args: [questIdBytes32, BigInt(expiresAtSeconds)],
+    value: amountWei,
+  });
+
+  console.log('📝 Transaction hash:', hash);
+
+  // Wait for confirmation
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+  if (receipt.status !== 'success') {
+    throw new Error('Deposit transaction failed');
   }
-  
-  try {
-    const questIdBytes = questIdToBytes32(questId);
-    // Convert the user's entered amount to wei - this is the EXACT amount that will be deducted
-    const amountWei = parseEther(amount);
-    
-    // Call deposit function - the value field sends the exact amount to the escrow contract
-    // This amount will be deducted from the user's wallet
-    const hash = await walletClient.writeContract({
-      address: CONTRACT_ADDRESSES.QUEST_ESCROW,
-      abi: QUEST_ESCROW_ABI,
-      functionName: 'deposit',
-      args: [questIdBytes, BigInt(numberOfWinners), BigInt(expiresAt), distributionType],
-      value: amountWei, // This is the exact amount the user entered, converted to wei
-    });
-    
-    // Wait for transaction
-    await publicClient.waitForTransactionReceipt({ hash });
-    
-    return { transactionHash: hash };
-  } catch (error: any) {
-    console.error('Error depositing to escrow:', error);
-    throw error;
-  }
+
+  console.log('✅ Deposit confirmed!');
+
+  return { hash, questIdBytes32, transactionHash: hash };
 }
 
 /**
- * Check the balance of a quest deposit
+ * Distribute rewards to winners
  */
-export async function checkBalance(
+export async function distributeRewards(
   questId: string,
+  winners: string[],
+  amounts: string[], // Amounts in TRUST
+  walletClient: any,
   publicClient: any
-): Promise<{ totalAmount: bigint; numberOfWinners: number; isDistributed: boolean }> {
-  if (!isContractDeployed(CONTRACT_ADDRESSES.QUEST_ESCROW)) {
-    throw new Error('QuestEscrow contract is not deployed');
+): Promise<Hash> {
+  const questIdBytes32 = questIdToBytes32(questId);
+  const amountsWei = amounts.map(a => parseEther(a));
+
+  console.log('🎁 Distributing rewards...');
+  console.log('  Quest ID:', questId);
+  console.log('  Winners:', winners.length);
+  console.log('  Amounts:', amounts.join(', '), 'TRUST');
+
+  const hash = await walletClient.writeContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'distributeRewards',
+    args: [questIdBytes32, winners as `0x${string}`[], amountsWei],
+  });
+
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+  if (receipt.status !== 'success') {
+    throw new Error('Distribution transaction failed');
   }
-  
-  try {
-    const questIdBytes = questIdToBytes32(questId);
-    
-    const deposit = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.QUEST_ESCROW,
-      abi: QUEST_ESCROW_ABI,
-      functionName: 'getQuestDeposit',
-      args: [questIdBytes],
-    }) as [bigint, bigint, boolean, Address, bigint, string];
-    
-    return {
-      totalAmount: deposit[0],
-      numberOfWinners: Number(deposit[1]),
-      isDistributed: deposit[2],
-    };
-  } catch (error: any) {
-    console.error('Error checking escrow balance:', error);
-    throw error;
-  }
+
+  console.log('✅ Rewards distributed!');
+
+  return hash;
 }
 
 /**
- * Get quest deposit details
+ * Distribute reward to a single winner
+ */
+export async function distributeSingleReward(
+  questId: string,
+  winner: string,
+  amount: string,
+  walletClient: any,
+  publicClient: any
+): Promise<Hash> {
+  const questIdBytes32 = questIdToBytes32(questId);
+  const amountWei = parseEther(amount);
+
+  console.log('🎁 Distributing single reward...');
+  console.log('  Quest ID:', questId);
+  console.log('  Winner:', winner);
+  console.log('  Amount:', amount, 'TRUST');
+
+  const hash = await walletClient.writeContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'distributeSingleReward',
+    args: [questIdBytes32, winner as `0x${string}`, amountWei],
+  });
+
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+  if (receipt.status !== 'success') {
+    throw new Error('Distribution transaction failed');
+  }
+
+  console.log('✅ Reward distributed to', winner);
+
+  return hash;
+}
+
+/**
+ * Refund remaining deposit to quest creator
+ */
+export async function refundDeposit(
+  questId: string,
+  walletClient: any,
+  publicClient: any
+): Promise<Hash> {
+  const questIdBytes32 = questIdToBytes32(questId);
+
+  console.log('💸 Requesting refund...');
+  console.log('  Quest ID:', questId);
+
+  const hash = await walletClient.writeContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'refundDeposit',
+    args: [questIdBytes32],
+  });
+
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+  if (receipt.status !== 'success') {
+    throw new Error('Refund transaction failed');
+  }
+
+  console.log('✅ Refund processed!');
+
+  return hash;
+}
+
+// ============================================
+// VIEW FUNCTIONS
+// ============================================
+
+/**
+ * Get deposit details for a quest
  */
 export async function getQuestDeposit(
   questId: string,
   publicClient: any
 ): Promise<{
-  totalAmount: bigint;
-  numberOfWinners: number;
-  isDistributed: boolean;
-  depositor: Address;
-  expiresAt: bigint;
-  distributionType: string;
+  creator: string;
+  amount: string;
+  distributed: string;
+  remaining: string;
+  depositedAt: number;
+  expiresAt: number;
+  isActive: boolean;
+  completionCount: number;
 }> {
-  if (!isContractDeployed(CONTRACT_ADDRESSES.QUEST_ESCROW)) {
-    throw new Error('QuestEscrow contract is not deployed');
-  }
-  
-  try {
-    const questIdBytes = questIdToBytes32(questId);
-    
-    const deposit = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.QUEST_ESCROW,
-      abi: QUEST_ESCROW_ABI,
-      functionName: 'getQuestDeposit',
-      args: [questIdBytes],
-    }) as [bigint, bigint, boolean, Address, bigint, string];
-    
-    return {
-      totalAmount: deposit[0],
-      numberOfWinners: Number(deposit[1]),
-      isDistributed: deposit[2],
-      depositor: deposit[3],
-      expiresAt: deposit[4],
-      distributionType: deposit[5],
-    };
-  } catch (error: any) {
-    console.error('Error getting quest deposit:', error);
-    throw error;
-  }
+  const questIdBytes32 = questIdToBytes32(questId);
+
+  const result = await publicClient.readContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'getQuestDeposit',
+    args: [questIdBytes32],
+  }) as [string, bigint, bigint, bigint, bigint, bigint, boolean, bigint];
+
+  return {
+    creator: result[0],
+    amount: formatEther(result[1]),
+    distributed: formatEther(result[2]),
+    remaining: formatEther(result[3]),
+    depositedAt: Number(result[4]),
+    expiresAt: Number(result[5]),
+    isActive: result[6],
+    completionCount: Number(result[7]),
+  };
 }
 
 /**
- * Get quest status
+ * Check if quest has active deposit
  */
-export async function getQuestStatus(
+export async function hasActiveDeposit(
   questId: string,
   publicClient: any
-): Promise<{
-  hasDeposit: boolean;
-  isExpired: boolean;
-  winnersSet: boolean;
-  isDistributed: boolean;
-  timeRemaining: bigint;
-  expiresAt: bigint;
-}> {
-  if (!isContractDeployed(CONTRACT_ADDRESSES.QUEST_ESCROW)) {
-    throw new Error('QuestEscrow contract is not deployed');
-  }
-  
-  try {
-    const questIdBytes = questIdToBytes32(questId);
-    
-    const status = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.QUEST_ESCROW,
-      abi: QUEST_ESCROW_ABI,
-      functionName: 'getQuestStatus',
-      args: [questIdBytes],
-    }) as [boolean, boolean, boolean, boolean, bigint, bigint];
-    
-    return {
-      hasDeposit: status[0],
-      isExpired: status[1],
-      winnersSet: status[2],
-      isDistributed: status[3],
-      timeRemaining: status[4],
-      expiresAt: status[5],
-    };
-  } catch (error: any) {
-    console.error('Error getting quest status:', error);
-    throw error;
-  }
+): Promise<boolean> {
+  const questIdBytes32 = questIdToBytes32(questId);
+
+  return await publicClient.readContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'hasActiveDeposit',
+    args: [questIdBytes32],
+  }) as boolean;
 }
 
 /**
- * Get the grace period for releasing funds (in seconds)
+ * Get remaining balance for a quest
+ */
+export async function getRemainingBalance(
+  questId: string,
+  publicClient: any
+): Promise<string> {
+  const questIdBytes32 = questIdToBytes32(questId);
+
+  const result = await publicClient.readContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'getRemainingBalance',
+    args: [questIdBytes32],
+  }) as bigint;
+
+  return formatEther(result);
+}
+
+/**
+ * Check if refund is available
+ */
+export async function canRefund(
+  questId: string,
+  publicClient: any
+): Promise<boolean> {
+  const questIdBytes32 = questIdToBytes32(questId);
+
+  return await publicClient.readContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'canRefund',
+    args: [questIdBytes32],
+  }) as boolean;
+}
+
+/**
+ * Get contract balance
+ */
+export async function getContractBalance(
+  publicClient: any
+): Promise<string> {
+  const result = await publicClient.readContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'getContractBalance',
+  }) as bigint;
+
+  return formatEther(result);
+}
+
+/**
+ * Get grace period (in seconds)
  */
 export async function getGracePeriod(
   publicClient: any
-): Promise<bigint> {
-  if (!isContractDeployed(CONTRACT_ADDRESSES.QUEST_ESCROW)) {
-    throw new Error('QuestEscrow contract is not deployed');
-  }
-  
-  try {
-    const gracePeriod = await publicClient.readContract({
-      address: CONTRACT_ADDRESSES.QUEST_ESCROW,
-      abi: QUEST_ESCROW_ABI,
-      functionName: 'RELEASE_GRACE_PERIOD',
-      args: [],
-    }) as bigint;
-    
-    return gracePeriod;
-  } catch (error: any) {
-    console.error('Error getting grace period:', error);
-    throw error;
-  }
+): Promise<number> {
+  const result = await publicClient.readContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'GRACE_PERIOD',
+  }) as bigint;
+
+  return Number(result);
+}
+
+/**
+ * Get minimum deposit amount
+ */
+export async function getMinDeposit(
+  publicClient: any
+): Promise<string> {
+  const result = await publicClient.readContract({
+    address: QUEST_ESCROW_ADDRESS,
+    abi: QUEST_ESCROW_ABI,
+    functionName: 'MIN_DEPOSIT',
+  }) as bigint;
+
+  return formatEther(result);
+}
+
+/**
+ * Check user balance before deposit
+ */
+export async function checkBalance(
+  userAddress: string,
+  publicClient: any
+): Promise<string> {
+  const balance = await publicClient.getBalance({
+    address: userAddress as `0x${string}`,
+  });
+
+  return formatEther(balance);
 }

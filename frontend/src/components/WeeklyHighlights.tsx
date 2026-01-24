@@ -11,6 +11,9 @@ import { isPCDevice } from '../utils/deviceDetection';
 import type { Space } from '../types';
 import type { Quest } from '../types';
 import './WeeklyHighlights.css';
+import { Reveal } from './Reveal';
+import BlurText from './BlurText';
+import DecryptedText from './DecryptedText';
 
 interface Project {
   id: string;
@@ -202,29 +205,29 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     let isMounted = true;
     let intervalId: NodeJS.Timeout | null = null;
     let hasLoadedOnce = false;
-    
+
     const loadSpaces = async (showLoading = false) => {
       // Only update state if component is still mounted and not during render
       if (!isMounted) return;
-      
+
       try {
         if (showLoading && !hasLoadedOnce) {
-        setIsSpacesLoading(true);
+          setIsSpacesLoading(true);
         }
         // spaceService.getAllSpaces() uses Supabase only
         const allSpaces = await spaceService.getAllSpaces();
         // Use startTransition to mark this as a non-urgent update
         // This prevents the "setState during render" warning
         if (isMounted) {
-        startTransition(() => {
-          if (isMounted) {
-            setSpaces(allSpaces);
+          startTransition(() => {
+            if (isMounted) {
+              setSpaces(allSpaces);
               if (showLoading && !hasLoadedOnce) {
-            setIsSpacesLoading(false);
+                setIsSpacesLoading(false);
                 hasLoadedOnce = true;
               }
-          }
-        });
+            }
+          });
         }
       } catch (error) {
         console.error('Error loading spaces from Supabase:', error);
@@ -232,9 +235,9 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         if (isMounted) {
           startTransition(() => {
             if (isMounted) {
-            setSpaces([]);
+              setSpaces([]);
               if (showLoading && !hasLoadedOnce) {
-            setIsSpacesLoading(false);
+                setIsSpacesLoading(false);
                 hasLoadedOnce = true;
               }
             }
@@ -242,14 +245,14 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         }
       }
     };
-    
+
     // Delay initial load to ensure we're not in render phase
     const initialLoadTimer = setTimeout(() => {
       if (isMounted) {
         loadSpaces(true);
       }
     }, 100);
-    
+
     // Listen for space creation events to refresh immediately (without showing loading)
     const handleSpaceCreated = () => {
       // Use setTimeout to ensure we're not in render phase
@@ -259,21 +262,21 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         }
       }, 0);
     };
-    
+
     // Listen for quest published events to refresh quest counts
     const handleQuestPublished = () => {
       // Use setTimeout to ensure we're not in render phase
       setTimeout(() => {
         if (isMounted) {
-      startTransition(() => {
-        if (isMounted) {
-          setSpaces(prev => [...prev]);
-        }
-      });
+          startTransition(() => {
+            if (isMounted) {
+              setSpaces(prev => [...prev]);
+            }
+          });
         }
       }, 0);
     };
-    
+
     // Handle highlights updated event
     const handleHighlightsUpdated = () => {
       // Use setTimeout to ensure we're not in render phase
@@ -292,16 +295,16 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         }
       }, 0);
     };
-    
+
     // Add event listeners after a small delay to avoid render phase issues
     setTimeout(() => {
       if (isMounted) {
-    window.addEventListener('spaceCreated', handleSpaceCreated);
-    window.addEventListener('questPublished', handleQuestPublished);
-    window.addEventListener('highlightsUpdated', handleHighlightsUpdated);
+        window.addEventListener('spaceCreated', handleSpaceCreated);
+        window.addEventListener('questPublished', handleQuestPublished);
+        window.addEventListener('highlightsUpdated', handleHighlightsUpdated);
       }
     }, 0);
-    
+
     // Reload spaces periodically in case they change (without showing loading)
     // Start interval after initial load
     setTimeout(() => {
@@ -313,7 +316,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
         }, 30000);
       }
     }, 1000);
-    
+
     return () => {
       isMounted = false;
       clearTimeout(initialLoadTimer);
@@ -353,19 +356,19 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     const bFollowers = parseInt(localStorage.getItem(`space_followers_${b.id}`) || '0');
     const aFollowing = isFollowingSpace(a.id);
     const bFollowing = isFollowingSpace(b.id);
-    
+
     // Priority 1: If sorting by verified, verified spaces come first
     if (sortByVerified) {
       if (aVerified && !bVerified) return -1;
       if (!aVerified && bVerified) return 1;
     }
-    
+
     // Priority 2: If sorting by following, followed spaces come first
     if (sortByFollowing) {
       if (aFollowing && !bFollowing) return -1;
       if (!aFollowing && bFollowing) return 1;
     }
-    
+
     // Default: maintain original order
     return 0;
   });
@@ -374,7 +377,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
   const maxSpacesDesktop = 8;
   const maxSpacesMobile = 5;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -391,10 +394,10 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
   useEffect(() => {
     const fetchQuestCounts = async () => {
       if (spaces.length === 0) return;
-      
+
       try {
         const counts: Record<string, number> = {};
-        
+
         // Fetch active quests for each space from Supabase
         await Promise.all(
           spaces.map(async (space) => {
@@ -410,16 +413,16 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
             }
           })
         );
-        
+
         setQuestCounts(counts);
       } catch (error) {
         console.error('Error fetching quest counts:', error);
       }
     };
-    
+
     fetchQuestCounts();
   }, [spaces]);
-  
+
   // Get quest count for a space (from state)
   const getQuestCount = (spaceId: string): number => {
     return questCounts[spaceId] || 0;
@@ -448,156 +451,189 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
 
   const currentProject = projects[currentIndex];
 
+  const handleAnimationComplete = () => {
+    console.log('Animation completed!');
+  };
+
   return (
     <div className="discover-earn-container">
-      <h1 className="welcome-text">Welcome to TrustQuests</h1>
-      <p className="welcome-description">
-        Discover and complete blockchain quests on the Intuition network.
-        Earn rewards, build your reputation, and connect with the Web3 community.
-      </p>
+      <BlurText
+        text="Welcome to TrustQuests"
+        delay={200}
+        animateBy="words"
+        direction="top"
+        onAnimationComplete={handleAnimationComplete}
+        className="welcome-text"
+      />
+      <div className="welcome-description">
+        <div style={{ display: 'block', marginBottom: '2px' }}>
+          <DecryptedText
+            text="Discover and complete blockchain quests on the Intuition network."
+            animateOn="view"
+            revealDirection="start"
+            sequential
+            useOriginalCharsOnly={false}
+            speed={30}
+            maxIterations={10}
+            encryptedClassName="encrypted-text"
+          />
+        </div>
+        <div style={{ display: 'block' }}>
+          <DecryptedText
+            text="Earn rewards, build your reputation, and connect with the Web3 community."
+            animateOn="view"
+            revealDirection="start"
+            sequential
+            useOriginalCharsOnly={false}
+            speed={30}
+            maxIterations={10}
+            encryptedClassName="encrypted-text"
+          />
+        </div>
+      </div>
       <div className="slideshow-glass">
-          <button 
-            className="slideshow-nav slideshow-prev" 
-            onClick={goToPrevious} 
-            aria-label="Previous slide"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6"/>
-            </svg>
-          </button>
-          <div className="slideshow-container">
-            {projects.map((project, index) => (
+        <button
+          className="slideshow-nav slideshow-prev"
+          onClick={goToPrevious}
+          aria-label="Previous slide"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <div className="slideshow-container">
+          {projects.map((project, index) => (
+            <div
+              key={project.id}
+              className={`slideshow-slide ${index === currentIndex ? 'active' : ''}`}
+              onClick={() => handleStartQuest(project.questLink)}
+              style={{ cursor: project.questLink ? 'pointer' : 'default' }}
+            >
               <div
-                key={project.id}
-                className={`slideshow-slide ${index === currentIndex ? 'active' : ''}`}
-                onClick={() => handleStartQuest(project.questLink)}
-                style={{ cursor: project.questLink ? 'pointer' : 'default' }}
+                className="slideshow-image"
+                style={{
+                  background: `linear-gradient(135deg, ${project.gradientColors[0]} 0%, ${project.gradientColors[1]} 100%)`
+                }}
               >
-                <div
-                  className="slideshow-image"
-                  style={{
-                    background: `linear-gradient(135deg, ${project.gradientColors[0]} 0%, ${project.gradientColors[1]} 100%)`
+
+                <svg viewBox="0 0 320 535" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ width: '180px', color: 'rgb(255, 255, 255)', position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(calc(-50% + 250px))' }}>
+                  <path d="m277.296 319.617-.177 885.003 42.195-92.35.176-885.001-42.194 92.348Z" fill="#48494A"></path>
+                  <path d="m118.014 344.353-.177 886.417 159.283-24.74.176-886.416-159.282 24.739Z" fill="#2F2E30"></path>
+                  <path d="M.925 276.762.748 1166.55l117.088 67.6.177-889.789L.925 276.762Z" fill="#1B1C1C"></path>
+                  <path d="m277.297 319.616 42.194-92.348-117.088-67.598L43.12 184.409.926 276.758l117.088 67.598 159.283-24.74Z"></path>
+                  <path d="m9.463 274.51 38.913-85.246L200.83 165.57l110.288 63.729-38.913 85.246-152.453 23.704L9.463 274.51Z" fill="#403F42"></path>
+                  <path d="m48.64 204.722 152.093-23.509 104.606 60.115 5.423-11.815-110.029-63.233L48.64 189.789 9.818 274.373l5.423 3.117 33.399-72.768Z" fill="url(#pedestal_svg__a)"></path>
+                  <path d="m257.862 226.559 26.118 15.092-26.303 57.564-.001.003-.128.285-28.41 4.415-23.837 3.694-76.948 11.965h-.001l-7.034 1.086-10.883-6.292h-.001L70.855 291.52l-38.02-21.941 26.44-57.863 11.424-1.778 39.579-6.144 18.213-2.833 67.016-10.405 9.638 5.566.225-.39-.225.39 23.837 13.761 28.88 16.676Z" stroke="#000" stroke-width="0.901" fill="transparent"></path>
+                  <path opacity="0.2" d="M180.113 281.73c29.395 0 53.225-12.529 53.225-27.985s-23.83-27.986-53.225-27.986c-29.394 0-53.224 12.53-53.224 27.986 0 15.456 23.83 27.985 53.224 27.985Z" fill="#000"></path>
+                  <g transform="translate(136.124, 210.844) rotate(-5) scale(3)">
+                    <defs>
+                      <clipPath id="oval-clip">
+                        <ellipse cx="0" cy="0" rx="44" ry="35" />
+                      </clipPath>
+                    </defs>
+                    <image href="/coin_4-removebg-preview.png" x="-44" y="-44" width="88" height="88" style={{ opacity: 1 }} clipPath="url(#oval-clip)" className="w-full" />
+                  </g>
+
+                  <defs>
+                    <linearGradient id="pedestal_svg__a" x1="57.235" y1="189.497" x2="257.141" y2="311.742" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#6E6E6E"></stop>
+                      <stop offset="1" stop-color="#1B1C1C"></stop>
+                    </linearGradient>
+                  </defs>
+                </svg>
+
+                {/* Individual coin for each slide */}
+                {isMobile && (
+                  <img
+                    src="/coin_4-removebg-preview.png"
+                    alt="TrustQuests Coin"
+                    className="slide-coin"
+                  />
+                )}
+
+              </div>
+              <div className="slideshow-info">
+                <div className="slideshow-header">
+                  <h2 className="slideshow-title">{project.title}</h2>
+                  {project.questCount && (
+                    <div className="slideshow-quest-count">
+                      <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                      {project.questCount} Quests
+                    </div>
+                  )}
+                </div>
+                <p className="slideshow-description">{project.description}</p>
+                <button
+                  className="slideshow-start-button"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering slide click
+                    handleStartQuest(project.questLink);
                   }}
                 >
-
-                  <svg viewBox="0 0 320 535" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{width: '180px', color: 'rgb(255, 255, 255)', position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(calc(-50% + 250px))'}}>
-                    <path d="m277.296 319.617-.177 885.003 42.195-92.35.176-885.001-42.194 92.348Z" fill="#48494A"></path>
-                    <path d="m118.014 344.353-.177 886.417 159.283-24.74.176-886.416-159.282 24.739Z" fill="#2F2E30"></path>
-                    <path d="M.925 276.762.748 1166.55l117.088 67.6.177-889.789L.925 276.762Z" fill="#1B1C1C"></path>
-                    <path d="m277.297 319.616 42.194-92.348-117.088-67.598L43.12 184.409.926 276.758l117.088 67.598 159.283-24.74Z"></path>
-                    <path d="m9.463 274.51 38.913-85.246L200.83 165.57l110.288 63.729-38.913 85.246-152.453 23.704L9.463 274.51Z" fill="#403F42"></path>
-                    <path d="m48.64 204.722 152.093-23.509 104.606 60.115 5.423-11.815-110.029-63.233L48.64 189.789 9.818 274.373l5.423 3.117 33.399-72.768Z" fill="url(#pedestal_svg__a)"></path>
-                    <path d="m257.862 226.559 26.118 15.092-26.303 57.564-.001.003-.128.285-28.41 4.415-23.837 3.694-76.948 11.965h-.001l-7.034 1.086-10.883-6.292h-.001L70.855 291.52l-38.02-21.941 26.44-57.863 11.424-1.778 39.579-6.144 18.213-2.833 67.016-10.405 9.638 5.566.225-.39-.225.39 23.837 13.761 28.88 16.676Z" stroke="#000" stroke-width="0.901" fill="transparent"></path>
-                    <path opacity="0.2" d="M180.113 281.73c29.395 0 53.225-12.529 53.225-27.985s-23.83-27.986-53.225-27.986c-29.394 0-53.224 12.53-53.224 27.986 0 15.456 23.83 27.985 53.224 27.985Z" fill="#000"></path>
-                    <g transform="translate(136.124, 210.844) rotate(-5) scale(3)">
-                      <defs>
-                        <clipPath id="oval-clip">
-                          <ellipse cx="0" cy="0" rx="44" ry="35"/>
-                        </clipPath>
-                      </defs>
-                      <image href="/coin_4-removebg-preview.png" x="-44" y="-44" width="88" height="88" style={{opacity: 1}} clipPath="url(#oval-clip)" className="w-full"/>
-                    </g>
-
-                    <defs>
-                      <linearGradient id="pedestal_svg__a" x1="57.235" y1="189.497" x2="257.141" y2="311.742" gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#6E6E6E"></stop>
-                        <stop offset="1" stop-color="#1B1C1C"></stop>
-                      </linearGradient>
-                    </defs>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="5 12 10 17 20 7" />
                   </svg>
-
-                  {/* Individual coin for each slide */}
-                  {isMobile && (
-                    <img
-                      src="/coin_4-removebg-preview.png"
-                      alt="TrustQuests Coin"
-                      className="slide-coin"
-                    />
-                  )}
-
-                </div>
-                <div className="slideshow-info">
-                  <div className="slideshow-header">
-                    <h2 className="slideshow-title">{project.title}</h2>
-                    {project.questCount && (
-                      <div className="slideshow-quest-count">
-                        <img src="/verified.svg" alt="Verified" width="16" height="16" />
-                        {project.questCount} Quests
-                      </div>
-                    )}
-                  </div>
-                  <p className="slideshow-description">{project.description}</p>
-                  <button
-                    className="slideshow-start-button"
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent triggering slide click
-                      handleStartQuest(project.questLink);
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="5 12 10 17 20 7"/>
-                    </svg>
-                    Start Quest
-                  </button>
-                </div>
+                  Start Quest
+                </button>
               </div>
-            ))}
-          </div>
-
-          <button
-            className="slideshow-nav slideshow-next"
-            onClick={goToNext}
-            aria-label="Next slide"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          </button>
-
-          <div className="slideshow-indicators">
-            <div className="slideshow-dots-container">
-              {projects.map((_, index) => (
-                <button
-                  key={`dot-${index}`}
-                  className={`slideshow-dot ${index === currentIndex ? 'active' : ''}`}
-                  onClick={() => goToSlide(index)}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
             </div>
-          </div>
-
+          ))}
         </div>
 
-        {/* Admin Edit Button */}
-        {isAdmin && onEditHighlights && isPCDevice && (
-          <div className="highlights-admin-controls">
-            <button
-              className="highlights-edit-button"
-              onClick={() => {
-                console.log('🎯 Edit Highlights button clicked');
-                console.log('isAdmin:', isAdmin);
-                console.log('onEditHighlights:', !!onEditHighlights);
-                if (isAdmin) {
-                  if (onEditHighlights) {
-                    onEditHighlights();
-                  }
-                } else {
-                  console.log('❌ User is not admin - cannot edit highlights');
-                  // Show admin login hint
-                  alert('Admin access required. Press Ctrl+Shift+A to login as admin.');
-                }
-              }}
-              title={isAdmin ? "Edit Weekly Highlights" : "Admin access required - Press Ctrl+Shift+A"}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              Edit Highlights
-            </button>
+        <button
+          className="slideshow-nav slideshow-next"
+          onClick={goToNext}
+          aria-label="Next slide"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+
+        <div className="slideshow-indicators">
+          <div className="slideshow-dots-container">
+            {projects.map((_, index) => (
+              <button
+                key={`dot-${index}`}
+                className={`slideshow-dot ${index === currentIndex ? 'active' : ''}`}
+                onClick={() => goToSlide(index)}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
-        )}
+        </div>
+
+      </div>
+
+      {/* Admin Edit Button */}
+      {isAdmin && onEditHighlights && isPCDevice && (
+        <div className="highlights-admin-controls">
+          <button
+            className="highlights-edit-button"
+            onClick={() => {
+              console.log('🎯 Edit Highlights button clicked');
+              console.log('isAdmin:', isAdmin);
+              console.log('onEditHighlights:', !!onEditHighlights);
+              if (isAdmin) {
+                if (onEditHighlights) {
+                  onEditHighlights();
+                }
+              } else {
+                console.log('❌ User is not admin - cannot edit highlights');
+                // Show admin login hint
+                alert('Admin access required. Press Ctrl+Shift+A to login as admin.');
+              }
+            }}
+            title={isAdmin ? "Edit Weekly Highlights" : "Admin access required - Press Ctrl+Shift+A"}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Edit Highlights
+          </button>
+        </div>
+      )}
 
       {/* Spaces Grid Section */}
       <div ref={spacesRef} className="spaces-section">
@@ -616,9 +652,9 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
               onClick={() => setSortByFollowing(!sortByFollowing)}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="8.5" cy="7" r="4"/>
-                <path d="M20 8v6M23 11h-6"/>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <path d="M20 8v6M23 11h-6" />
               </svg>
               Following
             </button>
@@ -646,62 +682,63 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
               <p>No spaces found. Create your first space to get started!</p>
             </div>
           ) : (
-            displayedSpaces.map((space) => {
+            displayedSpaces.map((space, index) => {
               const questCount = getQuestCount(space.id);
               const followerCount = getFollowerCount(space.id);
               const tokenInfo = getTokenStatus(space.id);
-              
+
               return (
-                <div
-                  key={space.id}
-                  className="space-card"
-                  data-space-id={space.id}
-                  data-space-name={space.name}
-                  onClick={() => onSpaceClick?.(space)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onSpaceClick?.(space);
-                    }
-                  }}
-                >
-                  <div className="space-card-header">
-                    <div className="space-logo">
-                      {space.logo ? (
-                        <img src={space.logo} alt={space.name} />
-                      ) : (
-                        <div className="space-logo-placeholder">
-                          {space.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-verified-badge">
-                      <img src="/verified.svg" alt="Verified" width="16" height="16" />
-                    </div>
-                  </div>
-                  <div className="space-card-content">
-                    <h3 className="space-name">{space.name}</h3>
-                    <div className="space-stats">
-                      <div className="space-followers">
-                        {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
+                <Reveal key={space.id} delay={index * 50} width="100%">
+                  <div
+                    className="space-card"
+                    data-space-id={space.id}
+                    data-space-name={space.name}
+                    onClick={() => onSpaceClick?.(space)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSpaceClick?.(space);
+                      }
+                    }}
+                  >
+                    <div className="space-card-header">
+                      <div className="space-logo">
+                        {space.logo ? (
+                          <img src={space.logo} alt={space.name} />
+                        ) : (
+                          <div className="space-logo-placeholder">
+                            {space.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
                       </div>
-                      <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
-                        {questCount} {questCount === 1 ? 'active quest' : 'active quests'}
+                      <div className="space-verified-badge">
+                        <img src="/verified.svg" alt="Verified" width="16" height="16" />
                       </div>
                     </div>
-                    <div className="space-token">
-                      {tokenInfo.symbol ? (
-                        <div className="space-token-with-symbol">
-                          <span className="space-token-symbol">{tokenInfo.symbol}</span>
+                    <div className="space-card-content">
+                      <h3 className="space-name">{space.name}</h3>
+                      <div className="space-stats">
+                        <div className="space-followers">
+                          {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
                         </div>
-                      ) : (
-                        <span className="space-token-status">{tokenInfo.status}</span>
-                      )}
+                        <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
+                          {questCount} {questCount === 1 ? 'active quest' : 'active quests'}
+                        </div>
+                      </div>
+                      <div className="space-token">
+                        {tokenInfo.symbol ? (
+                          <div className="space-token-with-symbol">
+                            <span className="space-token-symbol">{tokenInfo.symbol}</span>
+                          </div>
+                        ) : (
+                          <span className="space-token-status">{tokenInfo.status}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Reveal>
               );
             })
           )}
@@ -714,7 +751,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
             >
               See More
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6"/>
+                <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
           </div>
@@ -736,107 +773,119 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
             </>
           ) : (
             <>
-          <a
-            href="https://portal.intuition.systems/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
-              <p className="ecosystem-dapp-description">
-                Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
-              </p>
-            </div>
-          </a>
+              <Reveal delay={0} width="100%">
+                <a
+                  href="https://portal.intuition.systems/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ecosystem-dapp-card"
+                >
+                  <div className="ecosystem-dapp-icon">
+                    <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
+                  </div>
+                  <div className="ecosystem-dapp-content">
+                    <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
+                    <p className="ecosystem-dapp-description">
+                      Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
+                    </p>
+                  </div>
+                </a>
+              </Reveal>
 
-          <a
-            href="https://tns.intuition.box/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/tns logo.svg" alt="Trust Name Services" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
-              <p className="ecosystem-dapp-description">
-                Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
-              </p>
-            </div>
-          </a>
+              <Reveal delay={100} width="100%">
+                <a
+                  href="https://tns.intuition.box/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ecosystem-dapp-card"
+                >
+                  <div className="ecosystem-dapp-icon">
+                    <img src="/tns logo.svg" alt="Trust Name Services" />
+                  </div>
+                  <div className="ecosystem-dapp-content">
+                    <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
+                    <p className="ecosystem-dapp-description">
+                      Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
+                    </p>
+                  </div>
+                </a>
+              </Reveal>
 
-          <a
-            href="https://inturank.intuition.box/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/inturank-logo.svg" alt="IntuRank" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">IntuRank</h3>
-              <p className="ecosystem-dapp-description">
-                Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
-              </p>
-            </div>
-          </a>
+              <Reveal delay={200} width="100%">
+                <a
+                  href="https://inturank.intuition.box/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ecosystem-dapp-card"
+                >
+                  <div className="ecosystem-dapp-icon">
+                    <img src="/inturank-logo.svg" alt="IntuRank" />
+                  </div>
+                  <div className="ecosystem-dapp-content">
+                    <h3 className="ecosystem-dapp-name">IntuRank</h3>
+                    <p className="ecosystem-dapp-description">
+                      Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
+                    </p>
+                  </div>
+                </a>
+              </Reveal>
 
-          <a
-            href="https://tribememe.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/tribememe-logo.svg" alt="Tribememe" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Tribememe</h3>
-              <p className="ecosystem-dapp-description">
-                A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
-              </p>
-            </div>
-          </a>
+              <Reveal delay={300} width="100%">
+                <a
+                  href="https://tribememe.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ecosystem-dapp-card"
+                >
+                  <div className="ecosystem-dapp-icon">
+                    <img src="/tribememe-logo.svg" alt="Tribememe" />
+                  </div>
+                  <div className="ecosystem-dapp-content">
+                    <h3 className="ecosystem-dapp-name">Tribememe</h3>
+                    <p className="ecosystem-dapp-description">
+                      A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
+                    </p>
+                  </div>
+                </a>
+              </Reveal>
 
-          <a
-            href="https://intuitionbets.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/intuition-bets.svg" alt="IntuitionBets" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
-              <p className="ecosystem-dapp-description">
-                Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
-              </p>
-            </div>
-          </a>
+              <Reveal delay={400} width="100%">
+                <a
+                  href="https://intuitionbets.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ecosystem-dapp-card"
+                >
+                  <div className="ecosystem-dapp-icon">
+                    <img src="/intuition-bets.svg" alt="IntuitionBets" />
+                  </div>
+                  <div className="ecosystem-dapp-content">
+                    <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
+                    <p className="ecosystem-dapp-description">
+                      Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
+                    </p>
+                  </div>
+                </a>
+              </Reveal>
 
-          <a
-            href="https://oraclelend.intuition.box/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
-              <p className="ecosystem-dapp-description">
-                Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
-              </p>
-            </div>
-          </a>
+              <Reveal delay={500} width="100%">
+                <a
+                  href="https://oraclelend.intuition.box/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ecosystem-dapp-card"
+                >
+                  <div className="ecosystem-dapp-icon">
+                    <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
+                  </div>
+                  <div className="ecosystem-dapp-content">
+                    <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
+                    <p className="ecosystem-dapp-description">
+                      Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
+                    </p>
+                  </div>
+                </a>
+              </Reveal>
             </>
           )}
         </div>

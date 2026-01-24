@@ -1,0 +1,147 @@
+/* Stepper.css */
+.outer-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.step-circle-container {
+    background: #111;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.step-indicator-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    position: relative;
+    padding: 0 12px;
+}
+
+.step-indicator {
+    position: relative;
+    z-index: 10;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-indicator-inner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    background-color: #222;
+    color: #a3a3a3;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.active-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #fff;
+    border-radius: 50%;
+}
+
+.check-icon {
+    width: 20px;
+    height: 20px;
+    color: #fff;
+}
+
+.step-connector {
+    flex: 1;
+    height: 2px;
+    background-color: #333;
+    margin: 0 8px;
+    position: relative;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.step-connector-inner {
+    height: 100%;
+    background-color: #5227FF;
+    width: 0%;
+}
+
+.step-content-default {
+    min-height: 200px;
+    padding: 2px;
+}
+
+.step-default {
+    width: 100%;
+}
+
+.footer-container {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #222;
+}
+
+.footer-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.footer-nav.spread {
+    justify-content: space-between;
+}
+
+.footer-nav.end {
+    justify-content: flex-end;
+}
+
+.back-button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    background-color: transparent;
+    color: #a3a3a3;
+    font-weight: 500;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.back-button:hover {
+    color: #fff;
+    background-color: #222;
+}
+
+.back-button.inactive {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.next-button {
+    padding: 10px 24px;
+    border-radius: 8px;
+    background-color: #5227FF;
+    color: white;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(82, 39, 255, 0.2);
+}
+
+.next-button:hover {
+    background-color: #4319dd;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px rgba(82, 39, 255, 0.3);
+}
+
+.next-button:active {
+    transform: translateY(0);
+}

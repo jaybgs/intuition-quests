@@ -10,6 +10,9 @@ import { useSubscription } from '../hooks/useSubscription';
 import { BuilderSettings } from './BuilderSettings';
 import { BuilderQuests } from './BuilderQuests';
 import { BuilderAnalytics } from './BuilderAnalytics';
+import { Reveal } from './Reveal';
+import { Dock, DockIcon } from './VerticalDock';
+import BlurText from './BlurText';
 import './BuilderDashboard.css';
 
 interface BuilderDashboardProps {
@@ -87,23 +90,23 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             }
             // Try to get user's first space instead (for non-admin users)
             if (address) {
-            spaceService.getSpacesByOwner(address).then(userSpaces => {
-              if (userSpaces.length > 0) {
-                setSpace(userSpaces[0]);
-                setIsAuthorized(true);
-              } else {
+              spaceService.getSpacesByOwner(address).then(userSpaces => {
+                if (userSpaces.length > 0) {
+                  setSpace(userSpaces[0]);
+                  setIsAuthorized(true);
+                } else {
+                  setIsAuthorized(false);
+                  if (onBack) {
+                    setTimeout(() => onBack(), 1000);
+                  }
+                }
+              }).catch(error => {
+                console.error('Error loading user spaces:', error);
                 setIsAuthorized(false);
                 if (onBack) {
                   setTimeout(() => onBack(), 1000);
                 }
-              }
-            }).catch(error => {
-              console.error('Error loading user spaces:', error);
-              setIsAuthorized(false);
-              if (onBack) {
-                setTimeout(() => onBack(), 1000);
-              }
-            });
+              });
             } else {
               setIsAuthorized(false);
               if (onBack) {
@@ -112,7 +115,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             }
             return;
           }
-          
+
           // Check authorization: Admin users have access to ALL spaces, owners have access to their own spaces
           const isOwner = address ? address.toLowerCase() === loadedSpace.ownerAddress.toLowerCase() : false;
           const isAuthorized = (isAdminLoggedIn || hasAdminRole) || isOwner; // Note: Admin check comes first for clarity
@@ -168,7 +171,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
               }
             });
           }
-          
+
           if (isAuthorized) {
             console.log('✅ Access granted to builder dashboard');
             setSpace(loadedSpace);
@@ -286,7 +289,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   // Get quests for this space (filter by projectId matching space name or owner)
   const spaceQuests = useMemo(() => {
     if (!space) return [];
-    return quests.filter(q => 
+    return quests.filter(q =>
       q.projectName?.toLowerCase() === space.name.toLowerCase() ||
       q.creatorAddress?.toLowerCase() === space.ownerAddress.toLowerCase()
     );
@@ -306,16 +309,16 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
         setSpaceXP(parseInt(stored, 10));
       } else {
         // Calculate from quest completions
-        const userCompletions = spaceQuests.filter(q => 
+        const userCompletions = spaceQuests.filter(q =>
           q.completedBy?.includes(address.toLowerCase())
         );
-        const calculatedXP = userCompletions.reduce((sum, q) => sum + (q.xpReward || 0), 0);
+        const calculatedXP = userCompletions.reduce((sum, q) => sum + (q.xpReward || q.iqPoints || 0), 0);
         setSpaceXP(calculatedXP);
       }
     }
   }, [address, space, spaceQuests]);
 
-  const builderDashboardRef = useScrollAnimation();
+
 
   // Show loading state
   if (isAuthorized === null) {
@@ -351,21 +354,21 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   };
 
   return (
-    <div ref={builderDashboardRef} className="builder-dashboard-page">
+    <div className="builder-dashboard-page">
       {/* Mobile Menu Button */}
-      <button 
+      <button
         className="builder-mobile-menu-button"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
         aria-label="Toggle menu"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           {isMenuOpen ? (
-            <path d="M18 6L6 18M6 6l12 12"/>
+            <path d="M18 6L6 18M6 6l12 12" />
           ) : (
             <>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
-              <line x1="3" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
             </>
           )}
         </svg>
@@ -373,7 +376,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
 
       {/* Overlay for mobile menu */}
       {isMenuOpen && (
-        <div 
+        <div
           className="builder-menu-overlay"
           onClick={() => setIsMenuOpen(false)}
         />
@@ -399,68 +402,86 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
           </div>
 
           {/* Navigation */}
+          {/* Navigation */}
           <nav className="builder-sidebar-nav">
-            <button 
-              className={`builder-nav-item ${activeNav === 'dashboard' ? 'active' : ''}`}
-              onClick={() => handleNavClick('dashboard')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-              </svg>
-              <span>Dashboard</span>
-            </button>
-            <button 
-              className={`builder-nav-item ${activeNav === 'quests' ? 'active' : ''}`}
-              onClick={() => handleNavClick('quests')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-              </svg>
-              <span>Quests</span>
-            </button>
-            <button 
-              className={`builder-nav-item ${activeNav === 'guide' ? 'active' : ''}`}
-              onClick={() => handleNavClick('guide')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-              <span>Guide</span>
-            </button>
-            {isPro && (
-              <button 
-                className={`builder-nav-item ${activeNav === 'analytics' ? 'active' : ''}`}
-                onClick={() => handleNavClick('analytics')}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="20" x2="18" y2="10"/>
-                  <line x1="12" y1="20" x2="12" y2="4"/>
-                  <line x1="6" y1="20" x2="6" y2="14"/>
-                </svg>
-                <span>Analytics</span>
-              </button>
-            )}
-            <button 
-              className={`builder-nav-item ${activeNav === 'settings' ? 'active' : ''}`}
-              onClick={() => handleNavClick('settings')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
-              </svg>
-              <span>Settings</span>
-            </button>
+            <Dock>
+              <DockIcon>
+                <button
+                  className={`builder-nav-item ${activeNav === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => handleNavClick('dashboard')}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                  </svg>
+                  <span>Dashboard</span>
+                </button>
+              </DockIcon>
+              <DockIcon>
+                <button
+                  className={`builder-nav-item ${activeNav === 'quests' ? 'active' : ''}`}
+                  onClick={() => handleNavClick('quests')}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  </svg>
+                  <span>Quests</span>
+                </button>
+              </DockIcon>
+              <DockIcon>
+                <button
+                  className={`builder-nav-item ${activeNav === 'guide' ? 'active' : ''}`}
+                  onClick={() => handleNavClick('guide')}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  </svg>
+                  <span>Guide</span>
+                </button>
+              </DockIcon>
+              {isPro && (
+                <DockIcon>
+                  <button
+                    className={`builder-nav-item ${activeNav === 'analytics' ? 'active' : ''}`}
+                    onClick={() => handleNavClick('analytics')}
+                    style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="20" x2="18" y2="10" />
+                      <line x1="12" y1="20" x2="12" y2="4" />
+                      <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                    <span>Analytics</span>
+                  </button>
+                </DockIcon>
+              )}
+              <DockIcon>
+                <button
+                  className={`builder-nav-item ${activeNav === 'settings' ? 'active' : ''}`}
+                  onClick={() => handleNavClick('settings')}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" />
+                  </svg>
+                  <span>Settings</span>
+                </button>
+              </DockIcon>
+            </Dock>
           </nav>
         </aside>
 
         {/* Main Content */}
         <main className="builder-main-content">
           {activeNav === 'quests' ? (
-            <BuilderQuests 
+            <BuilderQuests
               spaceId={space?.id}
               onCreateQuest={() => {
                 // Navigate to create quest page - you can implement this later
@@ -470,7 +491,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
           ) : activeNav === 'guide' ? (
             <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
               <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2rem' }}>Quest Creation Guide</h1>
-              
+
               <div style={{ marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>How to Create a Quest</h2>
                 <div style={{ background: 'rgba(26, 31, 53, 0.3)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
@@ -547,7 +568,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
           ) : activeNav === 'analytics' && isPro ? (
             <BuilderAnalytics creatorAddress={address} />
           ) : activeNav === 'settings' && space ? (
-            <BuilderSettings 
+            <BuilderSettings
               space={space}
               onSpaceUpdated={(updatedSpace) => {
                 setSpace(updatedSpace);
@@ -562,123 +583,145 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             />
           ) : (
             <>
-              <h1 className="builder-main-title">Dashboard</h1>
-
-          {/* Stats Grid */}
-          <div className="builder-stats-grid">
-            <div className="builder-stat-card">
-              <div className="builder-stat-icon rocket">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
-                  <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
-                  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
-                  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
-                </svg>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <BlurText
+                  text="Creator's Dashboard"
+                  delay={150}
+                  animateBy="words"
+                  direction="top"
+                  className="builder-main-title"
+                />
               </div>
-              <div className="builder-stat-content">
-                <div className="builder-stat-label">Quests Launched</div>
-                <div className="builder-stat-value">
-                  {builderStats.isLoading ? '...' : builderStats.questsLaunched}
+
+              {/* Stats Grid */}{/* Stats Grid */}
+              <div className="builder-stats-grid" style={{ marginTop: '-10px' }}>
+                <Reveal delay={0}>
+                  <div className="builder-stat-card">
+                    <div className="builder-stat-icon rocket">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+                        <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+                        <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+                        <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+                      </svg>
+                    </div>
+                    <div className="builder-stat-content">
+                      <div className="builder-stat-label">Quests Launched</div>
+                      <div className="builder-stat-value">
+                        {builderStats.isLoading ? '...' : builderStats.questsLaunched}
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+
+                <Reveal delay={100}>
+                  <div className="builder-stat-card">
+                    <div className="builder-stat-icon checkmark">
+                      <img src="/verified.svg" alt="Verified" width="24" height="24" />
+                    </div>
+                    <div className="builder-stat-content">
+                      <div className="builder-stat-label">Rewards Distributed</div>
+                      <div className="builder-stat-value">
+                        {builderStats.isLoading ? '...' : `${builderStats.rewardsDistributed.toFixed(2)} TRUST`}
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+
+                <Reveal delay={200}>
+                  <div className="builder-stat-card">
+                    <div className="builder-stat-icon trophy">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                        <path d="M4 22h16" />
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                      </svg>
+                    </div>
+                    <div className="builder-stat-content">
+                      <div className="builder-stat-label">Total Completions</div>
+                      <div className="builder-stat-value">
+                        {builderStats.isLoading ? '...' : builderStats.totalCompletions}
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+
+                <Reveal delay={300}>
+                  <div className="builder-stat-card">
+                    <div className="builder-stat-icon chart">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="20" x2="18" y2="10" />
+                        <line x1="12" y1="20" x2="12" y2="4" />
+                        <line x1="6" y1="20" x2="6" y2="14" />
+                      </svg>
+                    </div>
+                    <div className="builder-stat-content">
+                      <div className="builder-stat-label">Builder Rank</div>
+                      <div className="builder-stat-value">-</div>
+                    </div>
+                  </div>
+                </Reveal>
+              </div>
+
+              {/* Community Stats Section */}
+              <div className="builder-section">
+                <h2 className="builder-section-title">Community Stats</h2>
+                <div className="builder-community-stats-grid">
+                  <Reveal delay={400} width="100%">
+                    <div className="builder-community-card">
+                      {space.logo ? (
+                        <img src={space.logo} alt={space.name} className="builder-community-logo" />
+                      ) : (
+                        <div className="builder-community-logo-placeholder">TRUST</div>
+                      )}
+                      <div className="builder-community-badge">1</div>
+                      <div className="builder-community-name">{space.name}</div>
+                      <div className="builder-community-xp">XP {spaceXP}/100</div>
+                    </div>
+                  </Reveal>
+
+                  <Reveal delay={500} width="100%">
+                    <div className="builder-staked-card">
+                      <div className="builder-staked-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 6v6l4 2" />
+                        </svg>
+                      </div>
+                      <div className="builder-staked-info">
+                        <div className="builder-staked-label">Staked</div>
+                        <div className="builder-staked-value">0 TRUST</div>
+                      </div>
+                      <button className="builder-staked-button">Stake</button>
+                    </div>
+                  </Reveal>
                 </div>
               </div>
-            </div>
 
-            <div className="builder-stat-card">
-              <div className="builder-stat-icon checkmark">
-                <img src="/verified.svg" alt="Verified" width="24" height="24" />
-              </div>
-              <div className="builder-stat-content">
-                <div className="builder-stat-label">Rewards Distributed</div>
-                <div className="builder-stat-value">
-                  {builderStats.isLoading ? '...' : `${builderStats.rewardsDistributed.toFixed(2)} TRUST`}
+              {/* Builder Rewards Section */}
+              <Reveal delay={600} width="100%">
+                <div className="builder-section">
+                  <div className="builder-rewards-header">
+                    <div className="builder-rewards-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                        <path d="M4 22h16" />
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                      </svg>
+                    </div>
+                    <h2 className="builder-section-title">Builder Rewards</h2>
+                  </div>
+                  <div className="builder-rewards-message">
+                    Builder Rewards are coming soon
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="builder-stat-card">
-              <div className="builder-stat-icon trophy">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                  <path d="M4 22h16"/>
-                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                </svg>
-              </div>
-              <div className="builder-stat-content">
-                <div className="builder-stat-label">Total Completions</div>
-                <div className="builder-stat-value">
-                  {builderStats.isLoading ? '...' : builderStats.totalCompletions}
-                </div>
-              </div>
-            </div>
-
-            <div className="builder-stat-card">
-              <div className="builder-stat-icon chart">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="20" x2="18" y2="10"/>
-                  <line x1="12" y1="20" x2="12" y2="4"/>
-                  <line x1="6" y1="20" x2="6" y2="14"/>
-                </svg>
-              </div>
-              <div className="builder-stat-content">
-                <div className="builder-stat-label">Builder Rank</div>
-                <div className="builder-stat-value">-</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Community Stats Section */}
-          <div className="builder-section">
-            <h2 className="builder-section-title">Community Stats</h2>
-            <div className="builder-community-stats-grid">
-              <div className="builder-community-card">
-                {space.logo ? (
-                  <img src={space.logo} alt={space.name} className="builder-community-logo" />
-                ) : (
-                  <div className="builder-community-logo-placeholder">TRUST</div>
-                )}
-                <div className="builder-community-badge">1</div>
-                <div className="builder-community-name">{space.name}</div>
-                <div className="builder-community-xp">XP {spaceXP}/100</div>
-              </div>
-
-              <div className="builder-staked-card">
-                <div className="builder-staked-icon">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                  </svg>
-                </div>
-                <div className="builder-staked-info">
-                  <div className="builder-staked-label">Staked</div>
-                  <div className="builder-staked-value">0 TRUST</div>
-                </div>
-                <button className="builder-staked-button">Stake</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Builder Rewards Section */}
-          <div className="builder-section">
-            <div className="builder-rewards-header">
-              <div className="builder-rewards-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                  <path d="M4 22h16"/>
-                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                </svg>
-              </div>
-              <h2 className="builder-section-title">Builder Rewards</h2>
-            </div>
-            <div className="builder-rewards-message">
-              Builder Rewards are coming soon
-            </div>
-          </div>
+              </Reveal>
             </>
           )}
         </main>

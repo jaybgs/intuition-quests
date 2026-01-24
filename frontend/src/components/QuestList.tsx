@@ -3,7 +3,7 @@ import { useQuests } from '../hooks/useQuests';
 import { QuestCard } from './QuestCard';
 import { QuestCardSkeleton } from './Skeleton';
 import { EmptyQuests } from './EmptyState';
-import { useScrollAnimation } from '../hooks/useScrollAnimation';
+import { Reveal } from './Reveal';
 import './QuestList.css';
 
 interface QuestListProps {
@@ -13,7 +13,7 @@ interface QuestListProps {
 export function QuestList({ onQuestClick }: QuestListProps) {
   const { quests, isLoading } = useQuests();
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
-  const questListRef = useScrollAnimation();
+
 
   const filteredQuests = quests.filter(quest => {
     if (filter === 'completed') {
@@ -24,7 +24,7 @@ export function QuestList({ onQuestClick }: QuestListProps) {
   });
 
   return (
-    <div ref={questListRef} className="quest-list">
+    <div className="quest-list">
       <div className="quest-list-header">
         <h2 className="quest-list-title">Available Quests</h2>
         <div className="quest-list-filters">
@@ -59,12 +59,13 @@ export function QuestList({ onQuestClick }: QuestListProps) {
         <EmptyQuests />
       ) : (
         <div className="quests-grid">
-          {filteredQuests.map((quest) => (
-            <QuestCard 
-              key={quest.id} 
-              quest={quest}
-              onClick={() => onQuestClick?.(quest.id)}
-            />
+          {filteredQuests.map((quest, i) => (
+            <Reveal key={quest.id} delay={i * 50} width="100%">
+              <QuestCard
+                quest={quest}
+                onClick={() => onQuestClick?.(quest.id)}
+              />
+            </Reveal>
           ))}
         </div>
       )}

@@ -54,7 +54,7 @@ export class QuestServiceSupabase {
         return [];
       }
 
-      return (data || []).map(quest => this.mapQuestFromDb(quest));
+      return (data || []).map(quest => this.mapQuestFromDb ? this.mapQuestFromDb(quest) : this.mapLocalQuest(quest));
     } catch (error) {
       console.error('Error fetching quests from Supabase:', error);
       return [];
@@ -359,6 +359,7 @@ export class QuestServiceSupabase {
       winnerPrizes,
       rewardDeposit: row.reward_deposit,
       rewardToken: row.reward_token,
+      rewardType: row.reward_type, // Add reward type mapping
       expiresAt: row.expires_at,
       endDate: row.end_date,
       endTime: row.end_time,
@@ -549,6 +550,7 @@ export class QuestServiceSupabase {
       winnerPrizes: quest.winnerPrizes,
       rewardDeposit: quest.rewardDeposit,
       rewardToken: quest.rewardToken,
+      rewardType: quest.rewardType, // Add reward type for local quests too
     };
   }
 }

@@ -423,6 +423,17 @@ export const CLAIM_IQ_ABI = [
     outputs: [{ name: 'tripleId', type: 'uint256' }],
   },
   {
+    name: 'claimIQOnlyQuest',
+    type: 'function',
+    stateMutability: 'payable',
+    inputs: [
+      { name: 'questId', type: 'bytes32' },
+      { name: 'questAtomId', type: 'uint256' },
+      { name: 'userAtomId', type: 'uint256' },
+    ],
+    outputs: [{ name: 'tripleId', type: 'uint256' }],
+  },
+  {
     name: 'hasClaimedQuest',
     type: 'function',
     stateMutability: 'view',

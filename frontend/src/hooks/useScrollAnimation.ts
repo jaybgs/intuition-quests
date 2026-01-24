@@ -1,83 +1,75 @@
 import { useEffect, useRef } from 'react';
 
-/**
- * Custom hook for scroll-triggered animations
- * Applies fade-in and slide-up animation when element enters viewport
- */
-export function useScrollAnimation(options?: {
+interface UseScrollAnimationOptions {
   threshold?: number;
   rootMargin?: string;
-  once?: boolean; // If true, only animate once (don't remove class when scrolling out)
-}) {
+  delay?: number;
+}
+
+/**
+ * Enhanced hook for smooth scroll transitions (60fps).
+ * Uses CSS transitions instead of keyframes to prevent jank.
+ */
+export function useScrollAnimation({
+  threshold = 0.15,
+  rootMargin = '0px',
+  delay = 0
+}: UseScrollAnimationOptions = {}) {
   const ref = useRef<HTMLDivElement>(null);
-  const hasAnimatedRef = useRef(false);
 
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
 
-    const {
-      threshold = 0.1,
-      rootMargin = '100px 0px 0px 0px',
-      once = true,
-    } = options || {};
+    // Initial state: Hidden below
+    element.classList.add('reveal-status-hidden-below');
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            if (!once || !hasAnimatedRef.current) {
-              entry.target.classList.add('animate-in');
-              hasAnimatedRef.current = true;
+          const el = entry.target as HTMLElement;
 
-              if (once) {
-                observer.unobserve(entry.target);
-              }
-            } else if (!once) {
-              // Re-trigger animation when element comes back into view
-              entry.target.classList.remove('animate-in');
-              // Force reflow to restart animation
-              void entry.target.offsetWidth;
-              entry.target.classList.add('animate-in');
+          if (entry.isIntersecting) {
+            // Visible: Apply delay and show
+            if (delay > 0) {
+              el.style.transitionDelay = `${delay}ms`;
             }
-          } else if (!once) {
-            entry.target.classList.remove('animate-in');
-            hasAnimatedRef.current = false; // Reset for re-triggering
+            el.classList.remove('reveal-status-hidden-below', 'reveal-status-hidden-above');
+            el.classList.add('reveal-status-visible');
+          } else {
+            // Hidden: Remove delay (instant exit) and set direction
+            el.style.transitionDelay = '0ms';
+
+            const isBelow = entry.boundingClientRect.top > 0;
+
+            el.classList.remove('reveal-status-visible');
+            if (isBelow) {
+              el.classList.add('reveal-status-hidden-below');
+              el.classList.remove('reveal-status-hidden-above');
+            } else {
+              el.classList.add('reveal-status-hidden-above');
+              el.classList.remove('reveal-status-hidden-below');
+            }
           }
         });
       },
       { threshold, rootMargin }
     );
 
-    // Check if element is already in view on mount - make it immediately visible
-    const rect = element.getBoundingClientRect();
-    const isInView = rect.top < window.innerHeight && rect.bottom > 0;
-    
-    if (isInView && !hasAnimatedRef.current) {
-      // First visible elements should be immediately visible, no animation
-      element.classList.add('animate-in');
-      hasAnimatedRef.current = true;
-      return; // Don't set up observer for immediately visible elements
-    }
-
     observer.observe(element);
-
-    // Fallback: ensure element is visible after 2 seconds
-    const fallbackTimeout = setTimeout(() => {
-      if (!hasAnimatedRef.current && element) {
-        element.classList.add('animate-in');
-        hasAnimatedRef.current = true;
-        observer.unobserve(element);
-      }
-    }, 2000);
 
     return () => {
       if (element) {
+        element.classList.remove(
+          'reveal-status-visible',
+          'reveal-status-hidden-below',
+          'reveal-status-hidden-above'
+        );
+        element.style.transitionDelay = '';
         observer.unobserve(element);
       }
-      clearTimeout(fallbackTimeout);
     };
-  }, [options?.threshold, options?.rootMargin, options?.once]);
+  }, [threshold, rootMargin, delay]);
 
   return ref;
 }

@@ -10,3 +10,9 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+// Declare custom web components for TypeScript
+declare namespace JSX {
+  interface IntrinsicElements {
+    'appkit-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & { size?: string }, HTMLElement>;
+  }
+}

@@ -49,12 +49,16 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Cybernetic Dark Gradient: Deep Teal -> Black -> Deep Maroon */
-  background: linear-gradient(135deg, #012E38 0%, #000000 50%, #360505 100%);
-  background-attachment: fixed; /* Keep gradient fixed on scroll */
+  /* Cybernetic Dark Gradient */
+  /* User Defined Gradient */
+  background: linear-gradient(180deg, #012E38 0%, #000000 50%, rgb(54, 5, 5) 100%);
+  /* Fallback dark background */
+  background-attachment: fixed;
+  /* Keep gradient fixed on scroll */
   color: var(--text-primary);
   min-height: 100vh;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-x: hidden;
+  /* Prevent horizontal scrolling */
   width: 100%;
   max-width: 100vw;
   position: relative;
@@ -62,48 +66,78 @@ body {
   font-size: inherit;
 }
 
+.bg-video {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  z-index: -1;
+  object-fit: cover;
+  opacity: 0.6;
+  /* Slight transparency to ensure text is readable */
+}
+
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: row;
   position: relative;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-x: hidden;
+  /* Prevent horizontal scrolling */
   width: 100%;
   max-width: 100vw;
   /* Ensure gradient shows through */
   background: transparent;
-  padding: 0; /* No padding on app container */
+  padding: 0;
+  /* No padding on app container */
 }
 
 .app-content-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
   min-width: 0;
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-x: hidden;
+  /* Prevent horizontal scrolling */
 }
 
 /* Header Styles - Layer3 inspired */
 .app-header {
-  background: rgba(26, 31, 53, 0.2); /* 80% transparency (20% opacity) - same as statistics boxes */
-  backdrop-filter: blur(36px); /* Increased blur - same as statistics boxes */
-  -webkit-backdrop-filter: blur(36px); /* Safari support */
-  border: none; /* No borderlines */
-  border-radius: 24px; /* Rounded rectangle */
+  background: rgba(26, 31, 53, 0.2);
+  /* 80% transparency (20% opacity) - same as statistics boxes */
+  backdrop-filter: blur(36px);
+  /* Increased blur - same as statistics boxes */
+  -webkit-backdrop-filter: blur(36px);
+  /* Safari support */
+  border: none;
+  /* No borderlines */
+  border-radius: 24px;
+  /* Rounded rectangle */
   padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
-  top: 16px; /* Margin from top edge */
+  top: 16px;
+  /* Margin from top edge */
   z-index: 100;
-  margin: 16px 24px 0 24px; /* Margins from screen edges - top, right, bottom, left */
-  width: calc(100% - 48px); /* Full width minus left and right margins */
-  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4), /* Outer shadow for depth */
-              0 4px 14px rgba(0, 0, 0, 0.3), /* Inner shadow for subtle depth */
-              inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Subtle inner highlight */
+  margin: 16px 24px 0 24px;
+  /* Margins from screen edges - top, right, bottom, left */
+  width: calc(100% - 48px);
+  /* Full width minus left and right margins */
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+    /* Outer shadow for depth */
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    /* Inner shadow for subtle depth */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  /* Subtle inner highlight */
   transition: all 0.2s;
 }
 
@@ -119,7 +153,8 @@ body {
   align-items: center;
   gap: 2px;
   position: relative;
-  margin-left: 15px; /* Move navigation tabs 15px to the right from logo */
+  margin-left: 15px;
+  /* Move navigation tabs 15px to the right from logo */
 }
 
 .header-nav-slider {
@@ -134,7 +169,7 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 0;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   pointer-events: none;
 }
 
@@ -239,18 +274,25 @@ body {
 .search-input {
   width: 100%;
   padding: 10px 12px 10px 44px;
-  background: rgba(26, 31, 53, 0.2); /* 80% transparency (20% opacity) - glassmorphism */
-  backdrop-filter: blur(36px); /* Blur effect - same as statistics boxes */
-  -webkit-backdrop-filter: blur(36px); /* Safari support */
-  border: none; /* No borderlines */
+  background: rgba(26, 31, 53, 0.2);
+  /* 80% transparency (20% opacity) - glassmorphism */
+  backdrop-filter: blur(36px);
+  /* Blur effect - same as statistics boxes */
+  -webkit-backdrop-filter: blur(36px);
+  /* Safari support */
+  border: none;
+  /* No borderlines */
   border-radius: 20px;
   color: var(--text-primary);
   font-size: 14px;
   font-weight: bold;
   transition: all 0.2s;
-  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4), /* Outer shadow for depth */
-              0 4px 14px rgba(0, 0, 0, 0.3), /* Inner shadow for subtle depth */
-              inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Subtle inner highlight */
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+    /* Outer shadow for depth */
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    /* Inner shadow for subtle depth */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  /* Subtle inner highlight */
 }
 
 .search-input::placeholder {
@@ -260,12 +302,16 @@ body {
 
 .search-input:focus {
   outline: none;
-  background: rgba(37, 43, 61, 0.25); /* Slightly more visible on focus, maintaining 80% transparency */
-  backdrop-filter: blur(45px); /* Even more blur on focus */
+  background: rgba(37, 43, 61, 0.25);
+  /* Slightly more visible on focus, maintaining 80% transparency */
+  backdrop-filter: blur(45px);
+  /* Even more blur on focus */
   -webkit-backdrop-filter: blur(45px);
-  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5), /* Deeper shadow on focus */
-              0 7px 22px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15); /* Slightly brighter highlight */
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5),
+    /* Deeper shadow on focus */
+    0 7px 22px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  /* Slightly brighter highlight */
 }
 
 .search-icon {
@@ -482,7 +528,7 @@ body {
   white-space: nowrap;
   min-width: fit-content;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .profile-button:hover {
@@ -492,7 +538,7 @@ body {
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
   box-shadow: 0 7px 22px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .profile-pic {
@@ -531,7 +577,8 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: #000000; /* Solid black background */
+  background: #000000;
+  /* Solid black background */
   border: 1px solid var(--border-color);
   border-radius: 12px;
   min-width: 200px;
@@ -548,6 +595,7 @@ body {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -614,7 +662,7 @@ body {
   font-size: 14px;
   transition: all 0.2s ease;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .trust-balance-display:hover {
@@ -623,7 +671,7 @@ body {
   -webkit-backdrop-filter: blur(45px);
   border-color: rgba(255, 255, 255, 0.15);
   box-shadow: 0 7px 22px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .trust-balance-amount {
@@ -646,7 +694,8 @@ body {
 
 /* Mobile Dropdown Balance Item - Hidden on desktop, visible on mobile */
 .dropdown-balance-item {
-  display: none; /* Hidden by default (desktop) */
+  display: none;
+  /* Hidden by default (desktop) */
 }
 
 .dropdown-balance-item.dropdown-balance-mobile {
@@ -671,7 +720,8 @@ body {
 }
 
 .dropdown-divider {
-  display: none; /* Hidden by default (desktop) */
+  display: none;
+  /* Hidden by default (desktop) */
 }
 
 .dropdown-divider.dropdown-divider-mobile {
@@ -686,7 +736,7 @@ body {
   .dropdown-balance-item.dropdown-balance-mobile {
     display: flex;
   }
-  
+
   .dropdown-divider.dropdown-divider-mobile {
     display: block;
   }
@@ -1061,25 +1111,38 @@ body {
 .user-details-section {
   margin-bottom: 32px;
   padding: 24px;
-  border: none; /* Remove border */
+  border: none;
+  /* Remove border */
   border-radius: 32px;
-  background: rgba(26, 31, 53, 0.2); /* 80% transparency (20% opacity) */
-  backdrop-filter: blur(36px); /* Increased blur by 80% (20px * 1.8 = 36px) */
-  -webkit-backdrop-filter: blur(36px); /* Safari support */
-  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4), /* Outer shadow for depth - increased by 80% */
-              0 4px 14px rgba(0, 0, 0, 0.3), /* Inner shadow for subtle depth - increased by 80% */
-              inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Subtle inner highlight */
+  background: rgba(26, 31, 53, 0.2);
+  /* 80% transparency (20% opacity) */
+  backdrop-filter: blur(36px);
+  /* Increased blur by 80% (20px * 1.8 = 36px) */
+  -webkit-backdrop-filter: blur(36px);
+  /* Safari support */
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+    /* Outer shadow for depth - increased by 80% */
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    /* Inner shadow for subtle depth - increased by 80% */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  /* Subtle inner highlight */
   transition: all 0.2s;
 }
 
 .user-details-section:hover {
-  background: rgba(37, 43, 61, 0.25); /* Slightly more visible on hover, maintaining 80% transparency */
-  backdrop-filter: blur(45px); /* Even more blur on hover - increased by 80% (25px * 1.8 = 45px) */
+  background: rgba(37, 43, 61, 0.25);
+  /* Slightly more visible on hover, maintaining 80% transparency */
+  backdrop-filter: blur(45px);
+  /* Even more blur on hover - increased by 80% (25px * 1.8 = 45px) */
   -webkit-backdrop-filter: blur(45px);
-  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5), /* Deeper shadow on hover - increased by 80% */
-              0 7px 22px rgba(0, 0, 0, 0.4), /* Increased by 80% */
-              inset 0 1px 0 rgba(255, 255, 255, 0.15); /* Slightly brighter highlight */
-  transform: translateY(-3px); /* Increased lift effect on hover */
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5),
+    /* Deeper shadow on hover - increased by 80% */
+    0 7px 22px rgba(0, 0, 0, 0.4),
+    /* Increased by 80% */
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  /* Slightly brighter highlight */
+  transform: translateY(-3px);
+  /* Increased lift effect on hover */
 }
 
 .user-details-content {
@@ -1195,12 +1258,17 @@ body {
 .xp-progress-container-inline .xp-level-circle {
   width: 48px;
   height: 48px;
-  border-radius: 50%; /* Circle shape */
-  border: 3px solid var(--border-color); /* 3px solid border */
+  border-radius: 50%;
+  /* Circle shape */
+  border: 3px solid var(--border-color);
+  /* 3px solid border */
   position: relative;
-  display: flex; /* Flexbox for centering */
-  align-items: center; /* Vertical centering */
-  justify-content: center; /* Horizontal centering */
+  display: flex;
+  /* Flexbox for centering */
+  align-items: center;
+  /* Vertical centering */
+  justify-content: center;
+  /* Horizontal centering */
   flex-shrink: 0;
   z-index: 2;
 }
@@ -1210,12 +1278,16 @@ body {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #39E80C 0%, #2db809 100%); /* Green gradient for depth */
+  background: linear-gradient(135deg, #39E80C 0%, #2db809 100%);
+  /* Green gradient for depth */
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), /* Black outer shadow */
-              0 2px 6px rgba(0, 0, 0, 0.3),
-              inset 0 2px 4px rgba(255, 255, 255, 0.2), /* Inner highlight */
-              inset 0 -2px 4px rgba(0, 0, 0, 0.3); /* Inner shadow for depth */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+    /* Black outer shadow */
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    /* Inner highlight */
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  /* Inner shadow for depth */
 }
 
 .xp-progress-container-inline .level-value {
@@ -1254,7 +1326,8 @@ body {
 
 .xp-progress-container-inline .xp-progress-fill {
   height: 8px;
-  background: #39E80C; /* Green color */
+  background: #39E80C;
+  /* Green color */
   border-radius: 4px;
   transition: width 1.5s ease-out;
   position: relative;
@@ -1281,12 +1354,15 @@ body {
     transform: translateX(100%);
     opacity: 0;
   }
+
   20% {
     opacity: 1;
   }
+
   80% {
     opacity: 1;
   }
+
   100% {
     transform: translateX(-300%);
     opacity: 0;
@@ -1297,6 +1373,7 @@ body {
   0% {
     width: 0%;
   }
+
   100% {
     width: var(--target-width, 2%);
   }
@@ -1543,12 +1620,17 @@ body {
 .xp-level-circle {
   width: 48px;
   height: 48px;
-  border-radius: 50%; /* Circle shape */
-  border: 3px solid var(--border-color); /* 3px solid border */
+  border-radius: 50%;
+  /* Circle shape */
+  border: 3px solid var(--border-color);
+  /* 3px solid border */
   position: relative;
-  display: flex; /* Flexbox for centering */
-  align-items: center; /* Vertical centering */
-  justify-content: center; /* Horizontal centering */
+  display: flex;
+  /* Flexbox for centering */
+  align-items: center;
+  /* Vertical centering */
+  justify-content: center;
+  /* Horizontal centering */
   flex-shrink: 0;
   z-index: 2;
 }
@@ -1558,12 +1640,16 @@ body {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #39E80C 0%, #2db809 100%); /* Green gradient for depth */
+  background: linear-gradient(135deg, #39E80C 0%, #2db809 100%);
+  /* Green gradient for depth */
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), /* Black outer shadow */
-              0 2px 6px rgba(0, 0, 0, 0.3),
-              inset 0 2px 4px rgba(255, 255, 255, 0.2), /* Inner highlight */
-              inset 0 -2px 4px rgba(0, 0, 0, 0.3); /* Inner shadow for depth */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+    /* Black outer shadow */
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    /* Inner highlight */
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  /* Inner shadow for depth */
 }
 
 .level-value {
@@ -1620,7 +1706,8 @@ body {
 
 .xp-progress-fill {
   height: 8px;
-  background: #39E80C; /* Green color */
+  background: #39E80C;
+  /* Green color */
   border-radius: 4px;
   transition: width 0.3s ease;
   align-self: center;
@@ -1692,8 +1779,8 @@ body {
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2),
-              0 2px 4px rgba(0, 0, 0, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -1713,8 +1800,8 @@ body {
   background: linear-gradient(135deg, #2d4a6f 0%, #3d5a7f 100%);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.3),
-              0 3px 6px rgba(0, 0, 0, 0.3);
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .connect-button:hover::before {
@@ -1724,7 +1811,7 @@ body {
 .connect-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .connect-button:disabled {
@@ -2036,6 +2123,7 @@ body {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2237,27 +2325,40 @@ body {
   gap: 5.6px;
   padding: 20px;
   height: 200px;
-  background: rgba(26, 31, 53, 0.2); /* 80% transparency (20% opacity) */
-  border: none; /* Remove border */
+  background: rgba(26, 31, 53, 0.2);
+  /* 80% transparency (20% opacity) */
+  border: none;
+  /* Remove border */
   border-radius: 16px;
   transition: all 0.2s;
   justify-content: flex-end;
   align-items: flex-start;
-  backdrop-filter: blur(36px); /* Increased blur by 80% (20px * 1.8 = 36px) */
-  -webkit-backdrop-filter: blur(36px); /* Safari support */
-  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4), /* Outer shadow for depth - increased by 80% */
-              0 4px 14px rgba(0, 0, 0, 0.3), /* Inner shadow for subtle depth - increased by 80% */
-              inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Subtle inner highlight */
+  backdrop-filter: blur(36px);
+  /* Increased blur by 80% (20px * 1.8 = 36px) */
+  -webkit-backdrop-filter: blur(36px);
+  /* Safari support */
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+    /* Outer shadow for depth - increased by 80% */
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    /* Inner shadow for subtle depth - increased by 80% */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  /* Subtle inner highlight */
 }
 
 .stat-rectangle:hover {
-  background: rgba(37, 43, 61, 0.25); /* Slightly more visible on hover, maintaining 80% transparency */
-  backdrop-filter: blur(45px); /* Even more blur on hover - increased by 80% (25px * 1.8 = 45px) */
+  background: rgba(37, 43, 61, 0.25);
+  /* Slightly more visible on hover, maintaining 80% transparency */
+  backdrop-filter: blur(45px);
+  /* Even more blur on hover - increased by 80% (25px * 1.8 = 45px) */
   -webkit-backdrop-filter: blur(45px);
-  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5), /* Deeper shadow on hover - increased by 80% */
-              0 7px 22px rgba(0, 0, 0, 0.4), /* Increased by 80% */
-              inset 0 1px 0 rgba(255, 255, 255, 0.15); /* Slightly brighter highlight */
-  transform: translateY(-3px); /* Increased lift effect on hover */
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5),
+    /* Deeper shadow on hover - increased by 80% */
+    0 7px 22px rgba(0, 0, 0, 0.4),
+    /* Increased by 80% */
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  /* Slightly brighter highlight */
+  transform: translateY(-3px);
+  /* Increased lift effect on hover */
 }
 
 .stat-rectangle .stat-label {
@@ -2580,7 +2681,8 @@ body {
 
 /* Slide-out Menu - Hidden (moved to top bar) */
 .slide-menu {
-  display: none; /* Side menu removed, items moved to top bar */
+  display: none;
+  /* Side menu removed, items moved to top bar */
 }
 
 .slide-menu-header {
@@ -2590,12 +2692,14 @@ body {
   padding: 16px 24px;
   background: var(--bg-header);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  min-height: 64px; /* Match header height */
+  min-height: 64px;
+  /* Match header height */
   position: sticky;
   top: 0;
   z-index: 10;
   backdrop-filter: blur(10px);
-  flex-shrink: 0; /* Prevent shrinking */
+  flex-shrink: 0;
+  /* Prevent shrinking */
 }
 
 .slide-menu-header h2 {
@@ -2630,7 +2734,8 @@ body {
 .slide-menu-nav {
   flex: 1;
   padding: 12px 8px;
-  padding-top: 12px; /* Reduced padding since header is now visible */
+  padding-top: 12px;
+  /* Reduced padding since header is now visible */
   overflow-y: auto;
 }
 
@@ -2683,30 +2788,44 @@ body {
   width: 100%;
   max-width: 100%;
   height: 500px;
-  background: rgba(26, 31, 53, 0.2); /* 80% transparency (20% opacity) - same as statistics boxes */
-  backdrop-filter: blur(36px); /* Increased blur by 80% (20px * 1.8 = 36px) - same as statistics boxes */
-  -webkit-backdrop-filter: blur(36px); /* Safari support */
-  border: none; /* Remove border - same as statistics boxes */
+  background: rgba(26, 31, 53, 0.2);
+  /* 80% transparency (20% opacity) - same as statistics boxes */
+  backdrop-filter: blur(36px);
+  /* Increased blur by 80% (20px * 1.8 = 36px) - same as statistics boxes */
+  -webkit-backdrop-filter: blur(36px);
+  /* Safari support */
+  border: none;
+  /* Remove border - same as statistics boxes */
   border-radius: 24px;
   padding: 40px;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4), /* Outer shadow for depth - increased by 80% - same as statistics boxes */
-              0 4px 14px rgba(0, 0, 0, 0.3), /* Inner shadow for subtle depth - increased by 80% */
-              inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Subtle inner highlight */
+  box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
+    /* Outer shadow for depth - increased by 80% - same as statistics boxes */
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    /* Inner shadow for subtle depth - increased by 80% */
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  /* Subtle inner highlight */
   transition: all 0.2s;
-  overflow: hidden; /* Ensure arrows don't overflow */
+  overflow: hidden;
+  /* Ensure arrows don't overflow */
 }
 
 .slideshow-glass:hover {
-  background: rgba(37, 43, 61, 0.25); /* Slightly more visible on hover, maintaining 80% transparency */
-  backdrop-filter: blur(45px); /* Even more blur on hover - increased by 80% (25px * 1.8 = 45px) */
+  background: rgba(37, 43, 61, 0.25);
+  /* Slightly more visible on hover, maintaining 80% transparency */
+  backdrop-filter: blur(45px);
+  /* Even more blur on hover - increased by 80% (25px * 1.8 = 45px) */
   -webkit-backdrop-filter: blur(45px);
-  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5), /* Deeper shadow on hover - increased by 80% */
-              0 7px 22px rgba(0, 0, 0, 0.4), /* Increased by 80% */
-              inset 0 1px 0 rgba(255, 255, 255, 0.15); /* Slightly brighter highlight */
-  transform: translateY(-3px); /* Increased lift effect on hover */
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.5),
+    /* Deeper shadow on hover - increased by 80% */
+    0 7px 22px rgba(0, 0, 0, 0.4),
+    /* Increased by 80% */
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  /* Slightly brighter highlight */
+  transform: translateY(-3px);
+  /* Increased lift effect on hover */
 }
 
 .slideshow-content {
@@ -2802,7 +2921,7 @@ body {
   transition: all 0.3s ease;
   z-index: 10;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .slideshow-nav:hover {
@@ -2811,7 +2930,7 @@ body {
   -webkit-backdrop-filter: blur(25px);
   transform: translateY(-50%) scale(1.1);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .slideshow-nav:active {
@@ -2865,8 +2984,10 @@ body {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(20px); /* Increased blur for whole screen */
-  -webkit-backdrop-filter: blur(20px); /* Increased blur for whole screen */
+  backdrop-filter: blur(20px);
+  /* Increased blur for whole screen */
+  -webkit-backdrop-filter: blur(20px);
+  /* Increased blur for whole screen */
   z-index: 1000;
   display: flex;
   align-items: flex-start;
@@ -2877,13 +2998,14 @@ body {
 }
 
 .mobile-menu-content {
-  background: #000000; /* Solid black background */
+  background: #000000;
+  /* Solid black background */
   border-radius: 16px;
   padding: 16px;
   min-width: 240px;
   box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
-              0 4px 14px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   animation: slideDown 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
@@ -2931,6 +3053,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -2941,6 +3064,7 @@ body {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -3041,13 +3165,15 @@ body {
 
   .app-content-wrapper {
     margin-left: 0;
-    overflow-x: hidden; /* Prevent horizontal scrolling on mobile */
+    overflow-x: hidden;
+    /* Prevent horizontal scrolling on mobile */
     width: 100%;
     max-width: 100vw;
   }
 
   /* Prevent horizontal scrolling globally on mobile */
-  html, body {
+  html,
+  body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
@@ -3072,7 +3198,8 @@ body {
     height: auto;
     min-height: 450px;
     padding: 28px;
-    border: none; /* Ensure no border on mobile */
+    border: none;
+    /* Ensure no border on mobile */
   }
 
   .slideshow-image {
@@ -3166,9 +3293,13 @@ body {
   }
 
   /* Global Mobile Optimizations */
-  
+
   /* Better touch targets - minimum 44x44px for accessibility */
-  button, a, input[type="button"], input[type="submit"], .clickable {
+  button,
+  a,
+  input[type="button"],
+  input[type="submit"],
+  .clickable {
     min-height: 44px;
     min-width: 44px;
   }
@@ -3199,7 +3330,8 @@ body {
   input[type="search"],
   textarea,
   select {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
     padding: 12px 16px;
     min-height: 44px;
   }
@@ -3217,14 +3349,17 @@ body {
   }
 
   /* Better modal/dialog spacing */
-  .modal, .popup, [role="dialog"] {
+  .modal,
+  .popup,
+  [role="dialog"] {
     padding: 20px 16px;
     margin: 16px;
     max-width: calc(100vw - 32px);
   }
 
   /* Improved card spacing */
-  .card, [class*="card"] {
+  .card,
+  [class*="card"] {
     padding: 16px;
     margin-bottom: 16px;
   }
@@ -3236,11 +3371,13 @@ body {
   }
 
   /* Improved navigation */
-  nav, [role="navigation"] {
+  nav,
+  [role="navigation"] {
     padding: 8px 12px;
   }
 
-  nav button, nav a {
+  nav button,
+  nav a {
     padding: 12px 16px;
     font-size: 14px;
   }
@@ -3266,7 +3403,8 @@ body {
   }
 
   /* Improved loading states */
-  [class*="loading"], [class*="skeleton"] {
+  [class*="loading"],
+  [class*="skeleton"] {
     min-height: 44px;
   }
 
@@ -3285,4 +3423,26 @@ body {
     outline: 2px solid var(--accent-blue);
     outline-offset: 2px;
   }
+}
+
+/* Scroll Reveal Animations - Optimized for 60fps */
+.reveal-status-hidden-below {
+  opacity: 0;
+  transform: translate3d(0, 40px, 0);
+  transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-status-hidden-above {
+  opacity: 0;
+  transform: translate3d(0, -40px, 0);
+  transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-status-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
 }

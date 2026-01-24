@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Reveal } from './Reveal';
 import { useAccount } from 'wagmi';
 import { useTrustBalance } from '../hooks/useTrustBalance';
 import { useQuery } from '@tanstack/react-query';
@@ -79,9 +80,9 @@ const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '-';
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -117,20 +118,20 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   // Get XP data from backend or use defaults
   // Calculate total claimed IQ from localStorage for immediate display
   const [localClaimedIQ, setLocalClaimedIQ] = useState(0);
-  
+
   // Track staked claims count from Intuition
   const [stakedClaimsCount, setStakedClaimsCount] = useState(0);
-  
+
   // Track quest completions count from database
   const [questsCompletedCount, setQuestsCompletedCount] = useState(0);
-  
+
   // Store previous stats to prevent flickering during loading
   const [previousStats, setPreviousStats] = useState({
     claimsStaked: 0,
     tasksCompleted: 0,
     tradeVolume: 0,
   });
-  
+
   useEffect(() => {
     if (address) {
       const claimedQuests = JSON.parse(localStorage.getItem(`claimed_quests_${address.toLowerCase()}`) || '[]');
@@ -139,7 +140,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       setLocalClaimedIQ(claimedQuests.length * 20); // Assuming 20 IQ per quest for now
     }
   }, [address]);
-  
+
   const userXP = userXPData?.totalXP || localClaimedIQ || 0;
   const level = userXPData?.level || Math.floor(userXP / 100) + 1;
   const currentLevelXP = userXP % 100;
@@ -293,13 +294,13 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       // Fetch data for each wallet
       for (const wallet of wallets) {
         const walletAddress = wallet.address.toLowerCase();
-        
+
         // Skip if already loaded or currently fetching
         const existing = walletIntuitionData.get(walletAddress);
         if (existing?.hasLoaded || fetchingWallets.current.has(walletAddress)) {
           continue;
         }
-        
+
         // Mark as fetching
         fetchingWallets.current.add(walletAddress);
 
@@ -452,26 +453,26 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       <div className="user-details-section">
         <div className="user-details-content">
           <div className="user-avatar-large">
-            <img 
-              src={profilePicture || getDiceBearAvatar(address || 'anonymous')} 
-              alt="Profile" 
-              className="avatar-image" 
+            <img
+              src={profilePicture || getDiceBearAvatar(address || 'anonymous')}
+              alt="Profile"
+              className="avatar-image"
             />
           </div>
           <div className="user-info-main">
             <div className="user-name-row">
               <h1 className="user-name">{truncateUsername(username, 7)}</h1>
-              
+
               {/* IQ Progress Bar */}
               <div className="iq-progress-container">
                 {/* Hexagon Icon */}
-                <img 
-                  src="/hexagon.svg" 
-                  alt="Hexagon" 
+                <img
+                  src="/hexagon.svg"
+                  alt="Hexagon"
                   className="iq-hexagon-icon"
                 />
                 <div className="iq-progress-bar-wrapper">
-                  <div 
+                  <div
                     className="iq-progress-bar-fill"
                     style={{
                       width: `${Math.min(100, (currentLevelXP / possibleXP) * 100)}%`,
@@ -482,7 +483,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                   {currentLevelXP} / {possibleXP} IQ
                 </span>
               </div>
-              
+
               {/* Shard Count Display */}
               <div className="user-shard-count" style={{ flexShrink: 0 }}>
                 <img src="/shard.svg" alt="Shard" className="shard-icon" />
@@ -496,150 +497,155 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       <div className="dashboard-content">
 
         {/* User Stats Section */}
-        <div className="stats-section-no-bg">
-          <div className="stat-rectangle">
-            <span className="stat-label">Claims</span>
-            <span className="stat-value">{userStats.claimsStaked}</span>
+        <Reveal delay={0} width="100%">
+          <div className="stats-section-no-bg">
+            <div className="stat-rectangle">
+              <span className="stat-label">Claims</span>
+              <span className="stat-value">{userStats.claimsStaked}</span>
+            </div>
+            <div className="stat-rectangle">
+              <span className="stat-label">Tasks Completed</span>
+              <span className="stat-value">{userStats.tasksCompleted}</span>
+            </div>
+            <div className="stat-rectangle">
+              <span className="stat-label">Trade Volume</span>
+              <span className="stat-value">${userStats.tradeVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
           </div>
-          <div className="stat-rectangle">
-            <span className="stat-label">Tasks Completed</span>
-            <span className="stat-value">{userStats.tasksCompleted}</span>
-          </div>
-          <div className="stat-rectangle">
-            <span className="stat-label">Trade Volume</span>
-            <span className="stat-value">${userStats.tradeVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
-        </div>
+        </Reveal>
 
 
 
 
 
         {/* Social Connections Section */}
-        <div className="section-no-bg">
-          <div className="section-header-with-tabs">
-            <h3 className="section-title">Social Connections</h3>
-          </div>
-          <div className="social-connections-grid">
-            {/* Twitter */}
-            <div className="social-connection-item">
-              <div className="social-connection-header">
-                <div className="social-connection-icon twitter">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
+        <Reveal delay={100} width="100%">
+          <div className="section-no-bg">
+            <div className="section-header-with-tabs">
+              <h3 className="section-title">Social Connections</h3>
+            </div>
+            <div className="social-connections-grid">
+              {/* Twitter */}
+              <div className="social-connection-item">
+                <div className="social-connection-header">
+                  <div className="social-connection-icon twitter">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                  </div>
+                  <div className="social-connection-info">
+                    <h3 className="social-connection-name">Twitter</h3>
+                    {connections.twitter ? (
+                      <p className="social-connection-status connected">
+                        @{connections.twitter.username}
+                      </p>
+                    ) : (
+                      <p className="social-connection-status">Not connected</p>
+                    )}
+                  </div>
                 </div>
-                <div className="social-connection-info">
-                  <h3 className="social-connection-name">Twitter</h3>
+                <div className="social-connection-actions">
                   {connections.twitter ? (
-                    <p className="social-connection-status connected">
-                      @{connections.twitter.username}
-                    </p>
+                    <button
+                      onClick={() => handleDisconnectSocial('twitter')}
+                      className="social-disconnect-button"
+                      disabled={socialLoading || isConnecting === 'twitter'}
+                    >
+                      Disconnect
+                    </button>
                   ) : (
-                    <p className="social-connection-status">Not connected</p>
+                    <button
+                      onClick={() => handleConnectSocial('twitter')}
+                      className="social-connect-button twitter"
+                      disabled={socialLoading || isConnecting === 'twitter'}
+                    >
+                      {isConnecting === 'twitter' ? 'Connecting...' : 'Connect'}
+                    </button>
                   )}
                 </div>
               </div>
-              <div className="social-connection-actions">
-                {connections.twitter ? (
-                  <button
-                    onClick={() => handleDisconnectSocial('twitter')}
-                    className="social-disconnect-button"
-                    disabled={socialLoading || isConnecting === 'twitter'}
-                  >
-                    Disconnect
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleConnectSocial('twitter')}
-                    className="social-connect-button twitter"
-                    disabled={socialLoading || isConnecting === 'twitter'}
-                  >
-                    {isConnecting === 'twitter' ? 'Connecting...' : 'Connect'}
-                  </button>
-                )}
-              </div>
-            </div>
 
-            {/* Discord */}
-            <div className="social-connection-item">
-              <div className="social-connection-header">
-                <div className="social-connection-icon discord">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.299 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.032-.0542c.5-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0189 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/>
-                  </svg>
+              {/* Discord */}
+              <div className="social-connection-item">
+                <div className="social-connection-header">
+                  <div className="social-connection-icon discord">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.299 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.032-.0542c.5-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0189 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
+                    </svg>
+                  </div>
+                  <div className="social-connection-info">
+                    <h3 className="social-connection-name">Discord</h3>
+                    {connections.discord ? (
+                      <p className="social-connection-status connected">
+                        @{connections.discord.username}
+                      </p>
+                    ) : (
+                      <p className="social-connection-status">Not connected</p>
+                    )}
+                  </div>
                 </div>
-                <div className="social-connection-info">
-                  <h3 className="social-connection-name">Discord</h3>
+                <div className="social-connection-actions">
                   {connections.discord ? (
-                    <p className="social-connection-status connected">
-                      @{connections.discord.username}
-                    </p>
+                    <button
+                      onClick={() => handleDisconnectSocial('discord')}
+                      className="social-disconnect-button"
+                      disabled={socialLoading || isConnecting === 'discord'}
+                    >
+                      Disconnect
+                    </button>
                   ) : (
-                    <p className="social-connection-status">Not connected</p>
+                    <button
+                      onClick={() => handleConnectSocial('discord')}
+                      className="social-connect-button discord"
+                      disabled={socialLoading || isConnecting === 'discord'}
+                    >
+                      {isConnecting === 'discord' ? 'Connecting...' : 'Connect'}
+                    </button>
                   )}
                 </div>
-              </div>
-              <div className="social-connection-actions">
-                {connections.discord ? (
-                  <button
-                    onClick={() => handleDisconnectSocial('discord')}
-                    className="social-disconnect-button"
-                    disabled={socialLoading || isConnecting === 'discord'}
-                  >
-                    Disconnect
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleConnectSocial('discord')}
-                    className="social-connect-button discord"
-                    disabled={socialLoading || isConnecting === 'discord'}
-                  >
-                    {isConnecting === 'discord' ? 'Connecting...' : 'Connect'}
-                  </button>
-                )}
               </div>
             </div>
           </div>
-        </div>
+        </Reveal>
 
         {/* Intuition Chain Identity Section - Multi-Wallet Display */}
-        <div className="section-no-bg">
-          <div className="section-header-with-tabs">
-            <h3 className="section-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px', verticalAlign: 'middle' }}>
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 16v-4"/>
-                <path d="M12 8h.01"/>
-              </svg>
-              Intuition Chain Identity
-            </h3>
-          </div>
-          
-          {!address ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3, marginBottom: '12px' }}>
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 16v-4"/>
-                <path d="M12 8h.01"/>
-              </svg>
-              <p style={{ margin: 0, fontSize: '14px' }}>Please connect your wallet</p>
+        <Reveal delay={200} width="100%">
+          <div className="section-no-bg">
+            <div className="section-header-with-tabs">
+              <h3 className="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px', verticalAlign: 'middle' }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
+                Intuition Chain Identity
+              </h3>
             </div>
-          ) : (() => {
-                const walletAddressLower = address.toLowerCase();
-                const walletData = walletIntuitionData.get(walletAddressLower);
-                const isExpanded = expandedWallets.has(walletAddressLower);
-                const isLoading = walletData?.isLoading ?? true;
-                const hasLoaded = walletData?.hasLoaded ?? false;
-                const atoms = walletData?.atoms ?? [];
-                const triples = walletData?.triples ?? [];
 
-                return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div key={address} style={{ background: 'rgba(0, 0, 0, 0.2)', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+            {!address ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.3, marginBottom: '12px' }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
+                <p style={{ margin: 0, fontSize: '14px' }}>Please connect your wallet</p>
+              </div>
+            ) : (() => {
+              const walletAddressLower = address.toLowerCase();
+              const walletData = walletIntuitionData.get(walletAddressLower);
+              const isExpanded = expandedWallets.has(walletAddressLower);
+              const isLoading = walletData?.isLoading ?? true;
+              const hasLoaded = walletData?.hasLoaded ?? false;
+              const atoms = walletData?.atoms ?? [];
+              const triples = walletData?.triples ?? [];
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div key={address} style={{ background: 'rgba(0, 0, 0, 0.2)', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
                     {/* Wallet Header */}
                     <button
-                  onClick={() => toggleWalletExpansion(address)}
+                      onClick={() => toggleWalletExpansion(address)}
                       style={{
                         width: '100%',
                         display: 'flex',
@@ -668,15 +674,15 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                             transition: 'transform 0.2s ease',
                           }}
                         >
-                          <polyline points="9 18 15 12 9 6"/>
+                          <polyline points="9 18 15 12 9 6" />
                         </svg>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="2" y="6" width="20" height="12" rx="2"/>
-                            <path d="M6 10h12M6 14h8"/>
+                            <rect x="2" y="6" width="20" height="12" rx="2" />
+                            <path d="M6 10h12M6 14h8" />
                           </svg>
                           <span style={{ fontWeight: 600, fontSize: '15px' }}>
-                        {truncateId(address, 8, 6)}
+                            {truncateId(address, 8, 6)}
                           </span>
                         </div>
                       </div>
@@ -707,8 +713,8 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                             <div style={{ background: 'rgba(0, 0, 0, 0.2)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
                               <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 20px', margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-blue)' }}>
-                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                  <circle cx="12" cy="7" r="4"/>
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                  <circle cx="12" cy="7" r="4" />
                                 </svg>
                                 Identities ({atoms.length})
                               </h4>
@@ -747,17 +753,17 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                                   </table>
                                 </div>
                               ) : (
-                            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '14px' }}>
-                              <p style={{ margin: 0 }}>No identities found for this address</p>
+                                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                                  <p style={{ margin: 0 }}>No identities found for this address</p>
                                 </div>
                               )}
                             </div>
-                            
+
                             {/* Claims Table */}
                             <div style={{ background: 'rgba(0, 0, 0, 0.2)', borderRadius: '12px', overflow: 'hidden' }}>
                               <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 20px', margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-purple)' }}>
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-purple)' }}>
+                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                                 </svg>
                                 Claims ({triples.length})
                               </h4>
@@ -766,9 +772,9 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                                     <thead>
                                       <tr>
-                                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Subject</th>
-                                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Predicate</th>
-                                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Object</th>
+                                        <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Subject</th>
+                                        <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Predicate</th>
+                                        <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Object</th>
                                         <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Created</th>
                                       </tr>
                                     </thead>
@@ -776,13 +782,13 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                                       {triples.map((triple, index) => (
                                         <tr key={triple.termId || index} style={{ transition: 'background 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                                           <td style={{ padding: '14px 16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', verticalAlign: 'middle' }}>
-                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.subjectId, 8, 6)}</code>
+                                            <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.subjectId, 8, 6)}</code>
                                           </td>
                                           <td style={{ padding: '14px 16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', verticalAlign: 'middle' }}>
-                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.predicateId, 8, 6)}</code>
+                                            <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.predicateId, 8, 6)}</code>
                                           </td>
                                           <td style={{ padding: '14px 16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', verticalAlign: 'middle' }}>
-                                        <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.objectId, 8, 6)}</code>
+                                            <code style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: '12px', padding: '4px 8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px', color: 'var(--text-secondary)' }}>{truncateId(triple.objectId, 8, 6)}</code>
                                           </td>
                                           <td style={{ padding: '14px 16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', verticalAlign: 'middle' }}>{formatDate(triple.createdAt)}</td>
                                         </tr>
@@ -791,8 +797,8 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                                   </table>
                                 </div>
                               ) : (
-                            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '14px' }}>
-                              <p style={{ margin: 0 }}>No claims found for this address</p>
+                                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                                  <p style={{ margin: 0 }}>No claims found for this address</p>
                                 </div>
                               )}
                             </div>
@@ -801,89 +807,93 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                       </div>
                     )}
                   </div>
-            </div>
-          )})()}
-        </div>
+                </div>
+              )
+            })()}
+          </div>
+        </Reveal>
 
         {/* User Activity Section */}
-        <div className="section-no-bg">
-          <div className="section-header-with-tabs">
-            <h3 className="section-title">User Activity</h3>
-          </div>
+        <Reveal delay={300} width="100%">
+          <div className="section-no-bg">
+            <div className="section-header-with-tabs">
+              <h3 className="section-title">User Activity</h3>
+            </div>
 
-          <div className="activity-list">
-            {isActivityLoading ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                <div style={{ width: '20px', height: '20px', border: '2px solid rgba(255, 255, 255, 0.3)', borderTopColor: 'var(--accent-blue)', borderRadius: '50%', animation: 'spin 0.6s linear infinite', margin: '0 auto 12px' }}></div>
-                <p style={{ margin: 0, fontSize: '14px' }}>Loading activity...</p>
-              </div>
-            ) : userActivity.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                <p style={{ margin: 0, fontSize: '14px' }}>No activity found</p>
-              </div>
-            ) : (
-              userActivity.map((activity) => (
-              <div key={activity.id} className="activity-item">
-                <div className="activity-icon">
-                  {activity.type === 'quest_completed' && (
-                    <img src="/verified.svg" alt="Verified" width="20" height="20" />
-                  )}
-                    {activity.type === 'deposit' && (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                  )}
-                    {activity.type === 'redemption' && (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 22v-20M6 19H13.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H18"/>
-                      </svg>
-                    )}
-                    {activity.type === 'atom_created' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="2" x2="12" y2="6"/>
-                        <line x1="12" y1="18" x2="12" y2="22"/>
-                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
-                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
-                        <line x1="2" y1="12" x2="6" y2="12"/>
-                        <line x1="18" y1="12" x2="22" y2="12"/>
-                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
-                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
-                      </svg>
-                    )}
-                    {activity.type === 'triple_created' && (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  )}
+            <div className="activity-list">
+              {isActivityLoading ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <div style={{ width: '20px', height: '20px', border: '2px solid rgba(255, 255, 255, 0.3)', borderTopColor: 'var(--accent-blue)', borderRadius: '50%', animation: 'spin 0.6s linear infinite', margin: '0 auto 12px' }}></div>
+                  <p style={{ margin: 0, fontSize: '14px' }}>Loading activity...</p>
                 </div>
-                <div className="activity-content">
-                  <span className="activity-title">{activity.title}</span>
-                  <span className="activity-time">
-                    {activity.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {activity.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                    {activity.transactionHash && (
-                      <a
-                        href={`https://explorer.intuition.systems/tx/${activity.transactionHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: '12px', color: 'var(--accent-blue)', textDecoration: 'none', marginTop: '4px', display: 'block' }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View on Explorer →
-                      </a>
-                    )}
+              ) : userActivity.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <p style={{ margin: 0, fontSize: '14px' }}>No activity found</p>
                 </div>
-                  {activity.xp && activity.xp > 0 && (
-                  <div className="activity-xp">
-                    +{activity.xp} IQ
+              ) : (
+                userActivity.map((activity) => (
+                  <div key={activity.id} className="activity-item">
+                    <div className="activity-icon">
+                      {activity.type === 'quest_completed' && (
+                        <img src="/verified.svg" alt="Verified" width="20" height="20" />
+                      )}
+                      {activity.type === 'deposit' && (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                      )}
+                      {activity.type === 'redemption' && (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22v-20M6 19H13.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H18" />
+                        </svg>
+                      )}
+                      {activity.type === 'atom_created' && (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="2" x2="12" y2="6" />
+                          <line x1="12" y1="18" x2="12" y2="22" />
+                          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+                          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+                          <line x1="2" y1="12" x2="6" y2="12" />
+                          <line x1="18" y1="12" x2="22" y2="12" />
+                          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+                          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+                        </svg>
+                      )}
+                      {activity.type === 'triple_created' && (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="activity-content">
+                      <span className="activity-title">{activity.title}</span>
+                      <span className="activity-time">
+                        {activity.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {activity.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {activity.transactionHash && (
+                        <a
+                          href={`https://explorer.intuition.systems/tx/${activity.transactionHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontSize: '12px', color: 'var(--accent-blue)', textDecoration: 'none', marginTop: '4px', display: 'block' }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View on Explorer →
+                        </a>
+                      )}
+                    </div>
+                    {activity.xp && activity.xp > 0 && (
+                      <div className="activity-xp">
+                        +{activity.xp} IQ
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </Reveal>
 
       </div>
     </div>

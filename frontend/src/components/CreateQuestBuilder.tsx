@@ -7,8 +7,8 @@ import { useQuests } from '../hooks/useQuests';
 import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from './Toast';
 // Contract services re-enabled
-import { 
-  depositToEscrow, 
+import {
+  depositToEscrow,
   checkBalance,
   getQuestDeposit,
   getGracePeriod,
@@ -19,6 +19,7 @@ import { apiClient } from '../services/apiClient';
 import { parseEther } from 'viem';
 import { parseUnits, formatUnits, createPublicClient, http } from 'viem';
 import { intuitionChain } from '../config/wagmi';
+import Stepper, { Step } from './Stepper';
 import './CreateQuestBuilder.css';
 
 // Quest Templates
@@ -156,7 +157,7 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
   const updateQuestion = (questionId: string, updates: Partial<QuizEditorProps['config']['questions'][0]>) => {
     setQuizConfig({
       ...quizConfig,
-      questions: quizConfig.questions?.map(q => 
+      questions: quizConfig.questions?.map(q =>
         q.id === questionId ? { ...q, ...updates } : q
       ) || []
     });
@@ -186,7 +187,7 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
   const updateAnswer = (questionId: string, answerId: string, updates: Partial<{ text: string; isCorrect: boolean }>) => {
     const question = quizConfig.questions?.find(q => q.id === questionId);
     if (question && question.answers) {
-      const updatedAnswers = question.answers.map(a => 
+      const updatedAnswers = question.answers.map(a =>
         a.id === answerId ? { ...a, ...updates } : a
       );
       updateQuestion(questionId, { answers: updatedAnswers });
@@ -218,15 +219,15 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
       <div className="quiz-editor-header">
         <div className="quiz-editor-header-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 11l3 3L22 4"/>
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
           </svg>
         </div>
         <h3 className="quiz-editor-title">Quiz</h3>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="quiz-editor-help-icon">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-          <line x1="12" y1="17" x2="12.01" y2="17"/>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
         </svg>
       </div>
 
@@ -257,8 +258,8 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
                 onClick={() => removeQuestion(question.id)}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
@@ -290,12 +291,12 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
                     >
                       {answer.isCorrect ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M9 11l3 3L22 4"/>
-                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                          <path d="M9 11l3 3L22 4" />
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                         </svg>
                       ) : (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10"/>
+                          <circle cx="12" cy="12" r="10" />
                         </svg>
                       )}
                     </button>
@@ -304,8 +305,8 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
                       onClick={() => removeAnswer(question.id, answer.id)}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
                     </button>
                   </div>
@@ -315,8 +316,8 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
                   onClick={() => addAnswer(question.id)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
                   Add answer
                 </button>
@@ -330,8 +331,8 @@ function QuizEditor({ config, onChange }: QuizEditorProps) {
           onClick={() => addQuestion()}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Add question
         </button>
@@ -366,7 +367,7 @@ function PollEditor({ config, onChange }: PollEditorProps) {
   const updateQuestion = (questionId: string, updates: Partial<PollEditorProps['config']['questions'][0]>) => {
     setPollConfig({
       ...pollConfig,
-      questions: pollConfig.questions?.map(q => 
+      questions: pollConfig.questions?.map(q =>
         q.id === questionId ? { ...q, ...updates } : q
       ) || []
     });
@@ -407,7 +408,7 @@ function PollEditor({ config, onChange }: PollEditorProps) {
       <div className="poll-editor-header">
         <div className="poll-editor-header-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         </div>
         <h3 className="poll-editor-title">Poll</h3>
@@ -461,8 +462,8 @@ function PollEditor({ config, onChange }: PollEditorProps) {
                   onClick={() => removeQuestion(question.id)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
               </div>
@@ -492,8 +493,8 @@ function PollEditor({ config, onChange }: PollEditorProps) {
                       onClick={() => removeChoice(question.id, cIndex)}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
                     </button>
                   </div>
@@ -503,8 +504,8 @@ function PollEditor({ config, onChange }: PollEditorProps) {
                   onClick={() => addChoice(question.id)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
                   Add choice
                 </button>
@@ -518,8 +519,8 @@ function PollEditor({ config, onChange }: PollEditorProps) {
           onClick={() => addQuestion('SELECT')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Add new question
         </button>
@@ -553,9 +554,9 @@ function OpenLinkEditor({ config, onChange }: OpenLinkEditorProps) {
       <div className="open-link-editor-header">
         <div className="open-link-editor-header-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
           </svg>
         </div>
         <h3 className="open-link-editor-title">Open Link</h3>
@@ -627,12 +628,12 @@ function StakedOnClaimEditor({ config, onChange }: StakedOnClaimEditorProps) {
   const prevConfigRef = useRef<string>('');
   const onChangeRef = useRef(onChange);
   const isInitialMount = useRef(true);
-  
+
   // Update ref when onChange changes
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
-  
+
   // Initialize from config on mount only
   useEffect(() => {
     if (isInitialMount.current && config) {
@@ -646,7 +647,7 @@ function StakedOnClaimEditor({ config, onChange }: StakedOnClaimEditorProps) {
       isInitialMount.current = false;
     }
   }, []);
-  
+
   // Only call onChange when claimConfig actually changes (skip initial mount)
   useEffect(() => {
     if (isInitialMount.current) return;
@@ -663,8 +664,8 @@ function StakedOnClaimEditor({ config, onChange }: StakedOnClaimEditorProps) {
       <div className="staked-claim-editor-header">
         <div className="staked-claim-editor-header-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
         <h3 className="staked-claim-editor-title">Staked on a Claim</h3>
@@ -739,8 +740,8 @@ function HoldTokenEditor({ config, onChange }: HoldTokenEditorProps) {
       <div className="hold-token-editor-header">
         <div className="hold-token-editor-header-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-            <line x1="1" y1="10" x2="23" y2="10"/>
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+            <line x1="1" y1="10" x2="23" y2="10" />
           </svg>
         </div>
         <h3 className="hold-token-editor-title">Hold a Token</h3>
@@ -817,8 +818,8 @@ function HoldNFTEditor({ config, onChange }: HoldNFTEditorProps) {
       <div className="hold-nft-editor-header">
         <div className="hold-nft-editor-header-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-            <line x1="1" y1="10" x2="23" y2="10"/>
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+            <line x1="1" y1="10" x2="23" y2="10" />
           </svg>
         </div>
         <h3 className="hold-nft-editor-title">Hold an NFT</h3>
@@ -894,8 +895,8 @@ function WaitEditor({ config, onChange }: WaitEditorProps) {
       <div className="wait-editor-header">
         <div className="wait-editor-header-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
         <h3 className="wait-editor-title">Wait</h3>
@@ -991,8 +992,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
   const [editingActionIndex, setEditingActionIndex] = useState<number | null>(null);
   const [showSubscribePopup, setShowSubscribePopup] = useState(false);
   const [hoveredDisabledAction, setHoveredDisabledAction] = useState<string | null>(null);
-  const [editingActionConfig, setEditingActionConfig] = useState<{ 
-    accountUrl?: string; 
+  const [editingActionConfig, setEditingActionConfig] = useState<{
+    accountUrl?: string;
     accountName?: string;
     customTitle?: string;
     pollConfig?: {
@@ -1043,6 +1044,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
   const [numberOfWinners, setNumberOfWinners] = useState<string>('1');
   const [winnerPrizes, setWinnerPrizes] = useState<string[]>([]);
   const [iqPoints, setIqPoints] = useState<string>('');
+  const [rewardType, setRewardType] = useState<'iq_only' | 'trust_only' | 'trust_and_iq'>('trust_and_iq');
   const [rewardDeposit, setRewardDeposit] = useState<string>('');
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositStatus, setDepositStatus] = useState<'none' | 'approved' | 'deposited'>('none');
@@ -1071,25 +1073,25 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     if (!rewardDeposit || rewardDeposit.trim() === '') {
       return false;
     }
-    
+
     const depositAmount = parseFloat(rewardDeposit);
     if (isNaN(depositAmount) || depositAmount <= 0) {
       return false;
     }
-    
+
     // Check if all required prize fields are filled
     const numWinners = parseInt(numberOfWinners, 10) || 0;
     if (numWinners === 0) {
       return false;
     }
-    
+
     // Check if all prize fields are filled
     for (let i = 0; i < numWinners; i++) {
       if (!winnerPrizes[i] || winnerPrizes[i].trim() === '') {
         return false;
       }
     }
-    
+
     const prizesSum = calculateWinnerPrizesSum();
     // Use a small epsilon for floating point comparison
     return Math.abs(depositAmount - prizesSum) < 0.01;
@@ -1146,64 +1148,64 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     if (action.title === 'Poll') {
       return !!(action.config?.pollConfig?.questions && action.config.pollConfig.questions.length > 0);
     }
-    
+
     if (action.title === 'Quiz') {
       return !!(action.config?.quizConfig?.questions && action.config.quizConfig.questions.length > 0);
     }
-    
+
     if (action.title === 'Open Link') {
       return !!(action.config?.openLinkConfig?.link && action.config.openLinkConfig.ctaText);
     }
-    
+
     if (action.title === 'Visit website') {
       return !!(action.config?.accountUrl);
     }
-    
+
     if (action.title === 'Wait') {
       return !!(action.config?.waitConfig?.amount && action.config.waitConfig.unit);
     }
-    
+
     if (action.title === 'Read docs') {
       return !!(action.config?.readDocsConfig?.documents && action.config.readDocsConfig.documents.length > 0);
     }
-    
+
     // For Twitter and Discord actions
     if (getActionType(action.title)) {
       return !!(action.config?.accountUrl || action.config?.accountName);
     }
-    
+
     // For Joined Discord Server
     if (action.title === 'Joined Discord Server' || action.title === 'Join Discord Server') {
       return !!(action.config?.accountUrl);
     }
-    
+
     // For Staked on a claim
     if (action.title === 'Staked on a claim') {
       const config = action.config?.stakedClaimConfig;
       return !!(config && (config.checkAllClaims || config.claimId));
     }
-    
+
     // For Hold a token
     if (action.title === 'Hold a token') {
       const config = action.config?.holdTokenConfig;
       return !!(config?.tokenContractAddress && config?.tokenAmount);
     }
-    
+
     // For Hold an NFT
     if (action.title === 'Hold an NFT') {
       const config = action.config?.holdNFTConfig;
       return !!(config?.nftContractAddress && config?.nftAmount);
     }
-    
+
     return false;
   };
 
   const steps = [
-        { number: 1, label: 'Details' },
-        { number: 2, label: 'Actions' },
-        { number: 3, label: 'Rewards' },
-        { number: 4, label: 'Deposit' }, // Re-enabled with escrow contracts
-    { number: 5, label: 'Preview' },
+    { number: 1, label: 'Details' },
+    { number: 2, label: 'Actions' },
+    { number: 3, label: 'Rewards' },
+    ...(rewardType !== 'iq_only' ? [{ number: 4, label: 'Deposit' }] : []), // Conditionally include deposit step
+    { number: rewardType === 'iq_only' ? 4 : 5, label: 'Preview' },
   ];
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1266,11 +1268,12 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
             setWinnerPrizes(Array.isArray(draft.winner_prizes) ? draft.winner_prizes : []);
             setIqPoints(draft.iq_points || '');
             setRewardDeposit(draft.reward_deposit || '');
+            setRewardType(draft.reward_type || 'trust_and_iq');
             setRewardToken(draft.reward_token || 'TRUST');
             setDistributionType(draft.distribution_type || 'fcfs');
             setCurrentStep(draft.current_step || 1);
             setQuestDraftId(draft.id || questDraftId);
-            
+
             // Load deposit status from draft
             if (draft.deposit_status) {
               setDepositStatus(draft.deposit_status);
@@ -1286,7 +1289,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                 console.warn('Could not check deposit status:', error);
               }
             }
-            
+
             showToast('Draft loaded successfully', 'success');
           } else {
             // If draftId is provided but no draft found, ensure actions are empty
@@ -1314,7 +1317,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
           // Load grace period
           const period = await getGracePeriod(publicClient);
           setGracePeriod(period);
-          
+
           // Check if deposit exists on blockchain (in case draft wasn't saved with status)
           if (depositStatus !== 'deposited') {
             try {
@@ -1322,7 +1325,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
               if (depositInfo.totalAmount > 0n) {
                 setDepositStatus('deposited');
               }
-        } catch (error) {
+            } catch (error) {
               // If contract not deployed or other error, keep current status
               console.warn('Could not check deposit status from blockchain:', error);
             }
@@ -1394,6 +1397,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         iq_points: iqPoints || null,
         reward_deposit: rewardDeposit || null,
         reward_token: rewardToken || null,
+        reward_type: rewardType || null,
         distribution_type: distributionType || null,
         current_step: currentStep,
         deposit_status: depositStatus || null,
@@ -1592,6 +1596,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         winnerPrizes,
         rewardDeposit,
         rewardToken,
+        rewardType,
         expiresAt: endDate && endTime ? new Date(`${endDate}T${endTime}`).getTime() : undefined,
         endDate,
         endTime,
@@ -1613,7 +1618,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
 
       // Dispatch event for real-time updates
       window.dispatchEvent(new CustomEvent('questPublished', { detail: { quest: completeQuestData } }));
-      
+
       // Immediately invalidate and refetch quests to show new quest without lag
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       queryClient.refetchQueries({ queryKey: ['quests'] });
@@ -1657,6 +1662,77 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     }
   };
 
+  const validateStep = async (stepToLeave: number): Promise<boolean> => {
+    // Maps builder step index (0-based) to validation logic
+    console.log('Validating step before leaving:', stepToLeave);
+
+    // Step index passed here is the builder's currentStep index that we are trying to leave
+    // If navigating forward from Step 1 (Details) -> Target 2 (Actions)
+    // We validate Step 1.
+
+    if (stepToLeave === 1) {
+      if (
+        !title.trim() ||
+        !difficulty ||
+        !description.trim() ||
+        !endDate ||
+        !endTime ||
+        !numberOfWinners ||
+        parseInt(numberOfWinners, 10) < 1
+      ) {
+        showToast('Please fill in all required fields', 'warning');
+        return false;
+      }
+    }
+
+    // Validate Rewards step (step 3)
+    if (stepToLeave === 3 && (rewardType === 'trust_only' || rewardType === 'trust_and_iq')) {
+      const numWinners = parseInt(numberOfWinners, 10) || 0;
+      const allPrizesFilled = numWinners > 0 && winnerPrizes.slice(0, numWinners).every((prize, idx) => idx < numWinners && prize && prize.trim() !== '');
+
+      if (!allPrizesFilled) {
+        showToast('Please fill in all winner prize amounts before proceeding.', 'warning');
+        return false;
+      }
+      const depositAmount = parseFloat(rewardDeposit || '0');
+      if (!rewardDeposit || isNaN(depositAmount) || depositAmount <= 0) {
+        showToast('Please enter a deposit amount before proceeding.', 'warning');
+        return false;
+      }
+      if (!isWinnerPrizesSumValid()) {
+        showToast('Total prizes must match the deposit amount before proceeding.', 'warning');
+        return false;
+      }
+    }
+
+    if (stepToLeave === 3 && rewardType === 'trust_and_iq') {
+      if (!iqPoints || parseInt(iqPoints, 10) <= 0) {
+        showToast('Please enter IQ points amount before proceeding.', 'warning');
+        return false;
+      }
+    }
+
+    // Validate Actions step (step 2)
+    if (stepToLeave === 2) {
+      if (isFree && selectedActions.length > 1) {
+        showToast('Free plan allows only 1 action per quest. Upgrade to Pro for multi-step quests.', 'warning');
+        return false;
+      }
+      const hasAdvancedActions = selectedActions.some(action => isAdvancedAction(action.title));
+      if (isFree && hasAdvancedActions) {
+        showToast('Free plan allows only basic quest types. Upgrade to Pro for advanced quest features.', 'warning');
+        return false;
+      }
+      const unconfiguredActions = selectedActions.filter(action => !isActionConfigured(action));
+      if (unconfiguredActions.length > 0) {
+        showToast(`Please configure all actions before proceeding. ${unconfiguredActions.length} action(s) need configuration.`, 'warning');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleNext = async () => {
     // Validate current step before proceeding
     if (currentStep === 1) {
@@ -1672,13 +1748,13 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         return; // Validation already handled by disabled state
       }
     }
-    
-    // Validate Rewards step (step 3) - enforce deposit/prizes before moving on
-    if (currentStep === 3) {
+
+    // Validate Rewards step (step 3) - enforce deposit/prizes before moving on (only for TRUST rewards)
+    if (currentStep === 3 && (rewardType === 'trust_only' || rewardType === 'trust_and_iq')) {
       // Check if all fields are filled
       const numWinners = parseInt(numberOfWinners, 10) || 0;
       const allPrizesFilled = numWinners > 0 && winnerPrizes.slice(0, numWinners).every((prize, idx) => idx < numWinners && prize && prize.trim() !== '');
-      
+
       if (!allPrizesFilled) {
         showToast('Please fill in all winner prize amounts before proceeding.', 'warning');
         return;
@@ -1693,7 +1769,15 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         return;
       }
     }
-    
+
+    // Validate IQ points for reward types that include IQ (but not IQ-only)
+    if (currentStep === 3 && rewardType === 'trust_and_iq') {
+      if (!iqPoints || parseInt(iqPoints, 10) <= 0) {
+        showToast('Please enter IQ points amount before proceeding.', 'warning');
+        return;
+      }
+    }
+
     // Validate Actions step (step 2) - check if all actions requiring configuration are configured
     if (currentStep === 2) {
       // Free plan: Limit to 1 action (basic quest types only)
@@ -1701,38 +1785,43 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         showToast('Free plan allows only 1 action per quest. Upgrade to Pro for multi-step quests.', 'warning');
         return;
       }
-      
+
       // Free plan: Check for advanced actions
       const hasAdvancedActions = selectedActions.some(action => isAdvancedAction(action.title));
       if (isFree && hasAdvancedActions) {
         showToast('Free plan allows only basic quest types. Upgrade to Pro for advanced quest features.', 'warning');
-            return;
-          }
+        return;
+      }
 
       const unconfiguredActions = selectedActions.filter(action => !isActionConfigured(action));
       if (unconfiguredActions.length > 0) {
         showToast(`Please configure all actions before proceeding. ${unconfiguredActions.length} action(s) need configuration.`, 'warning');
-            return;
-          }
+        return;
+      }
     }
-    
+
     // Save progress before moving to next step (async to ensure actions are saved)
     if (address) {
       await handleSave(false); // Auto-save without toast
     }
-    
-    const maxStep = 5; // Regular quests have 5 steps (Details, Actions, Rewards, Deposit, Preview)
-    
+
+    // Dynamic max step based on reward type (skip deposit for IQ-only)
+    const maxStep = rewardType === 'iq_only' ? 4 : 5;
+
     // Check active quest limit before publishing (free plan: max 1 active quest)
     if (currentStep === maxStep && isFree) {
       if (activeQuestCount >= 1) {
         showToast('Free plan allows only 1 active quest at a time. Please pause or complete your existing quest, or upgrade to Pro for unlimited active quests.', 'error');
-            return;
-          }
+        return;
+      }
     }
     if (currentStep < maxStep) {
-      // Normal step progression (Deposit tab is now enabled)
-      setCurrentStep(currentStep + 1);
+      // Skip deposit step for IQ-only quests
+      if (rewardType === 'iq_only' && currentStep === 3) {
+        setCurrentStep(5); // Skip from Rewards (3) directly to Preview (5)
+      } else {
+        setCurrentStep(currentStep + 1);
+      }
     } else {
       // Final step - publish the quest
       await handlePublishQuest();
@@ -1783,7 +1872,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         chain: intuitionChain,
         transport: http('https://rpc.intuition.systems'),
       });
-      
+
       const userBalance = await client.getBalance({
         address: address as `0x${string}`,
       });
@@ -1805,7 +1894,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         // Default to 30 days from now if no end date specified
         expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000);
       }
-      
+
       // Validate expiry time is in the future
       if (expiresAt <= Date.now()) {
         showToast('Quest end time must be in the future', 'error');
@@ -1857,7 +1946,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     if (stepNumber <= currentStep + 1 && stepNumber >= 1) {
       const maxStep = 5;
       if (stepNumber <= maxStep) {
-          setCurrentStep(stepNumber);
+        setCurrentStep(stepNumber);
       }
     }
   };
@@ -1867,7 +1956,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       <div className="create-quest-builder-header">
         <button className="create-quest-builder-back" onClick={onBack}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
+            <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Back
         </button>
@@ -1892,1934 +1981,1991 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         </div>
       )}
 
-      {/* Progress Steps - Hide on template selection */}
-      {currentStep > 0 && (
-        <div className="create-quest-builder-steps">
-          {steps.filter(step => !step.hidden).map((step) => {
-          const isClickable = step.number <= currentStep + 1;
-          return (
-          <div
-            key={step.number}
-              className={`create-quest-builder-step ${currentStep === step.number ? 'active' : ''} ${currentStep > step.number ? 'completed' : ''} ${isClickable ? 'clickable' : ''}`}
-              onClick={() => isClickable && handleStepClick(step.number)}
-              style={{ cursor: isClickable ? 'pointer' : 'default' }}
-          >
-            <span className="create-quest-builder-step-number">{step.number}</span>
-            <span className="create-quest-builder-step-label">{step.label}</span>
-          </div>
-          );
-        })}
-        </div>
-      )}
+
 
       {/* Form Content */}
       <div className="create-quest-builder-form-card">
         {/* Step 0: Template Selection */}
-        {currentStep === 0 && !draftId && (
-          <div className="create-quest-builder-form">
-            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 600, color: '#fff' }}>
-              Choose a Quest Template
-            </h2>
-            <p style={{ marginBottom: '2rem', color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
-              {isPro 
-                ? 'Select a template to get started quickly, or start from scratch'
-                : 'Start from scratch or upgrade to Pro to access pre-built quest templates.'}
-            </p>
-            
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: '1rem',
-              marginBottom: '2rem'
-            }} className="create-quest-builder-templates-grid">
-              {QUEST_TEMPLATES.map((template) => {
-                const isProOnly = template.id !== 'custom';
-                const isDisabled = isProOnly && !isPro;
-                
-                return (
-                <button
-                  key={template.id}
-                  onClick={() => {
-                    if (isDisabled) {
-                      setShowSubscribePopup(true);
-                      return;
-                    }
-                    setSelectedTemplate(template.id);
-                    if (template.id === 'custom') {
-                      setCurrentStep(1);
-                    } else {
-                      // Apply template
-                      setTitle(template.defaultTitle);
-                      setDescription(template.defaultDescription);
-                      setDifficulty(template.defaultDifficulty);
-                      setSelectedActions(template.actions);
-                      setCurrentStep(1);
-                      showToast(`Template "${template.name}" applied!`, 'success');
-                    }
-                  }}
-                  disabled={isDisabled}
-                  style={{
-                    padding: '1.5rem',
-                    backgroundColor: isDisabled 
-                      ? 'rgba(255, 255, 255, 0.02)'
-                      : selectedTemplate === template.id 
-                      ? 'rgba(59, 130, 246, 0.2)' 
-                      : 'rgba(255, 255, 255, 0.05)',
-                    border: `1px solid ${isDisabled
-                      ? 'rgba(255, 255, 255, 0.05)'
-                      : selectedTemplate === template.id 
-                      ? 'rgba(59, 130, 246, 0.5)' 
-                      : 'rgba(255, 255, 255, 0.1)'}`,
-                    borderRadius: '12px',
-                    cursor: isDisabled ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'left',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    opacity: isDisabled ? 0.5 : 1,
-                    position: 'relative',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isDisabled && selectedTemplate !== template.id) {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isDisabled && selectedTemplate !== template.id) {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                    }
-                  }}
-                >
-                  {isProOnly && (
-                    <span className="pro-badge" style={{ 
-                      position: 'absolute', 
-                      top: '8px', 
-                      right: '8px',
-                      fontSize: '10px',
-                      padding: '2px 6px'
-                    }}>
-                      Pro
-                    </span>
-                  )}
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-                    {template.icon}
-                  </div>
-                  <h3 style={{ 
-                    margin: 0, 
-                    fontSize: '1rem', 
-                    fontWeight: 600, 
-                    color: isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#fff' 
-                  }}>
-                    {template.name}
-                  </h3>
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '0.875rem', 
-                    color: isDisabled ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.6)',
-                    lineHeight: '1.4'
-                  }}>
-                    {template.description}
-                  </p>
-                </button>
-              );
-              })}
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button
-                onClick={onBack}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
+        <Stepper
+          initialStep={draftId ? 1 : 1}
+          currentStep={draftId ? currentStep : currentStep + 1}
+          onStepChange={(step: number) => {
+            const builderStep = draftId ? step : step - 1;
 
-        {currentStep === 1 && (
-          <div className="create-quest-builder-form">
+            // Auto-save progress
+            handleSave(false);
 
-            {/* Distribution Type - FCFS or Raffle */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">
-                Reward Distribution <span className="required-asterisk">*</span>
-              </label>
-              <div className="create-quest-builder-distribution-options">
-                <button
-                  type="button"
-                  className={`create-quest-builder-distribution-option ${distributionType === 'fcfs' ? 'active' : ''}`}
-                  onClick={() => setDistributionType('fcfs')}
-                >
-                  <div className="create-quest-builder-distribution-content">
-                    <h4 className="create-quest-builder-distribution-title">First Come First Served (FCFS)</h4>
-                    <p className="create-quest-builder-distribution-desc">Rewards are distributed to the first users who complete the quest</p>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  className={`create-quest-builder-distribution-option ${distributionType === 'raffle' ? 'active' : ''}`}
-                  onClick={() => setDistributionType('raffle')}
-                >
-                  <div className="create-quest-builder-distribution-content">
-                    <h4 className="create-quest-builder-distribution-title">Raffle</h4>
-                    <p className="create-quest-builder-distribution-desc">Winners are randomly selected from all users who complete the quest</p>
-                  </div>
-                </button>
-              </div>
-            </div>
+            // Scroll to top
+            window.scrollTo(0, 0);
 
-            {/* Title */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">
-                Title <span className="required-asterisk">*</span>
-              </label>
-              <div className="create-quest-builder-input-wrapper">
-                <input
-                  type="text"
-                  className="create-quest-builder-input"
-                  placeholder="Enter title..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  maxLength={64}
-                />
-                <span className="create-quest-builder-char-count">{title.length}/64</span>
-              </div>
-              <p className="create-quest-builder-hint">Keep it concise and actionable</p>
-            </div>
+            // Skip Deposit (Step 4) if IQ Only
+            if (builderStep === 4 && rewardType === 'iq_only') {
+              if (currentStep < 4) {
+                setCurrentStep(5);
+              } else {
+                setCurrentStep(3);
+              }
+              return;
+            }
+            setCurrentStep(builderStep);
+          }}
+          onFinalStepCompleted={handlePublishQuest}
+          onBeforeNext={(nextStep) => {
+            const stepToValidate = draftId ? nextStep - 1 : nextStep - 2;
+            return validateStep(stepToValidate);
+          }}
+          footerContent={(
+            <button
+              type="button"
+              className="create-quest-builder-button save"
+              onClick={() => handleSave(true)}
+              style={{ padding: '10px 20px', borderRadius: '8px', background: 'transparent', border: '1px solid #333', color: '#fff' }}
+            >
+              Save
+            </button>
+          )}
+          nextButtonText={currentStep === 5 ? 'Publish' : 'Next'}
+          nextButtonProps={{
+            style: { display: (!draftId && currentStep === 0) ? 'none' : 'block' }
+          }}
+          stepCircleContainerClassName="create-quest-stepper-container"
+        >
+          {!draftId && (
+            <Step>
+              <div className="create-quest-builder-form">
+                <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 600, color: '#fff' }}>
+                  Choose a Quest Template
+                </h2>
+                <p style={{ marginBottom: '2rem', color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+                  {isPro
+                    ? 'Select a template to get started quickly, or start from scratch'
+                    : 'Start from scratch or upgrade to Pro to access pre-built quest templates.'}
+                </p>
 
-            {/* Difficulty */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">
-                Difficulty <span className="required-asterisk">*</span>
-              </label>
-              <select
-                className="create-quest-builder-select"
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-              >
-                <option value="">Select</option>
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-              </select>
-            </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                  gap: '1rem',
+                  marginBottom: '2rem'
+                }} className="create-quest-builder-templates-grid">
+                  {QUEST_TEMPLATES.map((template) => {
+                    const isProOnly = template.id !== 'custom';
+                    const isDisabled = isProOnly && !isPro;
 
-            {/* Number of Winners */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">
-                Number of Winners <span className="required-asterisk">*</span>
-                {isFree && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>(Max 5 for Free plan)</span>}
-              </label>
-              <input
-                type="number"
-                className="create-quest-builder-input"
-                placeholder="Enter number of winners"
-                min="1"
-                max={isFree ? 5 : undefined}
-                value={numberOfWinners}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) > 0)) {
-                    const numValue = value === '' ? 1 : parseInt(value, 10);
-                    // Free plan: limit to 5 winners
-                    if (isFree && numValue > 5) {
-                      showToast('Free plan allows maximum 5 winners. Upgrade to Pro for unlimited winners.', 'warning');
-                      setNumberOfWinners('5');
-                      return;
-                    }
-                    setNumberOfWinners(value);
-                    // Update winner prizes array to match number of winners
-                    const currentPrizes = [...winnerPrizes];
-                    while (currentPrizes.length < numValue) {
-                      currentPrizes.push('');
-                    }
-                    while (currentPrizes.length > numValue) {
-                      currentPrizes.pop();
-                    }
-                    setWinnerPrizes(currentPrizes);
-                  }
-                }}
-              />
-              <p className="create-quest-builder-hint">
-                {isFree 
-                  ? 'Free plan allows up to 5 winners. Upgrade to Pro for unlimited winners.'
-                  : 'Enter the number of winners for this quest'}
-              </p>
-            </div>
-
-            {/* Description */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">
-                Description <span className="required-asterisk">*</span>
-              </label>
-              <div className="create-quest-builder-textarea-wrapper">
-                <textarea
-                  className="create-quest-builder-textarea"
-                  placeholder="Enter a short description..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  maxLength={1000}
-                  rows={6}
-                />
-                <span className="create-quest-builder-char-count">{description.length}/1000</span>
-              </div>
-            </div>
-
-            {/* Quest Image */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">Quest Image (SVG Only)</label>
-              <p className="create-quest-builder-hint">Upload an SVG file (Scalable Vector Graphics)</p>
-              <div className="create-quest-builder-image-upload">
-                {imagePreview ? (
-                  <div className="create-quest-builder-image-preview">
-                    <img src={imagePreview} alt="Preview" />
-                    <button
-                      type="button"
-                      className="create-quest-builder-image-remove"
-                      onClick={() => {
-                        setImage(null);
-                        setImagePreview(null);
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <input
-                      type="file"
-                      accept="image/svg+xml,.svg"
-                      onChange={handleImageUpload}
-                      className="create-quest-builder-file-input"
-                      id="image-upload"
-                    />
-                    <label htmlFor="image-upload" className="create-quest-builder-upload-label">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                      </svg>
-                      <span className="create-quest-builder-upload-text">Upload</span>
-                      <span className="create-quest-builder-upload-subtext">Drag or click to upload</span>
-                    </label>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Quest Duration */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">Quest Duration</label>
-              <p className="create-quest-builder-hint">Set the duration of the campaign</p>
-              
-              <div className="create-quest-builder-duration-grid">
-                <div className="create-quest-builder-duration-field">
-                  <label className="create-quest-builder-label">
-                    End Date <span className="required-asterisk">*</span>
-                  </label>
-                  <div className="create-quest-builder-datetime-wrapper">
-                    <input
-                      type="date"
-                      className="create-quest-builder-input create-quest-builder-datetime-input"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
-                    />
-                    <input
-                      type="time"
-                      className="create-quest-builder-input create-quest-builder-datetime-input"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                    />
-                  </div>
-                  <p className="create-quest-builder-hint">
-                    The quest will start automatically when published on-chain
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Actions */}
-        {currentStep === 2 && (
-          <>
-            <div className="create-quest-builder-actions-header">
-              <button
-                className="create-quest-builder-add-action-top-button"
-                onClick={() => setShowActionsModal(true)}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Add Action
-              </button>
-            </div>
-
-            {selectedActions.length > 0 ? (
-              <div className="create-quest-builder-actions-list">
-                {selectedActions.map((action, index) => (
-                  <div 
-                    key={action.id || index} 
-                    className={`create-quest-builder-action-item ${openDropdownIndex === index ? 'dropdown-open' : ''}`}
-                  >
-                    <div className="create-quest-builder-action-item-number">{index + 1}</div>
-                    <div className="create-quest-builder-action-item-content">
-                      <h4 className="create-quest-builder-action-item-title">
-                        {action.title}
-                        {action.optional && (
-                          <span className="create-quest-builder-action-item-optional-badge"> (Optional)</span>
-                        )}
-                        {requiresConfiguration(action.title) && !isActionConfigured(action) && (
-                          <span className="create-quest-builder-action-item-warning"> (Needs configuration)</span>
-                        )}
-                      </h4>
-                      {action.config?.accountUrl && (
-                        <p className="create-quest-builder-action-item-subtitle">{action.config.accountUrl}</p>
-                      )}
-                      {action.config?.accountName && !action.config?.accountUrl && (
-                        <p className="create-quest-builder-action-item-subtitle">{action.config.accountName}</p>
-                      )}
-                    </div>
-                    <div className="create-quest-builder-action-item-actions">
+                    return (
                       <button
-                        className="create-quest-builder-action-item-edit"
+                        key={template.id}
                         onClick={() => {
-                          if (requiresConfiguration(action.title)) {
-                            // Show edit modal for configurable actions
-                            setEditingActionIndex(index);
-                            const config = action.config || {};
-                            // Initialize readDocsConfig if it's a Read docs action
-                            if (action.title === 'Read docs' && !config.readDocsConfig) {
-                              config.readDocsConfig = { documents: [''] };
-                            }
-                            setEditingActionConfig(config);
-                            setShowEditActionModal(true);
+                          if (isDisabled) {
+                            setShowSubscribePopup(true);
+                            return;
+                          }
+                          setSelectedTemplate(template.id);
+                          if (template.id === 'custom') {
+                            setCurrentStep(1);
                           } else {
-                            // For non-configurable actions, just show a message or do nothing
-                            // Don't remove the action - user can use the dropdown menu to delete if needed
-                            showToast('This action does not require configuration', 'info');
+                            // Apply template
+                            setTitle(template.defaultTitle);
+                            setDescription(template.defaultDescription);
+                            setDifficulty(template.defaultDifficulty);
+                            setSelectedActions(template.actions);
+                            setCurrentStep(1);
+                            showToast(`Template "${template.name}" applied!`, 'success');
+                          }
+                        }}
+                        disabled={isDisabled}
+                        style={{
+                          padding: '1.5rem',
+                          backgroundColor: isDisabled
+                            ? 'rgba(255, 255, 255, 0.02)'
+                            : selectedTemplate === template.id
+                              ? 'rgba(59, 130, 246, 0.2)'
+                              : 'rgba(255, 255, 255, 0.05)',
+                          border: `1px solid ${isDisabled
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : selectedTemplate === template.id
+                              ? 'rgba(59, 130, 246, 0.5)'
+                              : 'rgba(255, 255, 255, 0.1)'}`,
+                          borderRadius: '12px',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s',
+                          textAlign: 'left',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.75rem',
+                          opacity: isDisabled ? 0.5 : 1,
+                          position: 'relative',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isDisabled && selectedTemplate !== template.id) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isDisabled && selectedTemplate !== template.id) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                           }
                         }}
                       >
-                        Edit
-                      </button>
-                      <div className="create-quest-builder-action-item-menu-container">
-                        <button
-                          className="create-quest-builder-action-item-menu"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenDropdownIndex(openDropdownIndex === index ? null : index);
-                          }}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="1"/>
-                            <circle cx="12" cy="5" r="1"/>
-                            <circle cx="12" cy="19" r="1"/>
-                          </svg>
-                        </button>
-                        {openDropdownIndex === index && (
-                          <div className="create-quest-builder-action-item-dropdown">
-                            <button
-                              className="create-quest-builder-action-item-dropdown-item"
-                              onClick={() => {
-                                // Free plan: Prevent duplicating actions (multi-step limitation)
-                                if (isFree) {
-                                  showToast('Free plan allows only 1 action per quest. Upgrade to Pro for multi-step quests.', 'warning');
-                                  setOpenDropdownIndex(null);
-                                  return;
-                                }
-                                // Duplicate action
-                                const actionToDuplicate = selectedActions[index];
-                                const duplicatedAction = {
-                                  ...actionToDuplicate,
-                                  id: `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                                };
-                                const newActions = [...selectedActions];
-                                newActions.splice(index + 1, 0, duplicatedAction);
-                                setSelectedActions(newActions);
-                                setOpenDropdownIndex(null);
-                                showToast('Action duplicated', 'success');
-                              }}
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                              </svg>
-                              Duplicate
-                            </button>
-                            <button
-                              className="create-quest-builder-action-item-dropdown-item"
-                              onClick={() => {
-                                // Toggle optional status
-                                const updatedActions = [...selectedActions];
-                                updatedActions[index] = {
-                                  ...updatedActions[index],
-                                  optional: !updatedActions[index].optional
-                                };
-                                setSelectedActions(updatedActions);
-                                setOpenDropdownIndex(null);
-                                showToast(
-                                  updatedActions[index].optional ? 'Action set as optional' : 'Action set as required',
-                                  'success'
-                                );
-                              }}
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                {selectedActions[index].optional ? (
-                                  <>
-                                    <path d="M9 12l2 2 4-4"/>
-                                    <circle cx="12" cy="12" r="10"/>
-                                  </>
-                                ) : (
-                                  <circle cx="12" cy="12" r="10"/>
-                                )}
-                              </svg>
-                              {selectedActions[index].optional ? 'Set as required' : 'Set as optional'}
-                            </button>
-                            <button
-                              className="create-quest-builder-action-item-dropdown-item delete"
-                              onClick={() => {
-                                // Delete action
-                                setSelectedActions(selectedActions.filter((_, i) => i !== index));
-                                setOpenDropdownIndex(null);
-                                showToast('Action deleted', 'success');
-                              }}
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                              </svg>
-                              Delete
-                            </button>
-                          </div>
+                        {isProOnly && (
+                          <span className="pro-badge" style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            fontSize: '10px',
+                            padding: '2px 6px'
+                          }}>
+                            Pro
+                          </span>
                         )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="create-quest-builder-actions-empty">
-                <div className="create-quest-builder-actions-empty-content">
-                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="create-quest-builder-lightning-icon">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                  </svg>
-                  <h2 className="create-quest-builder-actions-empty-title">Add first action to your Quest</h2>
-                  <p className="create-quest-builder-actions-empty-description">
-                    To create a Quest you need to add at least 1 action.
-                  </p>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                          {template.icon}
+                        </div>
+                        <h3 style={{
+                          margin: 0,
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                          color: isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#fff'
+                        }}>
+                          {template.name}
+                        </h3>
+                        <p style={{
+                          margin: 0,
+                          fontSize: '0.875rem',
+                          color: isDisabled ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.6)',
+                          lineHeight: '1.4'
+                        }}>
+                          {template.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                   <button
-                    className="create-quest-builder-add-action-empty-button"
-                    onClick={() => setShowActionsModal(true)}
+                    onClick={onBack}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                    }}
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="12" y1="5" x2="12" y2="19"/>
-                      <line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    Add Action
+                    Cancel
                   </button>
                 </div>
               </div>
-            )}
 
-            {/* Actions Modal/Popup */}
-            {showActionsModal && (
-              <>
-                <div className="create-quest-builder-modal-overlay" onClick={() => setShowActionsModal(false)}></div>
-                <div className="create-quest-builder-actions-modal">
-                  <div className="create-quest-builder-actions-modal-header">
-                    <h3 className="create-quest-builder-actions-modal-title">Add Action</h3>
-                    <button
-                      className="create-quest-builder-modal-close"
-                      onClick={() => setShowActionsModal(false)}
-                    >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="create-quest-builder-actions-modal-content">
-                    {/* Search Bar */}
-                    <div className="create-quest-builder-actions-search">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="create-quest-builder-search-icon">
-                        <circle cx="11" cy="11" r="8"/>
-                        <path d="m21 21-4.35-4.35"/>
-                      </svg>
+
+            </Step>
+          )}
+
+          <Step>
+            <div className="create-quest-builder-form">
+
+              {/* Distribution Type - FCFS or Raffle */}
+              <div className="create-quest-builder-field">
+                <label className="create-quest-builder-label">
+                  Reward Distribution <span className="required-asterisk">*</span>
+                </label>
+                <div className="create-quest-builder-distribution-options">
+                  <button
+                    type="button"
+                    className={`create-quest-builder-distribution-option ${distributionType === 'fcfs' ? 'active' : ''}`}
+                    onClick={() => setDistributionType('fcfs')}
+                  >
+                    <div className="create-quest-builder-distribution-content">
+                      <h4 className="create-quest-builder-distribution-title">First Come First Served (FCFS)</h4>
+                      <p className="create-quest-builder-distribution-desc">Rewards are distributed to the first users who complete the quest</p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`create-quest-builder-distribution-option ${distributionType === 'raffle' ? 'active' : ''}`}
+                    onClick={() => setDistributionType('raffle')}
+                  >
+                    <div className="create-quest-builder-distribution-content">
+                      <h4 className="create-quest-builder-distribution-title">Raffle</h4>
+                      <p className="create-quest-builder-distribution-desc">Winners are randomly selected from all users who complete the quest</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="create-quest-builder-field">
+                <label className="create-quest-builder-label">
+                  Title <span className="required-asterisk">*</span>
+                </label>
+                <div className="create-quest-builder-input-wrapper">
+                  <input
+                    type="text"
+                    className="create-quest-builder-input"
+                    placeholder="Enter title..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    maxLength={64}
+                  />
+                  <span className="create-quest-builder-char-count">{title.length}/64</span>
+                </div>
+                <p className="create-quest-builder-hint">Keep it concise and actionable</p>
+              </div>
+
+              {/* Difficulty */}
+              <div className="create-quest-builder-field">
+                <label className="create-quest-builder-label">
+                  Difficulty <span className="required-asterisk">*</span>
+                </label>
+                <select
+                  className="create-quest-builder-select"
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                >
+                  <option value="">Select</option>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+
+              {/* Number of Winners */}
+              <div className="create-quest-builder-field">
+                <label className="create-quest-builder-label">
+                  Number of Winners <span className="required-asterisk">*</span>
+                  {isFree && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>(Max 5 for Free plan)</span>}
+                </label>
+                <input
+                  type="number"
+                  className="create-quest-builder-input"
+                  placeholder="Enter number of winners"
+                  min="1"
+                  max={isFree ? 5 : undefined}
+                  value={numberOfWinners}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) > 0)) {
+                      const numValue = value === '' ? 1 : parseInt(value, 10);
+                      // Free plan: limit to 5 winners
+                      if (isFree && numValue > 5) {
+                        showToast('Free plan allows maximum 5 winners. Upgrade to Pro for unlimited winners.', 'warning');
+                        setNumberOfWinners('5');
+                        return;
+                      }
+                      setNumberOfWinners(value);
+                      // Update winner prizes array to match number of winners
+                      const currentPrizes = [...winnerPrizes];
+                      while (currentPrizes.length < numValue) {
+                        currentPrizes.push('');
+                      }
+                      while (currentPrizes.length > numValue) {
+                        currentPrizes.pop();
+                      }
+                      setWinnerPrizes(currentPrizes);
+                    }
+                  }}
+                />
+                <p className="create-quest-builder-hint">
+                  {isFree
+                    ? 'Free plan allows up to 5 winners. Upgrade to Pro for unlimited winners.'
+                    : 'Enter the number of winners for this quest'}
+                </p>
+              </div>
+
+              {/* Description */}
+              <div className="create-quest-builder-field">
+                <label className="create-quest-builder-label">
+                  Description <span className="required-asterisk">*</span>
+                </label>
+                <div className="create-quest-builder-textarea-wrapper">
+                  <textarea
+                    className="create-quest-builder-textarea"
+                    placeholder="Enter a short description..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    maxLength={1000}
+                    rows={6}
+                  />
+                  <span className="create-quest-builder-char-count">{description.length}/1000</span>
+                </div>
+              </div>
+
+              {/* Quest Image */}
+              <div className="create-quest-builder-field">
+                <label className="create-quest-builder-label">Quest Image (SVG Only)</label>
+                <p className="create-quest-builder-hint">Upload an SVG file (Scalable Vector Graphics)</p>
+                <div className="create-quest-builder-image-upload">
+                  {imagePreview ? (
+                    <div className="create-quest-builder-image-preview">
+                      <img src={imagePreview} alt="Preview" />
+                      <button
+                        type="button"
+                        className="create-quest-builder-image-remove"
+                        onClick={() => {
+                          setImage(null);
+                          setImagePreview(null);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <>
                       <input
-                        type="text"
-                        placeholder="Search for action..."
-                        className="create-quest-builder-search-input"
+                        type="file"
+                        accept="image/svg+xml,.svg"
+                        onChange={handleImageUpload}
+                        className="create-quest-builder-file-input"
+                        id="image-upload"
+                      />
+                      <label htmlFor="image-upload" className="create-quest-builder-upload-label">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        <span className="create-quest-builder-upload-text">Upload</span>
+                        <span className="create-quest-builder-upload-subtext">Drag or click to upload</span>
+                      </label>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Quest Duration */}
+              <div className="create-quest-builder-field">
+                <label className="create-quest-builder-label">Quest Duration</label>
+                <p className="create-quest-builder-hint">Set the duration of the campaign</p>
+
+                <div className="create-quest-builder-duration-grid">
+                  <div className="create-quest-builder-duration-field">
+                    <label className="create-quest-builder-label">
+                      End Date <span className="required-asterisk">*</span>
+                    </label>
+                    <div className="create-quest-builder-datetime-wrapper">
+                      <input
+                        type="date"
+                        className="create-quest-builder-input create-quest-builder-datetime-input"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
+                      />
+                      <input
+                        type="time"
+                        className="create-quest-builder-input create-quest-builder-datetime-input"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
                       />
                     </div>
+                    <p className="create-quest-builder-hint">
+                      The quest will start automatically when published on-chain
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                    <div className="create-quest-builder-actions-content">
-                      {/* Action Cards Grid - No Categories Sidebar */}
-                      <div className="create-quest-builder-actions-grid">
-                        {false ? (
-                          <>
-                            {/* Wallet Actions */}
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 37, title: 'EVM wallet connected' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
-                                  <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
-                                  <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
-                                </svg>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">EVM wallet connected</h4>
-                              <p className="create-quest-builder-action-desc">Connect an EVM-compatible wallet</p>
-                            </div>
-                            
-                            {/* Discord Actions */}
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 5, title: 'Discord connected' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon purple">
-                                <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Discord connected</h4>
-                              <p className="create-quest-builder-action-desc">Connect a Discord account</p>
-                            </div>
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 10, title: 'Joined Discord Server' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                  <circle cx="9" cy="7" r="4"/>
-                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                </svg>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Joined Discord Server</h4>
-                              <p className="create-quest-builder-action-desc">Grow your community</p>
-                            </div>
+            {/* Step 2: Actions */}
+          </Step>
 
-                            {/* Twitter Actions */}
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 9, title: 'Twitter connected' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Twitter connected</h4>
-                              <p className="create-quest-builder-action-desc">Connect a Twitter account</p>
-                            </div>
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              handleAddAction({ id: 31, title: 'Follow a Twitter account' });
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                  <circle cx="9" cy="7" r="4"/>
-                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                </svg>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Follow a Twitter account</h4>
-                              <p className="create-quest-builder-action-desc">Follow a specific Twitter profile</p>
-                            </div>
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 32, title: 'Make a post on Twitter' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                  <polyline points="14 2 14 8 20 8"/>
-                                  <line x1="16" y1="13" x2="8" y2="13"/>
-                                  <line x1="16" y1="17" x2="8" y2="17"/>
-                                  <polyline points="10 9 9 9 8 9"/>
-                                </svg>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Make a post on Twitter</h4>
-                              <p className="create-quest-builder-action-desc">Create and publish a Twitter post</p>
-                            </div>
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 33, title: 'Like a post on Twitter' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                                </svg>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Like a post on Twitter</h4>
-                              <p className="create-quest-builder-action-desc">Like a specific Twitter post</p>
-                            </div>
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 34, title: 'Comment on a post on Twitter' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                                </svg>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Comment on a post on Twitter</h4>
-                              <p className="create-quest-builder-action-desc">Add a comment to a Twitter post</p>
-                            </div>
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 35, title: 'Repost a post on Twitter' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <polyline points="17 1 21 5 17 9"/>
-                                  <path d="M3 11V9a2 2 0 0 1 2-2h16"/>
-                                  <polyline points="7 23 3 19 7 15"/>
-                                  <path d="M21 13v2a2 2 0 0 1-2 2H3"/>
-                                </svg>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Repost a post on Twitter</h4>
-                              <p className="create-quest-builder-action-desc">Repost a Twitter post to your feed</p>
-                            </div>
-                            <div className="create-quest-builder-action-card" onClick={() => {
-                              setSelectedActions([...selectedActions, { id: 36, title: 'Visit website' }]);
-                              setShowActionsModal(false);
-                            }}>
-                              <div className="create-quest-builder-action-icon blue">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                                  <polyline points="15 3 21 3 21 9"/>
-                                  <line x1="10" y1="14" x2="21" y2="3"/>
-                                </svg>
-                              </div>
-                              <h4 className="create-quest-builder-action-title">Visit website</h4>
-                              <p className="create-quest-builder-action-desc">Visit a website URL</p>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            {/* Regular Quest Actions - All Actions */}
-                        {/* Row 1 */}
-                        <div 
-                          className="create-quest-builder-action-card disabled" 
+          <Step>
+            <>
+              <div className="create-quest-builder-actions-header">
+                <button
+                  className="create-quest-builder-add-action-top-button"
+                  onClick={() => setShowActionsModal(true)}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Add Action
+                </button>
+              </div>
+
+              {selectedActions.length > 0 ? (
+                <div className="create-quest-builder-actions-list">
+                  {selectedActions.map((action, index) => (
+                    <div
+                      key={action.id || index}
+                      className={`create-quest-builder-action-item ${openDropdownIndex === index ? 'dropdown-open' : ''}`}
+                    >
+                      <div className="create-quest-builder-action-item-number">{index + 1}</div>
+                      <div className="create-quest-builder-action-item-content">
+                        <h4 className="create-quest-builder-action-item-title">
+                          {action.title}
+                          {action.optional && (
+                            <span className="create-quest-builder-action-item-optional-badge"> (Optional)</span>
+                          )}
+                          {requiresConfiguration(action.title) && !isActionConfigured(action) && (
+                            <span className="create-quest-builder-action-item-warning"> (Needs configuration)</span>
+                          )}
+                        </h4>
+                        {action.config?.accountUrl && (
+                          <p className="create-quest-builder-action-item-subtitle">{action.config.accountUrl}</p>
+                        )}
+                        {action.config?.accountName && !action.config?.accountUrl && (
+                          <p className="create-quest-builder-action-item-subtitle">{action.config.accountName}</p>
+                        )}
+                      </div>
+                      <div className="create-quest-builder-action-item-actions">
+                        <button
+                          className="create-quest-builder-action-item-edit"
                           onClick={() => {
-                            showToast('This action is currently disabled', 'warning');
-                          }}
-                          onMouseEnter={() => {
-                            if (isPro) {
-                              setHoveredDisabledAction('tns');
+                            if (requiresConfiguration(action.title)) {
+                              // Show edit modal for configurable actions
+                              setEditingActionIndex(index);
+                              const config = action.config || {};
+                              // Initialize readDocsConfig if it's a Read docs action
+                              if (action.title === 'Read docs' && !config.readDocsConfig) {
+                                config.readDocsConfig = { documents: [''] };
+                              }
+                              setEditingActionConfig(config);
+                              setShowEditActionModal(true);
+                            } else {
+                              // For non-configurable actions, just show a message or do nothing
+                              // Don't remove the action - user can use the dropdown menu to delete if needed
+                              showToast('This action does not require configuration', 'info');
                             }
                           }}
-                          onMouseLeave={() => {
-                            setHoveredDisabledAction(null);
-                          }}
-                          style={{ position: 'relative' }}
                         >
-                          {hoveredDisabledAction === 'tns' && isPro && (
-                            <div className="coming-soon-tooltip">
-                              Coming Soon!
+                          Edit
+                        </button>
+                        <div className="create-quest-builder-action-item-menu-container">
+                          <button
+                            className="create-quest-builder-action-item-menu"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenDropdownIndex(openDropdownIndex === index ? null : index);
+                            }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="1" />
+                              <circle cx="12" cy="5" r="1" />
+                              <circle cx="12" cy="19" r="1" />
+                            </svg>
+                          </button>
+                          {openDropdownIndex === index && (
+                            <div className="create-quest-builder-action-item-dropdown">
+                              <button
+                                className="create-quest-builder-action-item-dropdown-item"
+                                onClick={() => {
+                                  // Free plan: Prevent duplicating actions (multi-step limitation)
+                                  if (isFree) {
+                                    showToast('Free plan allows only 1 action per quest. Upgrade to Pro for multi-step quests.', 'warning');
+                                    setOpenDropdownIndex(null);
+                                    return;
+                                  }
+                                  // Duplicate action
+                                  const actionToDuplicate = selectedActions[index];
+                                  const duplicatedAction = {
+                                    ...actionToDuplicate,
+                                    id: `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                                  };
+                                  const newActions = [...selectedActions];
+                                  newActions.splice(index + 1, 0, duplicatedAction);
+                                  setSelectedActions(newActions);
+                                  setOpenDropdownIndex(null);
+                                  showToast('Action duplicated', 'success');
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                </svg>
+                                Duplicate
+                              </button>
+                              <button
+                                className="create-quest-builder-action-item-dropdown-item"
+                                onClick={() => {
+                                  // Toggle optional status
+                                  const updatedActions = [...selectedActions];
+                                  updatedActions[index] = {
+                                    ...updatedActions[index],
+                                    optional: !updatedActions[index].optional
+                                  };
+                                  setSelectedActions(updatedActions);
+                                  setOpenDropdownIndex(null);
+                                  showToast(
+                                    updatedActions[index].optional ? 'Action set as optional' : 'Action set as required',
+                                    'success'
+                                  );
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  {selectedActions[index].optional ? (
+                                    <>
+                                      <path d="M9 12l2 2 4-4" />
+                                      <circle cx="12" cy="12" r="10" />
+                                    </>
+                                  ) : (
+                                    <circle cx="12" cy="12" r="10" />
+                                  )}
+                                </svg>
+                                {selectedActions[index].optional ? 'Set as required' : 'Set as optional'}
+                              </button>
+                              <button
+                                className="create-quest-builder-action-item-dropdown-item delete"
+                                onClick={() => {
+                                  // Delete action
+                                  setSelectedActions(selectedActions.filter((_, i) => i !== index));
+                                  setOpenDropdownIndex(null);
+                                  showToast('Action deleted', 'success');
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                                Delete
+                              </button>
                             </div>
                           )}
-                          <div className="create-quest-builder-action-icon purple">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <rect x="3" y="3" width="18" height="18" rx="2"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">TNS minted</h4>
-                          <p className="create-quest-builder-action-desc">Trust Name Service</p>
                         </div>
-                        <div 
-                          className="create-quest-builder-action-card disabled" 
-                          onClick={() => {
-                            showToast('This action is currently disabled', 'warning');
-                          }}
-                          onMouseEnter={() => {
-                            if (isPro) {
-                              setHoveredDisabledAction('gitcoin');
-                            }
-                          }}
-                          onMouseLeave={() => {
-                            setHoveredDisabledAction(null);
-                          }}
-                          style={{ position: 'relative' }}
-                        >
-                          {hoveredDisabledAction === 'gitcoin' && isPro && (
-                            <div className="coming-soon-tooltip">
-                              Coming Soon!
-                            </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="create-quest-builder-actions-empty">
+                  <div className="create-quest-builder-actions-empty-content">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="create-quest-builder-lightning-icon">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    <h2 className="create-quest-builder-actions-empty-title">Add first action to your Quest</h2>
+                    <p className="create-quest-builder-actions-empty-description">
+                      To create a Quest you need to add at least 1 action.
+                    </p>
+                    <button
+                      className="create-quest-builder-add-action-empty-button"
+                      onClick={() => setShowActionsModal(true)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      Add Action
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions Modal/Popup */}
+              {showActionsModal && (
+                <>
+                  <div className="create-quest-builder-modal-overlay" onClick={() => setShowActionsModal(false)}></div>
+                  <div className="create-quest-builder-actions-modal">
+                    <div className="create-quest-builder-actions-modal-header">
+                      <h3 className="create-quest-builder-actions-modal-title">Add Action</h3>
+                      <button
+                        className="create-quest-builder-modal-close"
+                        onClick={() => setShowActionsModal(false)}
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="create-quest-builder-actions-modal-content">
+                      {/* Search Bar */}
+                      <div className="create-quest-builder-actions-search">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="create-quest-builder-search-icon">
+                          <circle cx="11" cy="11" r="8" />
+                          <path d="m21 21-4.35-4.35" />
+                        </svg>
+                        <input
+                          type="text"
+                          placeholder="Search for action..."
+                          className="create-quest-builder-search-input"
+                        />
+                      </div>
+
+                      <div className="create-quest-builder-actions-content">
+                        {/* Action Cards Grid - No Categories Sidebar */}
+                        <div className="create-quest-builder-actions-grid">
+                          {false ? (
+                            <>
+                              {/* Wallet Actions */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 37, title: 'EVM wallet connected' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+                                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                                    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">EVM wallet connected</h4>
+                                <p className="create-quest-builder-action-desc">Connect an EVM-compatible wallet</p>
+                              </div>
+
+                              {/* Discord Actions */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 5, title: 'Discord connected' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon purple">
+                                  <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Discord connected</h4>
+                                <p className="create-quest-builder-action-desc">Connect a Discord account</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 10, title: 'Joined Discord Server' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Joined Discord Server</h4>
+                                <p className="create-quest-builder-action-desc">Grow your community</p>
+                              </div>
+
+                              {/* Twitter Actions */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 9, title: 'Twitter connected' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Twitter connected</h4>
+                                <p className="create-quest-builder-action-desc">Connect a Twitter account</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                handleAddAction({ id: 31, title: 'Follow a Twitter account' });
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Follow a Twitter account</h4>
+                                <p className="create-quest-builder-action-desc">Follow a specific Twitter profile</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 32, title: 'Make a post on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                    <polyline points="10 9 9 9 8 9" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Make a post on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Create and publish a Twitter post</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 33, title: 'Like a post on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Like a post on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Like a specific Twitter post</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 34, title: 'Comment on a post on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Comment on a post on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Add a comment to a Twitter post</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 35, title: 'Repost a post on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="17 1 21 5 17 9" />
+                                    <path d="M3 11V9a2 2 0 0 1 2-2h16" />
+                                    <polyline points="7 23 3 19 7 15" />
+                                    <path d="M21 13v2a2 2 0 0 1-2 2H3" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Repost a post on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Repost a Twitter post to your feed</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 38, title: 'Quote a tweet on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                    <path d="M9 9h6" />
+                                    <path d="M9 13h6" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Quote a tweet on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Quote a specific tweet with your own comment</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 36, title: 'Visit website' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                    <polyline points="15 3 21 3 21 9" />
+                                    <line x1="10" y1="14" x2="21" y2="3" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Visit website</h4>
+                                <p className="create-quest-builder-action-desc">Visit a website URL</p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              {/* Regular Quest Actions - All Actions */}
+                              {/* Row 1 */}
+                              <div
+                                className="create-quest-builder-action-card disabled"
+                                onClick={() => {
+                                  showToast('This action is currently disabled', 'warning');
+                                }}
+                                onMouseEnter={() => {
+                                  if (isPro) {
+                                    setHoveredDisabledAction('tns');
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredDisabledAction(null);
+                                }}
+                                style={{ position: 'relative' }}
+                              >
+                                {hoveredDisabledAction === 'tns' && isPro && (
+                                  <div className="coming-soon-tooltip">
+                                    Coming Soon!
+                                  </div>
+                                )}
+                                <div className="create-quest-builder-action-icon purple">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">TNS minted</h4>
+                                <p className="create-quest-builder-action-desc">Trust Name Service</p>
+                              </div>
+                              <div
+                                className="create-quest-builder-action-card disabled"
+                                onClick={() => {
+                                  showToast('This action is currently disabled', 'warning');
+                                }}
+                                onMouseEnter={() => {
+                                  if (isPro) {
+                                    setHoveredDisabledAction('gitcoin');
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredDisabledAction(null);
+                                }}
+                                style={{ position: 'relative' }}
+                              >
+                                {hoveredDisabledAction === 'gitcoin' && isPro && (
+                                  <div className="coming-soon-tooltip">
+                                    Coming Soon!
+                                  </div>
+                                )}
+                                <div className="create-quest-builder-action-icon blue">
+                                  <span style={{ fontSize: '20px', fontWeight: 'bold' }}>G</span>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Gitcoin Passport Score</h4>
+                                <p className="create-quest-builder-action-desc">Apply extra sybil protection</p>
+                              </div>
+
+                              {/* Row 2 */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 29, title: 'Have an Intuition identity' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Have an Intuition identity</h4>
+                                <p className="create-quest-builder-action-desc">Verify Intuition protocol identity</p>
+                              </div>
+
+                              {/* Row 3 */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 5, title: 'Discord connected' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon purple">
+                                  <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Discord connected</h4>
+                                <p className="create-quest-builder-action-desc">Connect a Discord account</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 6, title: 'Email connected' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon red">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                    <polyline points="22,6 12,13 2,6" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Email connected</h4>
+                                <p className="create-quest-builder-action-desc">Connect an email address</p>
+                              </div>
+
+                              {/* Row 4 */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 7, title: 'Github connected' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon purple">
+                                  <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Github connected</h4>
+                                <p className="create-quest-builder-action-desc">Connect a GitHub account</p>
+                              </div>
+                              {/* Row 5 */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 9, title: 'Twitter connected' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Twitter connected</h4>
+                                <p className="create-quest-builder-action-desc">Connect a Twitter account</p>
+                              </div>
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 10, title: 'Joined Discord Server' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Joined Discord Server</h4>
+                                <p className="create-quest-builder-action-desc">Grow your community</p>
+                              </div>
+
+                              {/* Row 5.5 - Follow Twitter Account */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 31, title: 'Follow a Twitter account' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Follow a Twitter account</h4>
+                                <p className="create-quest-builder-action-desc">Follow a specific Twitter profile</p>
+                              </div>
+
+                              {/* Row 5.6 - Make a post on Twitter */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 32, title: 'Make a post on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                    <polyline points="10 9 9 9 8 9" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Make a post on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Create and publish a Twitter post</p>
+                              </div>
+
+                              {/* Row 5.7 - Like a post on Twitter */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 33, title: 'Like a post on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Like a post on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Like a specific Twitter post</p>
+                              </div>
+
+                              {/* Row 5.8 - Comment on a post on Twitter */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 34, title: 'Comment on a post on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Comment on a post on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Add a comment to a Twitter post</p>
+                              </div>
+
+                              {/* Row 5.9 - Repost a post on Twitter */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 35, title: 'Repost a post on Twitter' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="17 1 21 5 17 9" />
+                                    <path d="M3 11V9a2 2 0 0 1 2-2h16" />
+                                    <polyline points="7 23 3 19 7 15" />
+                                    <path d="M21 13v2a2 2 0 0 1-2 2H3" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Repost a post on Twitter</h4>
+                                <p className="create-quest-builder-action-desc">Repost a Twitter post to your feed</p>
+                              </div>
+
+                              {/* Row 6 */}
+                              <div className="create-quest-builder-action-card" onClick={() => {
+                                setSelectedActions([...selectedActions, { id: 30, title: 'Staked on a claim' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Staked on a claim</h4>
+                                <p className="create-quest-builder-action-desc">Verify staking activity</p>
+                              </div>
+
+                              {/* Row 7 - PRO ONLY */}
+                              <>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 13, title: 'Poll' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon purple">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Poll {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Answer survey questions</p>
+                                </div>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 14, title: 'Quiz' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon green">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <circle cx="12" cy="12" r="10" />
+                                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                      <path d="M12 17h.01" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Quiz {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Test & verify knowledge</p>
+                                </div>
+                              </>
+
+                              {/* Row 8 - PRO ONLY */}
+                              <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                if (isFree) {
+                                  setShowSubscribePopup(true);
+                                  return;
+                                }
+                                setSelectedActions([...selectedActions, { id: 16, title: 'Open Link' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                    <polyline points="15 3 21 3 21 9" />
+                                    <line x1="10" y1="14" x2="21" y2="3" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Open Link {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                <p className="create-quest-builder-action-desc">Visit an external link</p>
+                              </div>
+
+                              {/* Row 9 - PRO ONLY */}
+                              <>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 17, title: 'Quest Completion' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon blue">
+                                    <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Q</span>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Quest Completion {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Build progressive engagement</p>
+                                </div>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 18, title: 'Wait' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon blue">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <circle cx="12" cy="12" r="10" />
+                                      <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Wait {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Add a timed waiting period</p>
+                                </div>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 19, title: 'Read docs' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon blue">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Read docs {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Require users to read documents</p>
+                                </div>
+                              </>
+
+                              {/* Row 10 - PRO ONLY */}
+                              <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                if (isFree) {
+                                  setShowSubscribePopup(true);
+                                  return;
+                                }
+                                setSelectedActions([...selectedActions, { id: 20, title: 'Minted an NFT' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Minted an NFT {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                <p className="create-quest-builder-action-desc">Verify NFT minting activity</p>
+                              </div>
+
+                              {/* Row 11 - PRO ONLY */}
+                              <>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 21, title: 'Transfer tokens' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon blue">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Transfer tokens {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Verify token movement</p>
+                                </div>
+                              </>
+
+                              {/* Row 12 - PRO ONLY */}
+                              <>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 23, title: 'Hold a token' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon blue">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                      <line x1="1" y1="10" x2="23" y2="10" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Hold a token {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Verify token ownership</p>
+                                </div>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 24, title: 'Hold an NFT' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon blue">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                      <line x1="1" y1="10" x2="23" y2="10" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Hold an NFT {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Enable holder-only benefits</p>
+                                </div>
+                              </>
+
+                              {/* Row 13 - PRO ONLY */}
+                              <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                if (isFree) {
+                                  setShowSubscribePopup(true);
+                                  return;
+                                }
+                                setSelectedActions([...selectedActions, { id: 26, title: 'Bridge' }]);
+                                setShowActionsModal(false);
+                              }}>
+                                <div className="create-quest-builder-action-icon blue">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                  </svg>
+                                </div>
+                                <h4 className="create-quest-builder-action-title">Bridge {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                <p className="create-quest-builder-action-desc">Bridge tokens between chains</p>
+                              </div>
+
+                              {/* Row 14 - PRO ONLY */}
+                              <>
+                                <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
+                                  if (isFree) {
+                                    setShowSubscribePopup(true);
+                                    return;
+                                  }
+                                  setSelectedActions([...selectedActions, { id: 27, title: 'Swap' }]);
+                                  setShowActionsModal(false);
+                                }}>
+                                  <div className="create-quest-builder-action-icon blue">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">Swap {isFree && <span className="pro-badge">Pro</span>}</h4>
+                                  <p className="create-quest-builder-action-desc">Swap tokens</p>
+                                </div>
+                              </>
+                            </>
                           )}
-                          <div className="create-quest-builder-action-icon blue">
-                            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>G</span>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Gitcoin Passport Score</h4>
-                          <p className="create-quest-builder-action-desc">Apply extra sybil protection</p>
                         </div>
-
-                        {/* Row 2 */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 29, title: 'Have an Intuition identity' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                              <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Have an Intuition identity</h4>
-                          <p className="create-quest-builder-action-desc">Verify Intuition protocol identity</p>
-                        </div>
-
-                        {/* Row 3 */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 5, title: 'Discord connected' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon purple">
-                            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Discord connected</h4>
-                          <p className="create-quest-builder-action-desc">Connect a Discord account</p>
-                        </div>
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 6, title: 'Email connected' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon red">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                              <polyline points="22,6 12,13 2,6"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Email connected</h4>
-                          <p className="create-quest-builder-action-desc">Connect an email address</p>
-                        </div>
-
-                        {/* Row 4 */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 7, title: 'Github connected' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon purple">
-                            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Github connected</h4>
-                          <p className="create-quest-builder-action-desc">Connect a GitHub account</p>
-                        </div>
-                        {/* Row 5 */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 9, title: 'Twitter connected' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>@</span>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Twitter connected</h4>
-                          <p className="create-quest-builder-action-desc">Connect a Twitter account</p>
-                        </div>
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 10, title: 'Joined Discord Server' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                              <circle cx="9" cy="7" r="4"/>
-                              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Joined Discord Server</h4>
-                          <p className="create-quest-builder-action-desc">Grow your community</p>
-                        </div>
-
-                        {/* Row 5.5 - Follow Twitter Account */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 31, title: 'Follow a Twitter account' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                              <circle cx="9" cy="7" r="4"/>
-                              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Follow a Twitter account</h4>
-                          <p className="create-quest-builder-action-desc">Follow a specific Twitter profile</p>
-                        </div>
-
-                        {/* Row 5.6 - Make a post on Twitter */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 32, title: 'Make a post on Twitter' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                              <polyline points="14 2 14 8 20 8"/>
-                              <line x1="16" y1="13" x2="8" y2="13"/>
-                              <line x1="16" y1="17" x2="8" y2="17"/>
-                              <polyline points="10 9 9 9 8 9"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Make a post on Twitter</h4>
-                          <p className="create-quest-builder-action-desc">Create and publish a Twitter post</p>
-                        </div>
-
-                        {/* Row 5.7 - Like a post on Twitter */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 33, title: 'Like a post on Twitter' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Like a post on Twitter</h4>
-                          <p className="create-quest-builder-action-desc">Like a specific Twitter post</p>
-                        </div>
-
-                        {/* Row 5.8 - Comment on a post on Twitter */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 34, title: 'Comment on a post on Twitter' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Comment on a post on Twitter</h4>
-                          <p className="create-quest-builder-action-desc">Add a comment to a Twitter post</p>
-                        </div>
-
-                        {/* Row 5.9 - Repost a post on Twitter */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 35, title: 'Repost a post on Twitter' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="17 1 21 5 17 9"/>
-                              <path d="M3 11V9a2 2 0 0 1 2-2h16"/>
-                              <polyline points="7 23 3 19 7 15"/>
-                              <path d="M21 13v2a2 2 0 0 1-2 2H3"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Repost a post on Twitter</h4>
-                          <p className="create-quest-builder-action-desc">Repost a Twitter post to your feed</p>
-                        </div>
-
-                        {/* Row 6 */}
-                        <div className="create-quest-builder-action-card" onClick={() => {
-                          setSelectedActions([...selectedActions, { id: 30, title: 'Staked on a claim' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                              <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Staked on a claim</h4>
-                          <p className="create-quest-builder-action-desc">Verify staking activity</p>
-                        </div>
-
-                        {/* Row 7 - PRO ONLY */}
-                        <>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 13, title: 'Poll' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon purple">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                              </svg>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Poll {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Answer survey questions</p>
-                          </div>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 14, title: 'Quiz' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon green">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                                <path d="M12 17h.01"/>
-                              </svg>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Quiz {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Test & verify knowledge</p>
-                          </div>
-                        </>
-
-                        {/* Row 8 - PRO ONLY */}
-                        <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                          if (isFree) {
-                            setShowSubscribePopup(true);
-                            return;
-                          }
-                          setSelectedActions([...selectedActions, { id: 16, title: 'Open Link' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                              <polyline points="15 3 21 3 21 9"/>
-                              <line x1="10" y1="14" x2="21" y2="3"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Open Link {isFree && <span className="pro-badge">Pro</span>}</h4>
-                          <p className="create-quest-builder-action-desc">Visit an external link</p>
-                        </div>
-
-                        {/* Row 9 - PRO ONLY */}
-                        <>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 17, title: 'Quest Completion' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon blue">
-                              <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Q</span>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Quest Completion {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Build progressive engagement</p>
-                          </div>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 18, title: 'Wait' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon blue">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                              </svg>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Wait {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Add a timed waiting period</p>
-                          </div>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 19, title: 'Read docs' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon blue">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                              </svg>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Read docs {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Require users to read documents</p>
-                          </div>
-                        </>
-
-                        {/* Row 10 - PRO ONLY */}
-                        <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                          if (isFree) {
-                            setShowSubscribePopup(true);
-                            return;
-                          }
-                          setSelectedActions([...selectedActions, { id: 20, title: 'Minted an NFT' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Minted an NFT {isFree && <span className="pro-badge">Pro</span>}</h4>
-                          <p className="create-quest-builder-action-desc">Verify NFT minting activity</p>
-                        </div>
-
-                        {/* Row 11 - PRO ONLY */}
-                        <>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 21, title: 'Transfer tokens' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon blue">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                              </svg>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Transfer tokens {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Verify token movement</p>
-                          </div>
-                        </>
-
-                        {/* Row 12 - PRO ONLY */}
-                        <>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 23, title: 'Hold a token' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon blue">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                                <line x1="1" y1="10" x2="23" y2="10"/>
-                              </svg>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Hold a token {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Verify token ownership</p>
-                          </div>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 24, title: 'Hold an NFT' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon blue">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                                <line x1="1" y1="10" x2="23" y2="10"/>
-                              </svg>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Hold an NFT {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Enable holder-only benefits</p>
-                          </div>
-                        </>
-
-                        {/* Row 13 - PRO ONLY */}
-                        <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                          if (isFree) {
-                            setShowSubscribePopup(true);
-                            return;
-                          }
-                          setSelectedActions([...selectedActions, { id: 26, title: 'Bridge' }]);
-                          setShowActionsModal(false);
-                        }}>
-                          <div className="create-quest-builder-action-icon blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                            </svg>
-                          </div>
-                          <h4 className="create-quest-builder-action-title">Bridge {isFree && <span className="pro-badge">Pro</span>}</h4>
-                          <p className="create-quest-builder-action-desc">Bridge tokens between chains</p>
-                        </div>
-
-                        {/* Row 14 - PRO ONLY */}
-                        <>
-                          <div className={`create-quest-builder-action-card ${isFree ? 'pro-disabled' : ''}`} onClick={() => {
-                            if (isFree) {
-                              setShowSubscribePopup(true);
-                              return;
-                            }
-                            setSelectedActions([...selectedActions, { id: 27, title: 'Swap' }]);
-                            setShowActionsModal(false);
-                          }}>
-                            <div className="create-quest-builder-action-icon blue">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                              </svg>
-                            </div>
-                            <h4 className="create-quest-builder-action-title">Swap {isFree && <span className="pro-badge">Pro</span>}</h4>
-                            <p className="create-quest-builder-action-desc">Swap tokens</p>
-                          </div>
-                        </>
-                      </>
-                    )}
                       </div>
                     </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
 
-            {/* Edit Action Configuration Modal */}
-            {showEditActionModal && editingActionIndex !== null && (
-              <>
-                <div className="create-quest-builder-modal-overlay" onClick={() => {
-                  setShowEditActionModal(false);
-                  setEditingActionIndex(null);
-                  setEditingActionConfig({});
-                }}></div>
-                <div className="create-quest-builder-edit-action-modal">
-                  <div className="create-quest-builder-actions-modal-header">
-                    <h3 className="create-quest-builder-actions-modal-title">
-                      Configure {selectedActions[editingActionIndex]?.title}
-                    </h3>
-                    <button
-                      className="create-quest-builder-modal-close"
-                      onClick={() => {
-                        setShowEditActionModal(false);
-                        setEditingActionIndex(null);
-                        setEditingActionConfig({});
-                      }}
-                    >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="create-quest-builder-edit-action-modal-content">
-                    {selectedActions[editingActionIndex]?.title === 'Poll' && (
-                      <PollEditor
-                        config={{
-                          ...(editingActionConfig.pollConfig || {}),
-                          customTitle: editingActionConfig.customTitle
-                        }}
-                        onChange={(pollConfig) => {
-                          setEditingActionConfig({
-                            ...editingActionConfig,
-                            pollConfig: {
-                              questions: pollConfig.questions
-                            },
-                            customTitle: pollConfig.customTitle
-                          });
-                        }}
-                      />
-                    )}
-                    {selectedActions[editingActionIndex]?.title === 'Quiz' && (
-                      <QuizEditor
-                        config={{
-                          ...(editingActionConfig.quizConfig || {}),
-                          customTitle: editingActionConfig.customTitle
-                        }}
-                        onChange={(quizConfig) => {
-                          setEditingActionConfig({
-                            ...editingActionConfig,
-                            quizConfig: {
-                              questions: quizConfig.questions
-                            },
-                            customTitle: quizConfig.customTitle
-                          });
-                        }}
-                      />
-                    )}
-                    {selectedActions[editingActionIndex]?.title === 'Open Link' && (
-                      <OpenLinkEditor
-                        config={{
-                          ...(editingActionConfig.openLinkConfig || {}),
-                          customTitle: editingActionConfig.customTitle
-                        }}
-                        onChange={(openLinkConfig) => {
-                          setEditingActionConfig({
-                            ...editingActionConfig,
-                            openLinkConfig: {
-                              link: openLinkConfig.link,
-                              ctaText: openLinkConfig.ctaText
-                            },
-                            customTitle: openLinkConfig.customTitle
-                          });
-                        }}
-                      />
-                    )}
-                    {selectedActions[editingActionIndex]?.title === 'Visit website' && (
-                      <>
-                        <div className="create-quest-builder-field">
-                          <label className="create-quest-builder-label">
-                            Custom Title
-                          </label>
-                          <input
-                            type="text"
-                            className="create-quest-builder-input"
-                            placeholder="Enter custom title (optional)"
-                            value={editingActionConfig.customTitle || ''}
-                            onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
-                          />
-                        </div>
-                        <div className="create-quest-builder-field">
-                          <label className="create-quest-builder-label">
-                            Website URL <span className="required-asterisk">*</span>
-                          </label>
-                          <input
-                            type="url"
-                            className="create-quest-builder-input"
-                            placeholder="https://example.com"
-                            value={editingActionConfig.accountUrl || ''}
-                            onChange={(e) => setEditingActionConfig({ ...editingActionConfig, accountUrl: e.target.value })}
-                          />
-                          <p className="create-quest-builder-hint">Enter the website URL to visit</p>
-                        </div>
-                      </>
-                    )}
-                    {selectedActions[editingActionIndex]?.title === 'Wait' && (
-                      <WaitEditor
-                        config={{
-                          ...(editingActionConfig.waitConfig || {}),
-                          customTitle: editingActionConfig.customTitle
-                        }}
-                        onChange={(waitConfig) => {
-                          setEditingActionConfig({
-                            ...editingActionConfig,
-                            waitConfig: {
-                              amount: waitConfig.amount,
-                              unit: waitConfig.unit
-                            },
-                            customTitle: waitConfig.customTitle
-                          });
-                        }}
-                      />
-                    )}
-                    {selectedActions[editingActionIndex]?.title === 'Read docs' && (
-                      <>
-                        <div className="create-quest-builder-field">
-                          <label className="create-quest-builder-label">
-                            Custom Title
-                          </label>
-                          <input
-                            type="text"
-                            className="create-quest-builder-input"
-                            placeholder="Enter custom title (optional)"
-                            value={editingActionConfig.customTitle || ''}
-                            onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
-                          />
-                        </div>
-                        <div className="create-quest-builder-field">
-                          <label className="create-quest-builder-label">
-                            Documents to Read <span className="required-asterisk">*</span>
-                          </label>
-                          <div style={{ marginBottom: '1rem' }}>
-                            {(editingActionConfig.readDocsConfig?.documents || []).map((doc: string, index: number) => (
-                              <div key={index} style={{ 
-                                display: 'flex', 
-                                gap: '0.5rem', 
-                                marginBottom: '0.5rem',
-                                alignItems: 'center'
-                              }}>
-                                <input
-                                  type="text"
-                                  className="create-quest-builder-input"
-                                  placeholder={`Read docs ${index + 1}`}
-                                  value={doc}
-                                  onChange={(e) => {
-                                    const documents = [...(editingActionConfig.readDocsConfig?.documents || [])];
-                                    documents[index] = e.target.value;
-                                    setEditingActionConfig({
-                                      ...editingActionConfig,
-                                      readDocsConfig: {
-                                        documents
-                                      }
-                                    });
-                                  }}
-                                  style={{ flex: 1 }}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const documents = [...(editingActionConfig.readDocsConfig?.documents || [])];
-                                    documents.splice(index, 1);
-                                    setEditingActionConfig({
-                                      ...editingActionConfig,
-                                      readDocsConfig: {
-                                        documents
-                                      }
-                                    });
-                                  }}
-                                  style={{
-                                    padding: '0.5rem 1rem',
-                                    background: 'rgba(239, 68, 68, 0.2)',
-                                    border: '1px solid rgba(239, 68, 68, 0.4)',
-                                    borderRadius: '8px',
-                                    color: '#ef4444',
-                                    cursor: 'pointer',
-                                    fontSize: '0.875rem'
-                                  }}
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            ))}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const documents = [...(editingActionConfig.readDocsConfig?.documents || []), ''];
-                                setEditingActionConfig({
-                                  ...editingActionConfig,
-                                  readDocsConfig: {
-                                    documents
-                                  }
-                                });
-                              }}
-                              style={{
-                                padding: '0.5rem 1rem',
-                                background: 'rgba(59, 130, 246, 0.2)',
-                                border: '1px solid rgba(59, 130, 246, 0.4)',
-                                borderRadius: '8px',
-                                color: '#3b82f6',
-                                cursor: 'pointer',
-                                fontSize: '0.875rem',
-                                marginTop: '0.5rem'
-                              }}
-                            >
-                              + Add Document
-                            </button>
-                          </div>
-                          <p className="create-quest-builder-hint">Add documents that users must read. Each document will be listed as "Read docs 1", "Read docs 2", etc.</p>
-                        </div>
-                      </>
-                    )}
-                    {getActionType(selectedActions[editingActionIndex]?.title) === 'twitter' && (
-                      <>
-                        <div className="create-quest-builder-field">
-                          <label className="create-quest-builder-label">
-                            Custom Title
-                          </label>
-                          <input
-                            type="text"
-                            className="create-quest-builder-input"
-                            placeholder="Enter custom title (optional)"
-                            value={editingActionConfig.customTitle || ''}
-                            onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
-                          />
-                        </div>
-                        <div className="create-quest-builder-field">
-                          <label className="create-quest-builder-label">
-                            {selectedActions[editingActionIndex]?.title === 'Follow a Twitter account' 
-                              ? 'Twitter Account URL' 
-                              : selectedActions[editingActionIndex]?.title === 'Make a post on Twitter'
-                              ? 'Post Content or Hashtag'
-                              : 'Twitter Post URL'}
-                            <span className="required-asterisk">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            className="create-quest-builder-input"
-                            placeholder={
-                              selectedActions[editingActionIndex]?.title === 'Follow a Twitter account'
-                                ? 'https://twitter.com/username or @username'
-                                : selectedActions[editingActionIndex]?.title === 'Make a post on Twitter'
-                                ? 'Enter post content or hashtag to include'
-                                : 'https://twitter.com/username/status/1234567890'
-                            }
-                            value={editingActionConfig.accountUrl || ''}
-                            onChange={(e) => setEditingActionConfig({ ...editingActionConfig, accountUrl: e.target.value })}
-                          />
-                          <p className="create-quest-builder-hint">
-                            {selectedActions[editingActionIndex]?.title === 'Follow a Twitter account'
-                              ? 'Enter the Twitter profile URL or username'
-                              : selectedActions[editingActionIndex]?.title === 'Make a post on Twitter'
-                              ? 'Enter the content or hashtag that should be included in the post'
-                              : 'Enter the URL of the Twitter post'}
-                          </p>
-                        </div>
-                      </>
-                    )}
-                    {getActionType(selectedActions[editingActionIndex]?.title) === 'discord' && (
-                      <>
-                        <div className="create-quest-builder-field">
-                          <label className="create-quest-builder-label">
-                            Custom Title
-                          </label>
-                          <input
-                            type="text"
-                            className="create-quest-builder-input"
-                            placeholder="Enter custom title (optional)"
-                            value={editingActionConfig.customTitle || ''}
-                            onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
-                          />
-                        </div>
-                        <div className="create-quest-builder-field">
-                          <label className="create-quest-builder-label">
-                            Discord Server Invite URL <span className="required-asterisk">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            className="create-quest-builder-input"
-                            placeholder="https://discord.gg/invite-code"
-                            value={editingActionConfig.accountUrl || ''}
-                            onChange={(e) => setEditingActionConfig({ ...editingActionConfig, accountUrl: e.target.value })}
-                          />
-                          <p className="create-quest-builder-hint">Enter the Discord server invite URL</p>
-                        </div>
-                      </>
-                    )}
-                    {selectedActions[editingActionIndex]?.title === 'Staked on a claim' && (
-                      <StakedOnClaimEditor
-                        config={{
-                          ...(editingActionConfig.stakedClaimConfig || {}),
-                          customTitle: editingActionConfig.customTitle
-                        }}
-                        onChange={(stakedClaimConfig) => {
-                          setEditingActionConfig({
-                            ...editingActionConfig,
-                            stakedClaimConfig: {
-                              claimId: stakedClaimConfig.claimId,
-                              checkAllClaims: stakedClaimConfig.checkAllClaims
-                            },
-                            customTitle: stakedClaimConfig.customTitle
-                          });
-                        }}
-                      />
-                    )}
-                    {selectedActions[editingActionIndex]?.title === 'Hold a token' && (
-                      <HoldTokenEditor
-                        config={{
-                          ...(editingActionConfig.holdTokenConfig || {}),
-                          customTitle: editingActionConfig.customTitle
-                        }}
-                        onChange={(holdTokenConfig) => {
-                          setEditingActionConfig({
-                            ...editingActionConfig,
-                            holdTokenConfig: {
-                              tokenContractAddress: holdTokenConfig.tokenContractAddress,
-                              tokenAmount: holdTokenConfig.tokenAmount
-                            },
-                            customTitle: holdTokenConfig.customTitle
-                          });
-                        }}
-                      />
-                    )}
-                    {selectedActions[editingActionIndex]?.title === 'Hold an NFT' && (
-                      <HoldNFTEditor
-                        config={{
-                          ...(editingActionConfig.holdNFTConfig || {}),
-                          customTitle: editingActionConfig.customTitle
-                        }}
-                        onChange={(holdNFTConfig) => {
-                          setEditingActionConfig({
-                            ...editingActionConfig,
-                            holdNFTConfig: {
-                              nftContractAddress: holdNFTConfig.nftContractAddress,
-                              nftAmount: holdNFTConfig.nftAmount
-                            },
-                            customTitle: holdNFTConfig.customTitle
-                          });
-                        }}
-                      />
-                    )}
-                    <div className="create-quest-builder-edit-action-modal-actions">
+              {/* Edit Action Configuration Modal */}
+              {showEditActionModal && editingActionIndex !== null && (
+                <>
+                  <div className="create-quest-builder-modal-overlay" onClick={() => {
+                    setShowEditActionModal(false);
+                    setEditingActionIndex(null);
+                    setEditingActionConfig({});
+                  }}></div>
+                  <div className="create-quest-builder-edit-action-modal">
+                    <div className="create-quest-builder-actions-modal-header">
+                      <h3 className="create-quest-builder-actions-modal-title">
+                        Configure {selectedActions[editingActionIndex]?.title}
+                      </h3>
                       <button
-                        className="create-quest-builder-button save"
-                        onClick={() => {
-                          if (editingActionIndex !== null) {
-                            const updatedActions = [...selectedActions];
-                            updatedActions[editingActionIndex] = {
-                              ...updatedActions[editingActionIndex],
-                              config: editingActionConfig
-                            };
-                            setSelectedActions(updatedActions);
-                            setShowEditActionModal(false);
-                            setEditingActionIndex(null);
-                            setEditingActionConfig({});
-                            showToast('Action configuration saved!', 'success');
-                          }
-                        }}
-                        disabled={
-                          selectedActions[editingActionIndex]?.title === 'Poll' || 
-                          selectedActions[editingActionIndex]?.title === 'Quiz' ||
-                          selectedActions[editingActionIndex]?.title === 'Open Link' ||
-                          selectedActions[editingActionIndex]?.title === 'Wait'
-                            ? false 
-                            : selectedActions[editingActionIndex]?.title === 'Read docs'
-                            ? !(editingActionConfig.readDocsConfig?.documents && editingActionConfig.readDocsConfig.documents.length > 0 && editingActionConfig.readDocsConfig.documents.every((doc: string) => doc.trim()))
-                            : selectedActions[editingActionIndex]?.title === 'Visit website'
-                            ? !editingActionConfig.accountUrl
-                            : selectedActions[editingActionIndex]?.title === 'Staked on a claim'
-                            ? !(editingActionConfig.stakedClaimConfig?.checkAllClaims || editingActionConfig.stakedClaimConfig?.claimId)
-                            : selectedActions[editingActionIndex]?.title === 'Hold a token'
-                            ? !(editingActionConfig.holdTokenConfig?.tokenContractAddress && editingActionConfig.holdTokenConfig?.tokenAmount)
-                            : selectedActions[editingActionIndex]?.title === 'Hold an NFT'
-                            ? !(editingActionConfig.holdNFTConfig?.nftContractAddress && editingActionConfig.holdNFTConfig?.nftAmount)
-                            : !editingActionConfig.accountUrl && !editingActionConfig.accountName
-                        }
-                      >
-                        Save
-                      </button>
-                      <button
-                        className="create-quest-builder-button previous"
+                        className="create-quest-builder-modal-close"
                         onClick={() => {
                           setShowEditActionModal(false);
                           setEditingActionIndex(null);
                           setEditingActionConfig({});
                         }}
                       >
-                        Cancel
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
                       </button>
                     </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </>
-        )}
-
-        {/* Step 3: Rewards */}
-        {currentStep === 3 && (
-          <div className="create-quest-builder-form">
-            {/* IQ Points Distribution */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">
-                IQ Points Distribution <span className="required-asterisk">*</span>
-              </label>
-              <p className="create-quest-builder-hint">
-                Amount of IQ points users will earn for completing this quest
-                {difficulty === 'beginner' && ' (Maximum: 25 IQ)'}
-                {difficulty === 'intermediate' && ' (Maximum: 50 IQ)'}
-                {difficulty === 'advanced' && ' (Maximum: 75 IQ)'}
-              </p>
-              <input
-                type="number"
-                min="0"
-                max={difficulty === 'beginner' ? 25 : difficulty === 'intermediate' ? 50 : difficulty === 'advanced' ? 75 : 75}
-                step="1"
-                className="create-quest-builder-input"
-                placeholder="Enter IQ points (e.g., 25)"
-                value={iqPoints}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const numValue = parseInt(value, 10);
-                  const maxIQ = difficulty === 'beginner' ? 25 : difficulty === 'intermediate' ? 50 : difficulty === 'advanced' ? 75 : 75;
-                  
-                  if (value === '') {
-                    setIqPoints('');
-                  } else if (!isNaN(numValue) && numValue >= 0) {
-                    if (numValue > maxIQ) {
-                      showToast(`Maximum IQ points for ${difficulty} difficulty is ${maxIQ}`, 'warning');
-                      setIqPoints(maxIQ.toString());
-                    } else {
-                      setIqPoints(value);
-                    }
-                  }
-                }}
-              />
-            </div>
-
-            {/* Reward Deposit Amount with Token Selection */}
-            <div className="create-quest-builder-field">
-              <label className="create-quest-builder-label">
-                Total Deposit Amount <span className="required-asterisk">*</span>
-              </label>
-              <p className="create-quest-builder-hint">Amount of TRUST tokens you want to deposit for winners</p>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="create-quest-builder-input"
-                  placeholder="Enter deposit amount"
-                  value={rewardDeposit}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow empty or valid decimal numbers
-                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                      setRewardDeposit(value);
-                    }
-                  }}
-                  style={{ flex: 1 }}
-                />
-                <select
-                  className="create-quest-builder-select"
-                  value={rewardToken}
-                  onChange={(e) => setRewardToken(e.target.value as 'TRUST')}
-                  style={{ width: '120px', flexShrink: 0 }}
-                >
-                  <option value="TRUST">TRUST</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Winner Prizes - Based on number of winners */}
-            {numberOfWinners && parseInt(numberOfWinners, 10) > 0 && (
-              <div className="create-quest-builder-field">
-                <label className="create-quest-builder-label">
-                  Winner Prizes <span className="required-asterisk">*</span>
-                </label>
-                <p className="create-quest-builder-hint">
-                  Set the prize amount for each winner
-                  {rewardDeposit && (
-                    <span style={{ 
-                      display: 'block', 
-                      marginTop: '0.5rem',
-                      color: isWinnerPrizesSumValid() ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)',
-                      fontWeight: 500
-                    }}>
-                      Total Prizes: {calculateWinnerPrizesSum().toFixed(2)} TRUST | 
-                      Deposit: {parseFloat(rewardDeposit || '0').toFixed(2)} TRUST
-                      {!isWinnerPrizesSumValid() && (
-                        <span style={{ display: 'block', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                          {(() => {
-                            const diff = Math.abs(parseFloat(rewardDeposit || '0') - calculateWinnerPrizesSum());
-                            const isOver = calculateWinnerPrizesSum() > parseFloat(rewardDeposit || '0');
-                            return isOver 
-                              ? `⚠️ Prizes exceed deposit by ${diff.toFixed(2)} TRUST`
-                              : `⚠️ Prizes are ${diff.toFixed(2)} TRUST less than deposit`;
-                          })()}
-                        </span>
+                    <div className="create-quest-builder-edit-action-modal-content">
+                      {selectedActions[editingActionIndex]?.title === 'Poll' && (
+                        <PollEditor
+                          config={{
+                            ...(editingActionConfig.pollConfig || {}),
+                            customTitle: editingActionConfig.customTitle
+                          }}
+                          onChange={(pollConfig) => {
+                            setEditingActionConfig({
+                              ...editingActionConfig,
+                              pollConfig: {
+                                questions: pollConfig.questions
+                              },
+                              customTitle: pollConfig.customTitle
+                            });
+                          }}
+                        />
                       )}
-                    </span>
-                  )}
-                </p>
-                <div className="create-quest-builder-winner-prizes">
-                  {Array.from({ length: parseInt(numberOfWinners, 10) }, (_, index) => (
-                    <div key={index} className="create-quest-builder-winner-prize-item" style={{ marginTop: index > 0 ? '1rem' : '0' }}>
-                      <label className="create-quest-builder-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
-                        Winner {index + 1} Prize
-                      </label>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="create-quest-builder-input"
-                          placeholder={`Enter prize amount for winner ${index + 1}`}
-                          value={winnerPrizes[index] || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                              const newPrizes = [...winnerPrizes];
-                              newPrizes[index] = value;
-                              setWinnerPrizes(newPrizes);
+                      {selectedActions[editingActionIndex]?.title === 'Quiz' && (
+                        <QuizEditor
+                          config={{
+                            ...(editingActionConfig.quizConfig || {}),
+                            customTitle: editingActionConfig.customTitle
+                          }}
+                          onChange={(quizConfig) => {
+                            setEditingActionConfig({
+                              ...editingActionConfig,
+                              quizConfig: {
+                                questions: quizConfig.questions
+                              },
+                              customTitle: quizConfig.customTitle
+                            });
+                          }}
+                        />
+                      )}
+                      {selectedActions[editingActionIndex]?.title === 'Open Link' && (
+                        <OpenLinkEditor
+                          config={{
+                            ...(editingActionConfig.openLinkConfig || {}),
+                            customTitle: editingActionConfig.customTitle
+                          }}
+                          onChange={(openLinkConfig) => {
+                            setEditingActionConfig({
+                              ...editingActionConfig,
+                              openLinkConfig: {
+                                link: openLinkConfig.link,
+                                ctaText: openLinkConfig.ctaText
+                              },
+                              customTitle: openLinkConfig.customTitle
+                            });
+                          }}
+                        />
+                      )}
+                      {selectedActions[editingActionIndex]?.title === 'Visit website' && (
+                        <>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Custom Title
+                            </label>
+                            <input
+                              type="text"
+                              className="create-quest-builder-input"
+                              placeholder="Enter custom title (optional)"
+                              value={editingActionConfig.customTitle || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
+                            />
+                          </div>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Website URL <span className="required-asterisk">*</span>
+                            </label>
+                            <input
+                              type="url"
+                              className="create-quest-builder-input"
+                              placeholder="https://example.com"
+                              value={editingActionConfig.accountUrl || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, accountUrl: e.target.value })}
+                            />
+                            <p className="create-quest-builder-hint">Enter the website URL to visit</p>
+                          </div>
+                        </>
+                      )}
+                      {selectedActions[editingActionIndex]?.title === 'Wait' && (
+                        <WaitEditor
+                          config={{
+                            ...(editingActionConfig.waitConfig || {}),
+                            customTitle: editingActionConfig.customTitle
+                          }}
+                          onChange={(waitConfig) => {
+                            setEditingActionConfig({
+                              ...editingActionConfig,
+                              waitConfig: {
+                                amount: waitConfig.amount,
+                                unit: waitConfig.unit
+                              },
+                              customTitle: waitConfig.customTitle
+                            });
+                          }}
+                        />
+                      )}
+                      {selectedActions[editingActionIndex]?.title === 'Read docs' && (
+                        <>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Custom Title
+                            </label>
+                            <input
+                              type="text"
+                              className="create-quest-builder-input"
+                              placeholder="Enter custom title (optional)"
+                              value={editingActionConfig.customTitle || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
+                            />
+                          </div>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Documents to Read <span className="required-asterisk">*</span>
+                            </label>
+                            <div style={{ marginBottom: '1rem' }}>
+                              {(editingActionConfig.readDocsConfig?.documents || []).map((doc: string, index: number) => (
+                                <div key={index} style={{
+                                  display: 'flex',
+                                  gap: '0.5rem',
+                                  marginBottom: '0.5rem',
+                                  alignItems: 'center'
+                                }}>
+                                  <input
+                                    type="text"
+                                    className="create-quest-builder-input"
+                                    placeholder={`Read docs ${index + 1}`}
+                                    value={doc}
+                                    onChange={(e) => {
+                                      const documents = [...(editingActionConfig.readDocsConfig?.documents || [])];
+                                      documents[index] = e.target.value;
+                                      setEditingActionConfig({
+                                        ...editingActionConfig,
+                                        readDocsConfig: {
+                                          documents
+                                        }
+                                      });
+                                    }}
+                                    style={{ flex: 1 }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const documents = [...(editingActionConfig.readDocsConfig?.documents || [])];
+                                      documents.splice(index, 1);
+                                      setEditingActionConfig({
+                                        ...editingActionConfig,
+                                        readDocsConfig: {
+                                          documents
+                                        }
+                                      });
+                                    }}
+                                    style={{
+                                      padding: '0.5rem 1rem',
+                                      background: 'rgba(239, 68, 68, 0.2)',
+                                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                                      borderRadius: '8px',
+                                      color: '#ef4444',
+                                      cursor: 'pointer',
+                                      fontSize: '0.875rem'
+                                    }}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const documents = [...(editingActionConfig.readDocsConfig?.documents || []), ''];
+                                  setEditingActionConfig({
+                                    ...editingActionConfig,
+                                    readDocsConfig: {
+                                      documents
+                                    }
+                                  });
+                                }}
+                                style={{
+                                  padding: '0.5rem 1rem',
+                                  background: 'rgba(59, 130, 246, 0.2)',
+                                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                                  borderRadius: '8px',
+                                  color: '#3b82f6',
+                                  cursor: 'pointer',
+                                  fontSize: '0.875rem',
+                                  marginTop: '0.5rem'
+                                }}
+                              >
+                                + Add Document
+                              </button>
+                            </div>
+                            <p className="create-quest-builder-hint">Add documents that users must read. Each document will be listed as "Read docs 1", "Read docs 2", etc.</p>
+                          </div>
+                        </>
+                      )}
+                      {getActionType(selectedActions[editingActionIndex]?.title) === 'twitter' && (
+                        <>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Custom Title
+                            </label>
+                            <input
+                              type="text"
+                              className="create-quest-builder-input"
+                              placeholder="Enter custom title (optional)"
+                              value={editingActionConfig.customTitle || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
+                            />
+                          </div>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              {selectedActions[editingActionIndex]?.title === 'Follow a Twitter account'
+                                ? 'Twitter Account URL'
+                                : selectedActions[editingActionIndex]?.title === 'Quote a tweet on Twitter'
+                                  ? 'Tweet URL to Quote'
+                                  : selectedActions[editingActionIndex]?.title === 'Make a post on Twitter'
+                                    ? 'Post Content or Hashtag'
+                                    : 'Twitter Post URL'}
+                              <span className="required-asterisk">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="create-quest-builder-input"
+                              placeholder={
+                                selectedActions[editingActionIndex]?.title === 'Follow a Twitter account'
+                                  ? 'https://twitter.com/username or @username'
+                                  : selectedActions[editingActionIndex]?.title === 'Quote a tweet on Twitter'
+                                    ? 'https://twitter.com/username/status/1234567890'
+                                    : selectedActions[editingActionIndex]?.title === 'Make a post on Twitter'
+                                      ? 'Enter post content or hashtag to include'
+                                      : 'https://twitter.com/username/status/1234567890'
+                              }
+                              value={editingActionConfig.accountUrl || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, accountUrl: e.target.value })}
+                            />
+                            <p className="create-quest-builder-hint">
+                              {selectedActions[editingActionIndex]?.title === 'Follow a Twitter account'
+                                ? 'Enter the Twitter profile URL or username'
+                                : selectedActions[editingActionIndex]?.title === 'Quote a tweet on Twitter'
+                                  ? 'Enter the URL of the tweet that users should quote'
+                                  : selectedActions[editingActionIndex]?.title === 'Make a post on Twitter'
+                                    ? 'Enter the content or hashtag that should be included in the post'
+                                    : 'Enter the URL of the Twitter post'}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      {getActionType(selectedActions[editingActionIndex]?.title) === 'discord' && (
+                        <>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Custom Title
+                            </label>
+                            <input
+                              type="text"
+                              className="create-quest-builder-input"
+                              placeholder="Enter custom title (optional)"
+                              value={editingActionConfig.customTitle || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
+                            />
+                          </div>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Discord Server Invite URL <span className="required-asterisk">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="create-quest-builder-input"
+                              placeholder="https://discord.gg/invite-code"
+                              value={editingActionConfig.accountUrl || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, accountUrl: e.target.value })}
+                            />
+                            <p className="create-quest-builder-hint">Enter the Discord server invite URL</p>
+                          </div>
+                        </>
+                      )}
+                      {selectedActions[editingActionIndex]?.title === 'Staked on a claim' && (
+                        <StakedOnClaimEditor
+                          config={{
+                            ...(editingActionConfig.stakedClaimConfig || {}),
+                            customTitle: editingActionConfig.customTitle
+                          }}
+                          onChange={(stakedClaimConfig) => {
+                            setEditingActionConfig({
+                              ...editingActionConfig,
+                              stakedClaimConfig: {
+                                claimId: stakedClaimConfig.claimId,
+                                checkAllClaims: stakedClaimConfig.checkAllClaims
+                              },
+                              customTitle: stakedClaimConfig.customTitle
+                            });
+                          }}
+                        />
+                      )}
+                      {selectedActions[editingActionIndex]?.title === 'Hold a token' && (
+                        <HoldTokenEditor
+                          config={{
+                            ...(editingActionConfig.holdTokenConfig || {}),
+                            customTitle: editingActionConfig.customTitle
+                          }}
+                          onChange={(holdTokenConfig) => {
+                            setEditingActionConfig({
+                              ...editingActionConfig,
+                              holdTokenConfig: {
+                                tokenContractAddress: holdTokenConfig.tokenContractAddress,
+                                tokenAmount: holdTokenConfig.tokenAmount
+                              },
+                              customTitle: holdTokenConfig.customTitle
+                            });
+                          }}
+                        />
+                      )}
+                      {selectedActions[editingActionIndex]?.title === 'Hold an NFT' && (
+                        <HoldNFTEditor
+                          config={{
+                            ...(editingActionConfig.holdNFTConfig || {}),
+                            customTitle: editingActionConfig.customTitle
+                          }}
+                          onChange={(holdNFTConfig) => {
+                            setEditingActionConfig({
+                              ...editingActionConfig,
+                              holdNFTConfig: {
+                                nftContractAddress: holdNFTConfig.nftContractAddress,
+                                nftAmount: holdNFTConfig.nftAmount
+                              },
+                              customTitle: holdNFTConfig.customTitle
+                            });
+                          }}
+                        />
+                      )}
+                      <div className="create-quest-builder-edit-action-modal-actions">
+                        <button
+                          className="create-quest-builder-button save"
+                          onClick={() => {
+                            if (editingActionIndex !== null) {
+                              const updatedActions = [...selectedActions];
+                              updatedActions[editingActionIndex] = {
+                                ...updatedActions[editingActionIndex],
+                                config: editingActionConfig
+                              };
+                              setSelectedActions(updatedActions);
+                              setShowEditActionModal(false);
+                              setEditingActionIndex(null);
+                              setEditingActionConfig({});
+                              showToast('Action configuration saved!', 'success');
                             }
                           }}
-                          style={{ flex: 1 }}
-                        />
-                        <select
-                          className="create-quest-builder-select"
-                          value={rewardToken}
-                          disabled
-                          style={{ width: '120px', flexShrink: 0 }}
+                          disabled={
+                            selectedActions[editingActionIndex]?.title === 'Poll' ||
+                              selectedActions[editingActionIndex]?.title === 'Quiz' ||
+                              selectedActions[editingActionIndex]?.title === 'Open Link' ||
+                              selectedActions[editingActionIndex]?.title === 'Wait'
+                              ? false
+                              : selectedActions[editingActionIndex]?.title === 'Read docs'
+                                ? !(editingActionConfig.readDocsConfig?.documents && editingActionConfig.readDocsConfig.documents.length > 0 && editingActionConfig.readDocsConfig.documents.every((doc: string) => doc.trim()))
+                                : selectedActions[editingActionIndex]?.title === 'Visit website'
+                                  ? !editingActionConfig.accountUrl
+                                  : selectedActions[editingActionIndex]?.title === 'Staked on a claim'
+                                    ? !(editingActionConfig.stakedClaimConfig?.checkAllClaims || editingActionConfig.stakedClaimConfig?.claimId)
+                                    : selectedActions[editingActionIndex]?.title === 'Hold a token'
+                                      ? !(editingActionConfig.holdTokenConfig?.tokenContractAddress && editingActionConfig.holdTokenConfig?.tokenAmount)
+                                      : selectedActions[editingActionIndex]?.title === 'Hold an NFT'
+                                        ? !(editingActionConfig.holdNFTConfig?.nftContractAddress && editingActionConfig.holdNFTConfig?.nftAmount)
+                                        : !editingActionConfig.accountUrl && !editingActionConfig.accountName
+                          }
                         >
-                          <option value="TRUST">TRUST</option>
-                        </select>
+                          Save
+                        </button>
+                        <button
+                          className="create-quest-builder-button previous"
+                          onClick={() => {
+                            setShowEditActionModal(false);
+                            setEditingActionIndex(null);
+                            setEditingActionConfig({});
+                          }}
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </div>
+                </>
+              )}
+            </>
 
-          </div>
-        )}
+            {/* Step 3: Rewards */}
+          </Step>
 
-        {/* Step 4: Deposit */}
-        {currentStep === 4 && (
-          <div className="create-quest-builder-form">
-            <div className="create-quest-builder-deposit-container" style={{ display: 'flex', gap: '2rem' }}>
-              {/* Left side - Deposit Button */}
-              <div className="create-quest-builder-deposit-button-wrapper" style={{ flex: '0 0 200px' }}>
-                <button
-                  type="button"
-                  className="create-quest-builder-button"
-                  onClick={handleDeposit}
-                  disabled={isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0}
-                  style={{
-                    width: '100%',
-                    padding: '1rem',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    opacity: (isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0) ? 0.5 : 1,
-                    cursor: (isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0) ? 'not-allowed' : 'pointer'
+          <Step>
+            <div className="create-quest-builder-form">
+              {/* Reward Type Selection */}
+              <div className="create-quest-builder-field">
+                <label className="create-quest-builder-label">
+                  Reward Type <span className="required-asterisk">*</span>
+                </label>
+                <p className="create-quest-builder-hint">
+                  Choose what type of rewards users will receive for completing this quest
+                </p>
+                <select
+                  className="create-quest-builder-select"
+                  value={rewardType}
+                  onChange={(e) => {
+                    const newRewardType = e.target.value as 'iq_only' | 'trust_only' | 'trust_and_iq';
+                    setRewardType(newRewardType);
+
+                    // Reset TRUST-related fields when switching to IQ-only
+                    if (newRewardType === 'iq_only') {
+                      setRewardDeposit('');
+                      setWinnerPrizes([]);
+                      setNumberOfWinners('');
+                      setDepositStatus('none');
+                    }
                   }}
                 >
-                  {isDepositing ? (
-                    <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', marginRight: '8px', animation: 'spin 1s linear infinite' }}>
-                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
-                      </svg>
-                      Depositing...
-                    </>
-                  ) : depositStatus === 'deposited' ? (
-                    <>
-                      <img src="/verified.svg" alt="Verified" width="16" height="16" style={{ display: 'inline-block', marginRight: '8px' }} />
-                      Deposited
-                    </>
-                  ) : (
-                    'Deposit'
-                  )}
-                </button>
-                {depositStatus === 'deposited' && (
-                  <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'rgba(34, 197, 94, 0.8)', textAlign: 'center' }}>
-                    ✓ Deposit successful
-                  </p>
-                )}
+                  <option value="iq_only">IQ Points Only</option>
+                  <option value="trust_only">$TRUST Tokens Only</option>
+                  <option value="trust_and_iq">$TRUST Tokens & IQ Points</option>
+                </select>
               </div>
 
-              {/* Right side - Deposit Summary */}
-              <div className="create-quest-builder-deposit-summary-wrapper" style={{ flex: 1 }}>
+              {/* IQ Points Distribution */}
+              {(rewardType === 'iq_only' || rewardType === 'trust_and_iq') && (
                 <div className="create-quest-builder-field">
                   <label className="create-quest-builder-label">
-                    Deposit Summary
+                    IQ Points Distribution <span className="required-asterisk">*</span>
                   </label>
-                  <p className="create-quest-builder-hint">Review and confirm your deposit</p>
-                  <div className="create-quest-builder-deposit-summary-rectangle" style={{ 
-                    padding: '1.5rem', 
-                    background: 'rgba(26, 31, 53, 0.3)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '12px',
-                    marginTop: '1rem'
-                  }}>
-                    {iqPoints && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <span style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.7)' }}>IQ Points Reward:</span>
-                        <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>
-                          {iqPoints} IQ
-                        </span>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.7)' }}>Total Deposit:</span>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>
-                        {rewardDeposit || '0'} {rewardToken || 'TRUST'}
-                      </span>
-                    </div>
-                    <div style={{ paddingTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                      <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.6)', margin: '0.5rem 0' }}>
-                        This amount will be deposited to fund the rewards.
-                      </p>
-                      {gracePeriod !== null && (
-                        <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '8px' }}>
-                          <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', margin: '0 0 0.25rem 0', fontWeight: 500 }}>
-                            Grace Period:
-                          </p>
-                          <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.6)', margin: 0 }}>
-                            {gracePeriod > 0n ? (
-                              gracePeriod >= 86400n ? (
-                                `${Number(gracePeriod) / 86400} day${Number(gracePeriod) / 86400 !== 1 ? 's' : ''}`
-                              ) : gracePeriod >= 3600n ? (
-                                `${Number(gracePeriod) / 3600} hour${Number(gracePeriod) / 3600 !== 1 ? 's' : ''}`
-                              ) : (
-                                `${Number(gracePeriod) / 60} minute${Number(gracePeriod) / 60 !== 1 ? 's' : ''}`
-                              )
-                            ) : 'Not available'}
-                          </p>
-                          <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.5)', margin: '0.5rem 0 0 0' }}>
-                            If the quest expires without winners, you can reclaim funds after this period.
-                          </p>
-                        </div>
-                      )}
-                      {winnerPrizes.filter(p => p.trim()).length > 0 && (
-                        <div style={{ marginTop: '1rem' }}>
-                          <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '0.5rem' }}>Prize Distribution:</p>
-                          {winnerPrizes.map((prize, idx) => (
-                            prize.trim() && (
-                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                <span style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.6)' }}>Winner {idx + 1}:</span>
-                                <span style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.8)' }}>{prize} {rewardToken}</span>
-                              </div>
-                            )
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 5: Preview */}
-        {currentStep === 5 && (
-          <div className="create-quest-builder-form">
-            <div className="create-quest-builder-preview">
-              <h3 className="create-quest-builder-preview-title">Preview</h3>
-              <div className="create-quest-builder-preview-card">
-                {imagePreview && (
-                  <img src={imagePreview} alt="Quest" className="create-quest-builder-preview-image" />
-                )}
-                <div className="create-quest-builder-preview-content">
-                  <h4 className="create-quest-builder-preview-name">{title || 'Untitled Quest'}</h4>
-                  <p className="create-quest-builder-preview-description">{description || 'No description provided'}</p>
-                  <div className="create-quest-builder-preview-meta">
-                    {difficulty && (
-                      <span className="create-quest-builder-preview-badge">{difficulty}</span>
-                    )}
-                    {iqPoints && (
-                      <span className="create-quest-builder-preview-badge" style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8' }}>
-                        {iqPoints} IQ{rewardDeposit && parseFloat(rewardDeposit) > 0 ? ` + ${rewardDeposit} ${rewardToken || 'TRUST'}` : ''}
-                      </span>
-                    )}
-                  </div>
-                  <p className="create-quest-builder-preview-date">
-                    Will start when published on-chain
+                  <p className="create-quest-builder-hint">
+                    Amount of IQ points users will earn for completing this quest
+                    {difficulty === 'beginner' && ' (Maximum: 25 IQ)'}
+                    {difficulty === 'intermediate' && ' (Maximum: 50 IQ)'}
+                    {difficulty === 'advanced' && ' (Maximum: 75 IQ)'}
                   </p>
-                  {endDate && endTime && (
-                    <p className="create-quest-builder-preview-date">
-                      Ends: {new Date(endDate + 'T' + endTime).toLocaleString()}
+                  <input
+                    type="number"
+                    min="0"
+                    max={difficulty === 'beginner' ? 25 : difficulty === 'intermediate' ? 50 : difficulty === 'advanced' ? 75 : 75}
+                    step="1"
+                    className="create-quest-builder-input"
+                    placeholder="Enter IQ points (e.g., 25)"
+                    value={iqPoints}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const numValue = parseInt(value, 10);
+                      const maxIQ = difficulty === 'beginner' ? 25 : difficulty === 'intermediate' ? 50 : difficulty === 'advanced' ? 75 : 75;
+
+                      if (value === '') {
+                        setIqPoints('');
+                      } else if (!isNaN(numValue) && numValue >= 0) {
+                        if (numValue > maxIQ) {
+                          showToast(`Maximum IQ points for ${difficulty} difficulty is ${maxIQ}`, 'warning');
+                          setIqPoints(maxIQ.toString());
+                        } else {
+                          setIqPoints(value);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* TRUST Token Rewards - Only show for trust_only and trust_and_iq */}
+              {(rewardType === 'trust_only' || rewardType === 'trust_and_iq') && (
+                <>
+                  {/* Reward Deposit Amount with Token Selection */}
+                  <div className="create-quest-builder-field">
+                    <label className="create-quest-builder-label">
+                      Total Deposit Amount <span className="required-asterisk">*</span>
+                    </label>
+                    <p className="create-quest-builder-hint">Amount of TRUST tokens you want to deposit for winners</p>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="create-quest-builder-input"
+                        placeholder="Enter deposit amount"
+                        value={rewardDeposit}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Allow empty or valid decimal numbers
+                          if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                            setRewardDeposit(value);
+                          }
+                        }}
+                        style={{ flex: 1 }}
+                      />
+                      <select
+                        className="create-quest-builder-select"
+                        value={rewardToken}
+                        onChange={(e) => setRewardToken(e.target.value as 'TRUST')}
+                        style={{ width: '120px', flexShrink: 0 }}
+                      >
+                        <option value="TRUST">TRUST</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Winner Prizes - Based on number of winners */}
+                  {numberOfWinners && parseInt(numberOfWinners, 10) > 0 && (
+                    <div className="create-quest-builder-field">
+                      <label className="create-quest-builder-label">
+                        Winner Prizes <span className="required-asterisk">*</span>
+                      </label>
+                      <p className="create-quest-builder-hint">
+                        Set the prize amount for each winner
+                        {rewardDeposit && (
+                          <span style={{
+                            display: 'block',
+                            marginTop: '0.5rem',
+                            color: isWinnerPrizesSumValid() ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)',
+                            fontWeight: 500
+                          }}>
+                            Total Prizes: {calculateWinnerPrizesSum().toFixed(2)} TRUST |
+                            Deposit: {parseFloat(rewardDeposit || '0').toFixed(2)} TRUST
+                            {!isWinnerPrizesSumValid() && (
+                              <span style={{ display: 'block', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                                {(() => {
+                                  const diff = Math.abs(parseFloat(rewardDeposit || '0') - calculateWinnerPrizesSum());
+                                  const isOver = calculateWinnerPrizesSum() > parseFloat(rewardDeposit || '0');
+                                  return isOver
+                                    ? `⚠️ Prizes exceed deposit by ${diff.toFixed(2)} TRUST`
+                                    : `⚠️ Prizes are ${diff.toFixed(2)} TRUST less than deposit`;
+                                })()}
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </p>
+                      <div className="create-quest-builder-winner-prizes">
+                        {Array.from({ length: parseInt(numberOfWinners, 10) }, (_, index) => (
+                          <div key={index} className="create-quest-builder-winner-prize-item" style={{ marginTop: index > 0 ? '1rem' : '0' }}>
+                            <label className="create-quest-builder-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
+                              Winner {index + 1} Prize
+                            </label>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="create-quest-builder-input"
+                                placeholder={`Enter prize amount for winner ${index + 1}`}
+                                value={winnerPrizes[index] || ''}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                    const newPrizes = [...winnerPrizes];
+                                    newPrizes[index] = value;
+                                    setWinnerPrizes(newPrizes);
+                                  }
+                                }}
+                                style={{ flex: 1 }}
+                              />
+                              <select
+                                className="create-quest-builder-select"
+                                value={rewardToken}
+                                disabled
+                                style={{ width: '120px', flexShrink: 0 }}
+                              >
+                                <option value="TRUST">TRUST</option>
+                              </select>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+            </div>
+
+            {/* Step 4: Deposit */}
+          </Step>
+
+          <Step>
+            <div className="create-quest-builder-form">
+              <div className="create-quest-builder-deposit-container" style={{ display: 'flex', gap: '2rem' }}>
+                {/* Left side - Deposit Button */}
+                <div className="create-quest-builder-deposit-button-wrapper" style={{ flex: '0 0 200px' }}>
+                  <button
+                    type="button"
+                    className="create-quest-builder-button"
+                    onClick={handleDeposit}
+                    disabled={isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0}
+                    style={{
+                      width: '100%',
+                      padding: '1rem',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      opacity: (isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0) ? 0.5 : 1,
+                      cursor: (isDepositing || depositStatus === 'deposited' || !rewardDeposit || parseFloat(rewardDeposit) <= 0) ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {isDepositing ? (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', marginRight: '8px', animation: 'spin 1s linear infinite' }}>
+                          <path d="M21 12a9 9 0 11-6.219-8.56" />
+                        </svg>
+                        Depositing...
+                      </>
+                    ) : depositStatus === 'deposited' ? (
+                      <>
+                        <img src="/verified.svg" alt="Verified" width="16" height="16" style={{ display: 'inline-block', marginRight: '8px' }} />
+                        Deposited
+                      </>
+                    ) : (
+                      'Deposit'
+                    )}
+                  </button>
+                  {depositStatus === 'deposited' && (
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'rgba(34, 197, 94, 0.8)', textAlign: 'center' }}>
+                      ✓ Deposit successful
                     </p>
                   )}
                 </div>
+
+                {/* Right side - Deposit Summary */}
+                <div className="create-quest-builder-deposit-summary-wrapper" style={{ flex: 1 }}>
+                  <div className="create-quest-builder-field">
+                    <label className="create-quest-builder-label">
+                      Deposit Summary
+                    </label>
+                    <p className="create-quest-builder-hint">Review and confirm your deposit</p>
+                    <div className="create-quest-builder-deposit-summary-rectangle" style={{
+                      padding: '1.5rem',
+                      background: 'rgba(26, 31, 53, 0.3)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      marginTop: '1rem'
+                    }}>
+                      {iqPoints && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                          <span style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.7)' }}>IQ Points Reward:</span>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>
+                            {iqPoints} IQ
+                          </span>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <span style={{ fontSize: '1rem', color: 'rgba(255, 255, 255, 0.7)' }}>Total Deposit:</span>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>
+                          {rewardDeposit || '0'} {rewardToken || 'TRUST'}
+                        </span>
+                      </div>
+                      <div style={{ paddingTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                        <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.6)', margin: '0.5rem 0' }}>
+                          This amount will be deposited to fund the rewards.
+                        </p>
+                        {gracePeriod !== null && (
+                          <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '8px' }}>
+                            <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', margin: '0 0 0.25rem 0', fontWeight: 500 }}>
+                              Grace Period:
+                            </p>
+                            <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.6)', margin: 0 }}>
+                              {gracePeriod > 0n ? (
+                                gracePeriod >= 86400n ? (
+                                  `${Number(gracePeriod) / 86400} day${Number(gracePeriod) / 86400 !== 1 ? 's' : ''}`
+                                ) : gracePeriod >= 3600n ? (
+                                  `${Number(gracePeriod) / 3600} hour${Number(gracePeriod) / 3600 !== 1 ? 's' : ''}`
+                                ) : (
+                                  `${Number(gracePeriod) / 60} minute${Number(gracePeriod) / 60 !== 1 ? 's' : ''}`
+                                )
+                              ) : 'Not available'}
+                            </p>
+                            <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.5)', margin: '0.5rem 0 0 0' }}>
+                              If the quest expires without winners, you can reclaim funds after this period.
+                            </p>
+                          </div>
+                        )}
+                        {winnerPrizes.filter(p => p.trim()).length > 0 && (
+                          <div style={{ marginTop: '1rem' }}>
+                            <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '0.5rem' }}>Prize Distribution:</p>
+                            {winnerPrizes.map((prize, idx) => (
+                              prize.trim() && (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                  <span style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.6)' }}>Winner {idx + 1}:</span>
+                                  <span style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.8)' }}>{prize} {rewardToken}</span>
+                                </div>
+                              )
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Action Buttons */}
-        <div className="create-quest-builder-actions">
-          <div className="create-quest-builder-nav-buttons">
-            {currentStep > 1 && (
-              <button
-                type="button"
-                className="create-quest-builder-button previous"
-                onClick={handlePrevious}
-              >
-                Previous
-              </button>
-            )}
-            <button
-              type="button"
-              className="create-quest-builder-button save"
-              onClick={() => handleSave(true)}
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              className="create-quest-builder-button next"
-              onClick={currentStep === 5 ? handlePublishQuest : handleNext}
-              disabled={
-                isPublishing ||
-                (currentStep === 1 && (!title.trim() || !difficulty || !description.trim() || !endDate || !endTime || !numberOfWinners || parseInt(numberOfWinners, 10) < 1)) ||
-                (currentStep === 2 && selectedActions.some(action => requiresConfiguration(action.title) && !isActionConfigured(action))) ||
-                (currentStep === 3 && (!iqPoints || !numberOfWinners || parseInt(numberOfWinners, 10) < 1 || winnerPrizes.some((prize, idx) => idx < parseInt(numberOfWinners, 10) && !prize.trim()))) ||
-                (currentStep === 4 && (!rewardDeposit || parseFloat(rewardDeposit) <= 0))
-              }
-            >
-              {isPublishing ? 'Publishing...' : currentStep === 5 ? 'Publish' : 'Next'}
-            </button>
-          </div>
-        </div>
+            {/* Step 5: Preview */}
+          </Step>
+
+          <Step>
+            <div className="create-quest-builder-form">
+              <div className="create-quest-builder-preview">
+                <h3 className="create-quest-builder-preview-title">Preview</h3>
+                <div className="create-quest-builder-preview-card">
+                  {imagePreview && (
+                    <img src={imagePreview} alt="Quest" className="create-quest-builder-preview-image" />
+                  )}
+                  <div className="create-quest-builder-preview-content">
+                    <h4 className="create-quest-builder-preview-name">{title || 'Untitled Quest'}</h4>
+                    <p className="create-quest-builder-preview-description">{description || 'No description provided'}</p>
+                    <div className="create-quest-builder-preview-meta">
+                      {difficulty && (
+                        <span className="create-quest-builder-preview-badge">{difficulty}</span>
+                      )}
+                      {iqPoints && (
+                        <span className="create-quest-builder-preview-badge" style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8' }}>
+                          {iqPoints} IQ{rewardDeposit && parseFloat(rewardDeposit) > 0 ? ` + ${rewardDeposit} ${rewardToken || 'TRUST'}` : ''}
+                        </span>
+                      )}
+                    </div>
+                    <p className="create-quest-builder-preview-date">
+                      Will start when published on-chain
+                    </p>
+                    {endDate && endTime && (
+                      <p className="create-quest-builder-preview-date">
+                        Ends: {new Date(endDate + 'T' + endTime).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </Step>
+        </Stepper>
       </div>
 
       {/* Subscribe to Pro Popup */}
@@ -3834,8 +3980,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                 onClick={() => setShowSubscribePopup(false)}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>

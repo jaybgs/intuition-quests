@@ -40,9 +40,10 @@
 
 .footer-links {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 40px;
   margin-bottom: 40px;
+  text-align: left;
 }
 
 .footer-column h4 {
@@ -216,5 +217,3 @@
     gap: 12px;
   }
 }
-
-

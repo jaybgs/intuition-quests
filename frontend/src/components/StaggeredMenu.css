@@ -1,0 +1,356 @@
+/* StaggeredMenu - Mobile Navigation */
+
+:root {
+    --sm-accent: #5227FF;
+}
+
+/* Wrapper - Only visible on mobile */
+.staggered-menu-wrapper {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .staggered-menu-wrapper {
+        display: block;
+        position: relative;
+        z-index: 10000;
+    }
+
+    .staggered-menu-wrapper.fixed-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10000;
+    }
+}
+
+/* Header */
+.staggered-menu-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 16px 20px;
+    background: rgba(10, 14, 39, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Connect Wallet Button - Left (Disconnected State) */
+.sm-connect-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.sm-connect-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--sm-accent);
+    color: var(--sm-accent);
+    transform: scale(1.05);
+}
+
+/* User Avatar Button - Left (Connected State) */
+.sm-user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.sm-avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    object-fit: cover;
+    transition: all 0.3s ease;
+}
+
+.sm-user-avatar:hover .sm-avatar-img {
+    border-color: var(--sm-accent);
+    transform: scale(1.05);
+}
+
+/* Logo - Center */
+.sm-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sm-logo-img {
+    height: 32px;
+    width: auto;
+}
+
+/* Toggle Button */
+.sm-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    font-family: inherit;
+    justify-self: end;
+}
+
+.sm-toggle-textWrap {
+    height: 18px;
+    overflow: hidden;
+    display: block;
+}
+
+/* Lock the text to only show "Menu" - prevent animation to "Close" */
+.sm-toggle-textInner {
+    display: flex;
+    flex-direction: column;
+    transform: translateY(0) !important;
+}
+
+.sm-toggle-line {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 18px;
+    color: inherit;
+}
+
+/* Plus Icon */
+.sm-icon {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sm-icon-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+}
+
+.sm-icon-line-v {
+    transform: rotate(90deg);
+}
+
+/* Prelayers - Background slide-in layers */
+.sm-prelayers {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    pointer-events: none;
+    z-index: 9998;
+}
+
+.staggered-menu-wrapper[data-position="right"] .sm-prelayers {
+    right: 0;
+    left: auto;
+}
+
+.staggered-menu-wrapper[data-position="left"] .sm-prelayers {
+    left: 0;
+    right: auto;
+}
+
+.sm-prelayer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    will-change: transform;
+}
+
+/* Panel */
+.staggered-menu-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 400px;
+    background: linear-gradient(180deg, #0a0e27 0%, #1a1f35 100%);
+    z-index: 9999;
+    overflow-y: auto;
+    will-change: transform;
+}
+
+/* Panel Close Button */
+.sm-panel-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.sm-panel-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #ef4444;
+    color: #ef4444;
+    transform: rotate(90deg);
+}
+
+.staggered-menu-wrapper[data-position="right"] .staggered-menu-panel {
+    right: 0;
+    left: auto;
+}
+
+.staggered-menu-wrapper[data-position="left"] .staggered-menu-panel {
+    left: 0;
+    right: auto;
+}
+
+.sm-panel-inner {
+    padding: 100px 32px 40px;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Menu List */
+.sm-panel-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+}
+
+.sm-panel-itemWrap {
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.sm-panel-item {
+    display: block;
+    padding: 16px 0;
+    text-decoration: none;
+    color: var(--text-primary, #fff);
+    position: relative;
+}
+
+.sm-panel-item::before {
+    content: attr(data-index);
+    position: absolute;
+    left: 0;
+    top: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sm-accent);
+    opacity: var(--sm-num-opacity, 0);
+    transition: opacity 0.3s ease;
+}
+
+.sm-panel-list[data-numbering] .sm-panel-item {
+    padding-left: 32px;
+}
+
+.sm-panel-itemLabel {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    display: block;
+    will-change: transform;
+}
+
+.sm-panel-item:hover .sm-panel-itemLabel {
+    color: var(--sm-accent);
+}
+
+/* Socials Section */
+.sm-socials {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sm-socials-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary, #a0aec0);
+    margin: 0 0 16px 0;
+    opacity: 0;
+}
+
+.sm-socials-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.sm-socials-item {
+    margin: 0;
+}
+
+.sm-socials-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary, #fff);
+    text-decoration: none;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    display: inline-block;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(25px);
+}
+
+.sm-socials-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--sm-accent);
+    color: var(--sm-accent);
+}
+
+/* Accessibility */
+.staggered-menu-panel[aria-hidden="true"] {
+    pointer-events: none;
+}
+
+.staggered-menu-panel[aria-hidden="false"] {
+    pointer-events: auto;
+}
+
+/* Prevent body scroll when menu is open */
+.staggered-menu-wrapper[data-open]~body,
+body:has(.staggered-menu-wrapper[data-open]) {
+    overflow: hidden;
+}

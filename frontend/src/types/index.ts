@@ -41,7 +41,7 @@ export interface QuestStep {
 }
 
 export interface QuestRequirement {
-  type: 'follow' | 'retweet' | 'visit' | 'custom' | 'verify';
+  type: 'follow' | 'retweet' | 'quote' | 'visit' | 'custom' | 'verify';
   description: string;
   verification: string;
   verified?: boolean;

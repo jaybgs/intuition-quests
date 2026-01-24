@@ -681,30 +681,41 @@
     }
 }
 
+/* Mobile Follow Button - Hidden on Desktop */
+.mobile-follow-btn {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .space-detail-wrapper {
         margin: 0;
         width: 100%;
+        border-radius: 0 !important;
     }
 
     .space-detail-banner {
-        height: 144px;
+        height: 160px;
     }
 
     .space-detail-banner-content {
         flex-direction: column;
         align-items: flex-start;
-        padding: 20px 16px;
+        padding: 28px 16px 20px 6px;
+        position: relative;
     }
 
     .space-detail-logo-wrapper {
-        margin-bottom: -40px;
+        position: absolute;
+        top: 75px;
+        left: 6px;
+        margin-bottom: 0;
+        z-index: 10;
     }
 
     .space-detail-logo,
     .space-detail-logo-placeholder {
-        width: 80px;
-        height: 80px;
+        width: 96px;
+        height: 96px;
         border-width: 3px;
     }
 
@@ -713,59 +724,118 @@
     }
 
     .space-detail-name {
-        font-size: 24px;
+        font-size: 20px;
+        width: 100%;
+        /* Prevent overlap with top-right icons if name is long */
     }
 
     .space-detail-name-section {
+        position: absolute;
+        top: 125px;
+        left: 116px;
+        width: calc(100% - 126px);
+        /* Prevent touching right edge and overflow */
         padding-bottom: 0;
-        margin-top: 50px;
+        margin-top: 0;
+        transform: none;
+        z-index: 9;
     }
 
+    /* Show Banner Actions specifically for Mobile - Top Right Icons */
     .space-detail-actions {
+        display: flex;
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        transform: none;
+        padding-bottom: 0;
+        gap: 8px;
+    }
+
+    /* Hide the Follow Button inside the banner actions on mobile */
+    .space-detail-actions .space-detail-follow-button {
         display: none;
-        /* Hide banner actions on mobile */
+    }
+
+    /* Make action buttons smaller on mobile if needed */
+    .space-detail-action-button {
+        width: 36px;
+        height: 36px;
+        background: rgba(0, 0, 0, 0.4);
+        /* Darker background for visibility */
     }
 
     .space-detail-mobile-actions {
-        display: flex;
-        /* Show mobile actions on mobile */
-        justify-content: flex-end;
-    }
-
-    .space-detail-description-section {
-        margin-top: -20px;
-    }
-
-    .space-detail-mobile-stats {
-        display: block;
-        /* Show mobile stats on mobile */
-    }
-
-    .space-detail-mobile-stats .space-detail-stats-card {
-        grid-template-columns: 1fr;
-    }
-
-    .space-detail-right {
         display: none;
-        /* Hide right column stats on mobile */
+        /* Removed in JSX, ensure hidden */
     }
 
     .space-detail-main {
         padding: 60px 16px 40px;
+        border-radius: 0;
+    }
+
+    /* Top Row Layout - Vertical Stack */
+    .space-detail-top-row {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    /* Description Box - Stretch Full Width */
+    .space-detail-description-section {
+        width: 100%;
+        margin-top: -20px;
+        /* Pull up closer to banner */
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    /* Stats Card with Follow Button */
+    .space-detail-stats-card {
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 20px;
+    }
+
+    .space-detail-stat-item {
+        flex: 1;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .space-detail-mobile-follow-wrapper {
+        flex-shrink: 0;
+    }
+
+    /* Show the Mobile Follow Button */
+    .mobile-follow-btn {
+        display: block;
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .space-detail-right {
+        display: none;
     }
 
     .space-detail-quests-grid {
         grid-template-columns: 1fr;
     }
 
-    .space-detail-stats-card {
-        grid-template-columns: 1fr;
-    }
-
     .space-detail-back-button {
-        top: 80px;
+        top: 20px;
         left: 16px;
         padding: 8px 12px;
         font-size: 12px;
+        background: rgba(0, 0, 0, 0.4);
+        border: none;
+        backdrop-filter: blur(10px);
     }
 }

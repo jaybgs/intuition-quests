@@ -31,10 +31,15 @@
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     padding: 16px 20px;
-    background: rgba(10, 14, 39, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: #0a0e27;
+    /* Solid Navy */
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: fixed;
+    /* Fixed to top */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
 }
 
 /* Connect Wallet Button - Left (Disconnected State) */
@@ -45,7 +50,7 @@
     width: 40px;
     height: 40px;
     background: rgba(255, 255, 255, 0.08);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     padding: 0;
     cursor: pointer;
@@ -187,11 +192,18 @@
 /* Panel */
 .staggered-menu-panel {
     position: fixed;
-    top: 0;
+    top: 73px;
+    /* Exact height of header (72px) + border (1px) */
     bottom: 0;
     width: 100%;
+    height: calc(100% - 73px);
     max-width: 400px;
-    background: linear-gradient(180deg, #0a0e27 0%, #1a1f35 100%);
+    background: rgba(10, 14, 39, 0.6);
+    /* Semi-transparent navy */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    /* Only left border needed? */
     z-index: 9999;
     overflow-y: auto;
     will-change: transform;
@@ -353,4 +365,14 @@
 .staggered-menu-wrapper[data-open]~body,
 body:has(.staggered-menu-wrapper[data-open]) {
     overflow: hidden;
+}
+
+/* Hide Staggered Menu on Desktop */
+@media (min-width: 769px) {
+
+    .staggered-menu-header,
+    .staggered-menu-panel,
+    .sm-prelayers {
+        display: none !important;
+    }
 }

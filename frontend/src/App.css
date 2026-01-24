@@ -690,6 +690,16 @@ body {
   .header-balance-desktop {
     display: none;
   }
+
+  /* Hide original app header on mobile as StaggeredMenu replaces it */
+  .app-header {
+    display: none;
+  }
+
+  /* Add padding to content wrapper to prevent overlap with fixed StaggeredMenu header */
+  .app-content-wrapper {
+    padding-top: 80px;
+  }
 }
 
 /* Mobile Dropdown Balance Item - Hidden on desktop, visible on mobile */

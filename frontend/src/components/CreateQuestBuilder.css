@@ -176,8 +176,8 @@
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
-              0 4px 14px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .create-quest-builder-form {
@@ -676,8 +676,8 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   box-shadow: 0 14px 58px rgba(0, 0, 0, 0.4),
-              0 4px 14px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .create-quest-builder-actions-empty-content {
@@ -749,7 +749,7 @@
   border-radius: 12px;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
   z-index: 1;
 }
@@ -889,8 +889,8 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
-              0 2px 8px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 250;
   display: flex;
   flex-direction: column;
@@ -903,6 +903,7 @@
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -958,9 +959,9 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 24px;
   box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8),
-              0 8px 24px rgba(0, 0, 0, 0.6),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15),
-              inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
   z-index: 1002;
   display: flex;
   flex-direction: column;
@@ -1080,11 +1081,11 @@
   border-radius: 50%;
 }
 
-.poll-toggle-switch input:checked + .poll-toggle-slider {
+.poll-toggle-switch input:checked+.poll-toggle-slider {
   background-color: var(--accent-blue);
 }
 
-.poll-toggle-switch input:checked + .poll-toggle-slider:before {
+.poll-toggle-switch input:checked+.poll-toggle-slider:before {
   transform: translateX(20px);
 }
 
@@ -1791,6 +1792,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1810,9 +1812,9 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 24px;
   box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8),
-              0 8px 24px rgba(0, 0, 0, 0.6),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15),
-              inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
   z-index: 1001;
   display: flex;
   flex-direction: column;
@@ -1825,6 +1827,7 @@
     opacity: 0;
     transform: translate(-50%, -48%);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, -50%);
@@ -1865,7 +1868,7 @@
   border-radius: 12px;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .create-quest-builder-modal-close:hover {
@@ -1873,7 +1876,7 @@
   border-color: rgba(255, 255, 255, 0.2);
   color: var(--text-primary);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .create-quest-builder-actions-modal-content {
@@ -2060,7 +2063,7 @@
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .create-quest-builder-action-card.pro-disabled,
@@ -2082,8 +2085,8 @@
   border-color: rgba(59, 130, 246, 0.4);
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
-              0 0 0 1px rgba(59, 130, 246, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    0 0 0 1px rgba(59, 130, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .create-quest-builder-action-icon {
@@ -2269,21 +2272,21 @@
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
-  
+
   .create-quest-builder-templates-grid button {
     padding: 1rem !important;
     min-height: auto;
   }
-  
+
   .create-quest-builder-templates-grid button h3 {
     font-size: 0.9rem !important;
   }
-  
+
   .create-quest-builder-templates-grid button p {
     font-size: 0.8rem !important;
   }
-  
-  .create-quest-builder-templates-grid button > div:first-child {
+
+  .create-quest-builder-templates-grid button>div:first-child {
     font-size: 1.5rem !important;
   }
 }
@@ -2300,19 +2303,21 @@
     flex: none !important;
     width: 100%;
     max-width: 300px;
-    order: 2; /* Move button down */
+    order: 2;
+    /* Move button down */
   }
 
   .create-quest-builder-deposit-summary-wrapper {
     flex: none !important;
     width: 100%;
     max-width: 100%;
-    order: 1; /* Show summary first */
+    order: 1;
+    /* Show summary first */
     display: flex;
     justify-content: center;
   }
 
-  .create-quest-builder-deposit-summary-wrapper > .create-quest-builder-field {
+  .create-quest-builder-deposit-summary-wrapper>.create-quest-builder-field {
     width: 100%;
     max-width: 100%;
     display: flex;
@@ -2514,10 +2519,52 @@
     opacity: 0;
     transform: translateX(-50%) translateY(-4px);
   }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
 }
 
 
+@media (max-width: 768px) {
+
+  /* Hide step labels on mobile to prevent overflow */
+  .create-quest-builder-step-label {
+    display: none;
+  }
+
+  /* Adjust step container for compact view */
+  .create-quest-builder-steps {
+    gap: 4px;
+    justify-content: center;
+    width: 100%;
+    overflow-x: auto;
+    /* Fallback */
+  }
+
+  /* Make steps compact (just the number/icon) */
+  .create-quest-builder-step {
+    padding: 6px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .create-quest-builder-step-number {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  /* Equal width buttons for Action Modal */
+  .create-quest-builder-edit-action-modal-actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .create-quest-builder-edit-action-modal-actions button {
+    flex: 1;
+    width: 50%;
+    /* Fallback */
+  }
+}

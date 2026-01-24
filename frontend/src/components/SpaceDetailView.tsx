@@ -312,6 +312,28 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                                 </div>
                                 <div className="space-detail-stat-value">{followerCount.toLocaleString()}</div>
                             </div>
+
+                            {/* Mobile Follow Button - Inside Stats Card for alignment */}
+                            <div className="space-detail-mobile-follow-wrapper">
+                                {canAccessBuilder && onBuilderAccess && (
+                                    <button
+                                        className="space-detail-follow-button mobile-follow-btn"
+                                        onClick={() => onBuilderAccess(space.id)}
+                                        title={isAdminLoggedIn && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
+                                    >
+                                        {isAdminLoggedIn && !isOwner ? "Admin: Dashboard" : "Dashboard"}
+                                    </button>
+                                )}
+                                {!isOwner && (
+                                    <button
+                                        className={`space-detail-follow-button mobile-follow-btn ${isFollowing ? 'following' : ''}`}
+                                        onClick={handleFollow}
+                                        disabled={isLoadingFollow}
+                                    >
+                                        {isLoadingFollow ? '...' : isFollowing ? 'Following' : '+ Follow'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Filter Button */}
@@ -368,49 +390,6 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                             )}
                         </div>
                     </div>
-
-                    {/* Mobile Actions - Only visible on mobile */}
-                    <div className="space-detail-mobile-actions">
-                        <button className="space-detail-action-button" title="More options">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="1" />
-                                <circle cx="12" cy="5" r="1" />
-                                <circle cx="12" cy="19" r="1" />
-                            </svg>
-                        </button>
-                        {space.twitterUrl && (
-                            <a
-                                href={space.twitterUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="space-detail-action-button"
-                                title="X (Twitter) Profile"
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                </svg>
-                            </a>
-                        )}
-                        {canAccessBuilder && onBuilderAccess && (
-                            <button
-                                className="space-detail-follow-button"
-                                onClick={() => onBuilderAccess(space.id)}
-                                title={isAdminLoggedIn && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
-                            >
-                                {isAdminLoggedIn && !isOwner ? "Admin: Builder Dashboard" : "Builder Dashboard"}
-                            </button>
-                        )}
-                        {!isOwner && (
-                            <button
-                                className={`space-detail-follow-button ${isFollowing ? 'following' : ''}`}
-                                onClick={handleFollow}
-                                disabled={isLoadingFollow}
-                            >
-                                {isLoadingFollow ? '...' : isFollowing ? 'Following' : '+ Follow'}
-                            </button>
-                        )}
-                    </div>
-
                     {/* Quests Section - Full Width */}
                     <div className="space-detail-quests-section">
                         <h2 className="space-detail-quests-title">Quests</h2>

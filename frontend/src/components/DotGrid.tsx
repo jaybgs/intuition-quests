@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import { gsap } from 'gsap';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 
@@ -36,6 +36,7 @@ function hexToRgb(hex: string) {
 
 interface DotGridProps {
     dotSize?: number;
+    mobileDotSize?: number;
     gap?: number;
     baseColor?: string;
     activeColor?: string;
@@ -52,6 +53,7 @@ interface DotGridProps {
 
 const DotGrid = ({
     dotSize = 16,
+    mobileDotSize,
     gap = 32,
     baseColor = '#5227FF',
     activeColor = '#5227FF',
@@ -65,6 +67,18 @@ const DotGrid = ({
     className = '',
     style
 }: DotGridProps) => {
+    // Detect mobile for smaller dots
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Use mobile dot size if on mobile and mobileDotSize is provided
+    const effectiveDotSize = (isMobile && mobileDotSize) ? mobileDotSize : dotSize;
     const wrapperRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const dotsRef = useRef<any[]>([]);
@@ -86,9 +100,9 @@ const DotGrid = ({
         if (typeof window === 'undefined' || !window.Path2D) return null;
 
         const p = new window.Path2D();
-        p.arc(0, 0, dotSize / 2, 0, Math.PI * 2);
+        p.arc(0, 0, effectiveDotSize / 2, 0, Math.PI * 2);
         return p;
-    }, [dotSize]);
+    }, [effectiveDotSize]);
 
     const buildGrid = useCallback(() => {
         const wrap = wrapperRef.current;
@@ -105,9 +119,9 @@ const DotGrid = ({
         const ctx = canvas.getContext('2d');
         if (ctx) ctx.scale(dpr, dpr);
 
-        const cols = Math.floor((width + gap) / (dotSize + gap));
-        const rows = Math.floor((height + gap) / (dotSize + gap));
-        const cell = dotSize + gap;
+        const cols = Math.floor((width + gap) / (effectiveDotSize + gap));
+        const rows = Math.floor((height + gap) / (effectiveDotSize + gap));
+        const cell = effectiveDotSize + gap;
 
         const gridW = cell * cols - gap;
         const gridH = cell * rows - gap;
@@ -115,8 +129,8 @@ const DotGrid = ({
         const extraX = width - gridW;
         const extraY = height - gridH;
 
-        const startX = extraX / 2 + dotSize / 2;
-        const startY = extraY / 2 + dotSize / 2;
+        const startX = extraX / 2 + effectiveDotSize / 2;
+        const startY = extraY / 2 + effectiveDotSize / 2;
 
         const dots = [];
         for (let y = 0; y < rows; y++) {
@@ -127,7 +141,7 @@ const DotGrid = ({
             }
         }
         dotsRef.current = dots;
-    }, [dotSize, gap]);
+    }, [effectiveDotSize, gap]);
 
     useEffect(() => {
         if (!circlePath) return;

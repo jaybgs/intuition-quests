@@ -523,7 +523,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
                   <path d="m277.297 319.616 42.194-92.348-117.088-67.598L43.12 184.409.926 276.758l117.088 67.598 159.283-24.74Z"></path>
                   <path d="m9.463 274.51 38.913-85.246L200.83 165.57l110.288 63.729-38.913 85.246-152.453 23.704L9.463 274.51Z" fill="#403F42"></path>
                   <path d="m48.64 204.722 152.093-23.509 104.606 60.115 5.423-11.815-110.029-63.233L48.64 189.789 9.818 274.373l5.423 3.117 33.399-72.768Z" fill="url(#pedestal_svg__a)"></path>
-                  <path d="m257.862 226.559 26.118 15.092-26.303 57.564-.001.003-.128.285-28.41 4.415-23.837 3.694-76.948 11.965h-.001l-7.034 1.086-10.883-6.292h-.001L70.855 291.52l-38.02-21.941 26.44-57.863 11.424-1.778 39.579-6.144 18.213-2.833 67.016-10.405 9.638 5.566.225-.39-.225.39 23.837 13.761 28.88 16.676Z" stroke="#000" stroke-width="0.901" fill="transparent"></path>
+                  <path d="m257.862 226.559 26.118 15.092-26.303 57.564-.001.003-.128.285-28.41 4.415-23.837 3.694-76.948 11.965h-.001l-7.034 1.086-10.883-6.292h-.001L70.855 291.52l-38.02-21.941 26.44-57.863 11.424-1.778 39.579-6.144 18.213-2.833 67.016-10.405 9.638 5.566.225-.39-.225.39 23.837 13.761 28.88 16.676Z" stroke="#000" strokeWidth="0.901" fill="transparent"></path>
                   <path opacity="0.2" d="M180.113 281.73c29.395 0 53.225-12.529 53.225-27.985s-23.83-27.986-53.225-27.986c-29.394 0-53.224 12.53-53.224 27.986 0 15.456 23.83 27.985 53.224 27.985Z" fill="#000"></path>
                   <g transform="translate(136.124, 210.844) rotate(-5) scale(3)">
                     <defs>
@@ -536,8 +536,8 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
 
                   <defs>
                     <linearGradient id="pedestal_svg__a" x1="57.235" y1="189.497" x2="257.141" y2="311.742" gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#6E6E6E"></stop>
-                      <stop offset="1" stop-color="#1B1C1C"></stop>
+                      <stop stopColor="#6E6E6E"></stop>
+                      <stop offset="1" stopColor="#1B1C1C"></stop>
                     </linearGradient>
                   </defs>
                 </svg>
@@ -606,7 +606,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
       </div>
 
       {/* Admin Edit Button */}
-      {isAdmin && onEditHighlights && isPCDevice && (
+      {isAdmin && onEditHighlights && isPCDevice() && (
         <div className="highlights-admin-controls">
           <button
             className="highlights-edit-button"

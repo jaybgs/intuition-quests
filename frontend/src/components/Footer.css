@@ -167,10 +167,10 @@
   }
 
   .footer-community-link {
-    margin-bottom: 2px;
+    margin-bottom: 6px;
     text-decoration: none;
-    height: 20px !important;
-    line-height: 20px !important;
+    height: auto !important;
+    line-height: 1.4 !important;
   }
 
   .footer-bottom {
@@ -195,10 +195,10 @@
   }
 
   .footer-community-link {
-    margin-bottom: 2px;
+    margin-bottom: 6px;
     text-decoration: none;
-    height: 20px !important;
-    line-height: 20px !important;
+    height: auto !important;
+    line-height: 1.4 !important;
   }
 
   .footer-logo-section {

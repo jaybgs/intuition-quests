@@ -525,6 +525,27 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdmin();
   const { isPro: isLocalPro } = useSubscription();
 
+  // Auto-logout admin on mobile devices (real mobile only, not desktop resize)
+  /*
+  useEffect(() => {
+    const handleResize = () => {
+      // Only logout if it's NOT a PC device AND width is small
+      // This allows testing mobile layout on desktop by resizing window
+      if (!isPCDevice() && window.innerWidth <= 768 && isAdminAuthenticated) {
+        adminLogout();
+        showToast('Admin logged out: Mobile device detected', 'warning');
+      }
+    };
+
+    // Check on mount
+    handleResize();
+
+    // Check on resize
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isAdminAuthenticated, adminLogout]);
+  */
+
   // Check database for pro subscription status
   const checkDatabaseProStatus = async () => {
     if (!address) return false;
@@ -967,8 +988,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     const handleAdminLoginAutoLogout = () => {
       if (isConnected) {
         console.log('🔐 Admin login detected - auto-logging out wallet connection');
-        disconnect();
-        showToast('Wallet disconnected due to admin login', 'info');
+        // disconnect(); // DISABLED: This causes admin session to be cleared in some cases
+        showToast('Wallet connection preserved', 'info');
       }
     };
 
@@ -1172,6 +1193,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     <div className="app">
       <DotGrid
         dotSize={6}
+        mobileDotSize={3}
         gap={24}
         baseColor="#360404"
         activeColor="#0e5e71"
@@ -1206,7 +1228,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
           { label: 'Twitter', link: 'https://twitter.com/TrustQuests' },
           { label: 'Discord', link: 'https://discord.gg/TrustQuests' }
         ]}
-        displaySocials={true}
+        displaySocials={false}
         displayItemNumbering={true}
         menuButtonColor="#ffffff"
         openMenuButtonColor="#ffffff"
@@ -1659,8 +1681,9 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     key={`quest-detail-${qId}`}
                     questId={qId}
                     onBack={() => {
-                      const previousTab = localStorage.getItem('previousTab') || 'discover';
-                      navigateToTab(previousTab);
+                      // Always navigate back to community as per user request
+                      // The button label is "Back to Community"
+                      navigateToTab('community');
                     }}
                     onNavigateToProfile={() => {
                       // Navigate to user dashboard

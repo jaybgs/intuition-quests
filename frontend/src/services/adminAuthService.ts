@@ -72,6 +72,9 @@ export async function authenticateAdmin(username: string, password: string): Pro
     // Store session in localStorage
     localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
 
+    // Dispatch custom event for same-tab updates
+    window.dispatchEvent(new CustomEvent('admin-session-changed'));
+
     return { success: true, role: admin.role };
   } catch (error: any) {
     console.error('Admin authentication error:', error);
@@ -88,7 +91,7 @@ export function isAdminLoggedIn(): boolean {
     if (!sessionStr) return false;
 
     const session: AdminSession = JSON.parse(sessionStr);
-    
+
     // Check if session is expired
     if (Date.now() > session.expiryTime) {
       logoutAdmin();
@@ -110,7 +113,7 @@ export function getAdminSession(): AdminSession | null {
     if (!sessionStr) return null;
 
     const session: AdminSession = JSON.parse(sessionStr);
-    
+
     // Check if session is expired
     if (Date.now() > session.expiryTime) {
       logoutAdmin();
@@ -128,6 +131,10 @@ export function getAdminSession(): AdminSession | null {
  */
 export function logoutAdmin(): void {
   localStorage.removeItem(ADMIN_SESSION_KEY);
+  // Dispatch custom event for same-tab updates
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('admin-session-changed'));
+  }
 }
 
 /**

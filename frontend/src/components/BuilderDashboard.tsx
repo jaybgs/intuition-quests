@@ -13,6 +13,7 @@ import { BuilderAnalytics } from './BuilderAnalytics';
 import { Reveal } from './Reveal';
 import { Dock, DockIcon } from './VerticalDock';
 import BlurText from './BlurText';
+import { MobileDock } from './MobileDock';
 import './BuilderDashboard.css';
 
 interface BuilderDashboardProps {
@@ -356,31 +357,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   return (
     <div className="builder-dashboard-page">
       {/* Mobile Menu Button */}
-      <button
-        className="builder-mobile-menu-button"
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        aria-label="Toggle menu"
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          {isMenuOpen ? (
-            <path d="M18 6L6 18M6 6l12 12" />
-          ) : (
-            <>
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </>
-          )}
-        </svg>
-      </button>
 
-      {/* Overlay for mobile menu */}
-      {isMenuOpen && (
-        <div
-          className="builder-menu-overlay"
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
 
       <div className="builder-dashboard-layout">
         {/* Left Sidebar */}
@@ -725,6 +702,46 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             </>
           )}
         </main>
+      </div>
+
+      <div className="builder-mobile-dock-wrapper">
+        <MobileDock items={[
+          {
+            id: 'dashboard',
+            label: 'Dashboard',
+            icon: <span style={{ fontSize: '24px' }}>🏠</span>,
+            onClick: () => handleNavClick('dashboard'),
+            isActive: activeNav === 'dashboard'
+          },
+          {
+            id: 'quests',
+            label: 'Quests',
+            icon: <span style={{ fontSize: '24px' }}>⚔️</span>,
+            onClick: () => handleNavClick('quests'),
+            isActive: activeNav === 'quests'
+          },
+          {
+            id: 'guide',
+            label: 'Guide',
+            icon: <span style={{ fontSize: '24px' }}>📚</span>,
+            onClick: () => handleNavClick('guide'),
+            isActive: activeNav === 'guide'
+          },
+          ...(isPro ? [{
+            id: 'analytics',
+            label: 'Analytics',
+            icon: <span style={{ fontSize: '24px' }}>📈</span>,
+            onClick: () => handleNavClick('analytics'),
+            isActive: activeNav === 'analytics'
+          }] : []),
+          {
+            id: 'settings',
+            label: 'Settings',
+            icon: <span style={{ fontSize: '24px' }}>⚙️</span>,
+            onClick: () => handleNavClick('settings'),
+            isActive: activeNav === 'settings'
+          }
+        ]} />
       </div>
 
     </div>

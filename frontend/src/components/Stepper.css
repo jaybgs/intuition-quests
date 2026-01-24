@@ -145,3 +145,24 @@
 .next-button:active {
     transform: translateY(0);
 }
+
+@media (max-width: 768px) {
+    .outer-container {
+        width: 100%;
+        overflow: hidden;
+        /* Prevent body scroll */
+    }
+
+    .step-indicator-row {
+        overflow-x: auto;
+        padding-bottom: 8px;
+        /* Space for scrollbar */
+        justify-content: flex-start;
+        /* Prevent squashing if scrolling */
+        gap: 12px;
+    }
+
+    .step-indicator {
+        flex-shrink: 0;
+    }
+}

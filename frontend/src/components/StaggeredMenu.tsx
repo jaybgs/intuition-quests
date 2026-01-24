@@ -316,31 +316,8 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     }, [changeMenuColorOnOpen, menuButtonColor, openMenuButtonColor]);
 
     const animateText = useCallback((opening: boolean) => {
-        const inner = textInnerRef.current;
-        if (!inner) return;
-        textCycleAnimRef.current?.kill();
-
-        const currentLabel = opening ? 'Menu' : 'Close';
-        const targetLabel = opening ? 'Close' : 'Menu';
-        const cycles = 3;
-        const seq = [currentLabel];
-        let last = currentLabel;
-        for (let i = 0; i < cycles; i++) {
-            last = last === 'Menu' ? 'Close' : 'Menu';
-            seq.push(last);
-        }
-        if (last !== targetLabel) seq.push(targetLabel);
-        seq.push(targetLabel);
-        setTextLines(seq);
-
-        gsap.set(inner, { yPercent: 0 });
-        const lineCount = seq.length;
-        const finalShift = ((lineCount - 1) / lineCount) * 100;
-        textCycleAnimRef.current = gsap.to(inner, {
-            yPercent: -finalShift,
-            duration: 0.5 + lineCount * 0.07,
-            ease: 'power4.out'
-        });
+        // Disable text animation - always keep it as Menu
+        return;
     }, []);
 
     const toggleMenu = useCallback(() => {
@@ -486,18 +463,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
             </header>
 
             <aside id="staggered-menu-panel" ref={panelRef} className="staggered-menu-panel" aria-hidden={!open}>
-                {/* Close Button */}
-                <button
-                    className="sm-panel-close"
-                    onClick={() => closeMenu()}
-                    aria-label="Close menu"
-                    type="button"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 6L6 18" />
-                        <path d="M6 6l12 12" />
-                    </svg>
-                </button>
+                {/* Close Button Removed - Using Header Toggle Instead */}
                 <div className="sm-panel-inner">
                     <ul className="sm-panel-list" role="list" data-numbering={displayItemNumbering || undefined}>
                         {items && items.length ? (

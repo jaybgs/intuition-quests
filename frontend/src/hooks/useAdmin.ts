@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { 
-  isAdminLoggedIn, 
-  getAdminSession, 
-  logoutAdmin, 
-  isAdmin, 
-  isOracle 
+import {
+  isAdminLoggedIn,
+  getAdminSession,
+  logoutAdmin,
+  isAdmin,
+  isOracle
 } from '../services/adminAuthService';
 
 export function useAdmin() {
@@ -14,14 +14,26 @@ export function useAdmin() {
 
   useEffect(() => {
     checkAdminStatus();
-    
+
     // Listen for storage changes (e.g., logout from another tab)
     const handleStorageChange = () => {
+      console.log('🔄 useAdmin: storage event detected');
       checkAdminStatus();
     };
-    
+
+    // Listen for custom event for same-tab updates
+    const handleCustomAuthEvent = () => {
+      console.log('🔄 useAdmin: admin-session-changed event detected');
+      checkAdminStatus();
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('admin-session-changed', handleCustomAuthEvent);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('admin-session-changed', handleCustomAuthEvent);
+    };
   }, []);
 
   const checkAdminStatus = () => {
@@ -36,7 +48,7 @@ export function useAdmin() {
       adminStatus,
       currentTime: Date.now()
     });
-    
+
     setIsAuthenticated(loggedIn);
     setAdminRole(session?.role || null);
     setIsLoading(false);

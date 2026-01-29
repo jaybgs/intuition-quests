@@ -49,8 +49,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #000000;
-  /* Dark fallback to prevent white flash */
+  background-color: transparent;
+  /* Transparent to reveal gradient */
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;

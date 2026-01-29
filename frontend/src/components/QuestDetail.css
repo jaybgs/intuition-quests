@@ -778,7 +778,7 @@
   }
 
   .quest-detail-back-section {
-    padding: 12px 16px 4px 16px;
+    padding: 12px 12px 4px 12px;
   }
 
   .quest-detail-back-button {
@@ -891,8 +891,11 @@
     flex-wrap: nowrap;
     gap: 10px;
     padding: 12px 0;
+    width: auto;
     max-width: 100%;
     overflow-x: hidden;
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
   .quest-detail-task-content {
@@ -941,7 +944,7 @@
 
 @media (max-width: 480px) {
   .quest-detail-back-section {
-    padding: 8px 16px 4px 16px;
+    padding: 8px 12px 4px 12px;
   }
 
   .quest-detail-back-button {
@@ -1007,7 +1010,7 @@
 
 @media (max-width: 480px) {
   .quest-detail-back-section {
-    padding: 8px 16px 4px 16px;
+    padding: 8px 12px 4px 12px;
   }
 
   .quest-detail-back-button {
@@ -1067,5 +1070,12 @@
 
   .quest-detail-claim-button-container {
     padding: 12px;
+  }
+
+  /* Move fixed buttons above mobile dock */
+  .quest-detail-delete-button,
+  .quest-detail-edit-button {
+    bottom: 120px !important;
+    z-index: 10000 !important;
   }
 }

@@ -1,0 +1,99 @@
+.mobile-profile-dropdown-container {
+    position: fixed;
+    top: 70px;
+    /* Adjust based on header/staggered menu height */
+    left: 16px;
+    /* Align with left avatar */
+    z-index: 1002;
+    /* Above everything */
+    animation: mobileDropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes mobileDropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mobile-profile-dropdown-menu {
+    background: #000000;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    min-width: 220px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-profile-dropdown-menu button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-profile-dropdown-menu button:last-child {
+    border-bottom: none;
+}
+
+.mobile-profile-dropdown-menu button:hover {
+    background: var(--hover-bg);
+}
+
+.mobile-profile-dropdown-menu button svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+.mobile-dropdown-balance-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    color: var(--text-primary);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-dropdown-balance-item svg {
+    color: #3b82f6;
+    flex-shrink: 0;
+}
+
+.mobile-dropdown-balance-amount {
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.mobile-disconnect-btn {
+    color: #ef4444 !important;
+}
+
+.mobile-disconnect-btn svg {
+    color: #ef4444 !important;
+}
+
+.mobile-disconnect-btn:hover {
+    background: rgba(239, 68, 68, 0.1) !important;
+}

@@ -14,8 +14,8 @@
 }
 
 .leaderboard-container {
-  width: 85%;
-  max-width: 1000px;
+  width: clamp(85%, 90vw, 1400px);
+  max-width: 1400px;
   background: rgba(26, 31, 53, 0.2);
   backdrop-filter: blur(36px);
   -webkit-backdrop-filter: blur(36px);

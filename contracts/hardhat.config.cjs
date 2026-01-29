@@ -15,7 +15,7 @@ module.exports = {
   },
   networks: {
     intuition: {
-      url: process.env.INTUITION_RPC_URL || "https://rpc.intuition.systems/http",
+      url: process.env.INTUITION_RPC_URL || "https://rpc.intuition.systems",
       chainId: 1155,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },

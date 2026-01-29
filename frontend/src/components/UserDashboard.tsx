@@ -12,6 +12,7 @@ import { showToast } from './Toast';
 import './UserDashboard.css';
 import { truncateUsername } from '../utils/usernameUtils';
 import { getDiceBearAvatar } from '../utils/avatar';
+import { isPCDevice } from '../utils/deviceDetection';
 
 interface UserDashboardProps {
   onEditProfile: () => void;
@@ -140,6 +141,15 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       setLocalClaimedIQ(claimedQuests.length * 20); // Assuming 20 IQ per quest for now
     }
   }, [address]);
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(!isPCDevice());
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const userXP = userXPData?.totalXP || localClaimedIQ || 0;
   const level = userXPData?.level || Math.floor(userXP / 100) + 1;
@@ -503,13 +513,10 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
               <span className="stat-label">Claims</span>
               <span className="stat-value">{userStats.claimsStaked}</span>
             </div>
+
             <div className="stat-rectangle">
-              <span className="stat-label">Tasks Completed</span>
+              <span className="stat-label">Quests Completed</span>
               <span className="stat-value">{userStats.tasksCompleted}</span>
-            </div>
-            <div className="stat-rectangle">
-              <span className="stat-label">Trade Volume</span>
-              <span className="stat-value">${userStats.tradeVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
         </Reveal>
@@ -609,7 +616,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
         </Reveal>
 
         {/* Intuition Chain Identity Section - Multi-Wallet Display */}
-        <Reveal delay={200} width="100%">
+        <Reveal delay={200} width="100%" disabled={isMobile}>
           <div className="section-no-bg">
             <div className="section-header-with-tabs">
               <h3 className="section-title">

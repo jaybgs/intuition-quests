@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 /**
  * @title ClaimIQ
  * @dev Contract for claiming IQ points after completing quests
- * Users pay 1 TRUST to claim, which gets sent to revenue wallet
+ * Users pay 1 TRUST to claim, which acts as a deposit in this contract.
+ * The deployer/owner can withdraw the accumulated TRUST later.
  * Creates completion triple on MultiVault and awards IQ points
  */
 
@@ -19,7 +23,7 @@ interface IEthMultiVault {
     function getTripleCost() external view returns (uint256);
 }
 
-contract ClaimIQ {
+contract ClaimIQ is Ownable, ReentrancyGuard {
 
     // Events
     event QuestClaimed(
@@ -29,6 +33,11 @@ contract ClaimIQ {
         uint256 userAtomId,
         uint256 tripleId,
         uint256 iqAwarded
+    );
+    
+    event FundsWithdrawn(
+        address indexed to,
+        uint256 amount
     );
 
     // Constants
@@ -75,7 +84,7 @@ contract ClaimIQ {
     /**
      * @dev Claim completion for a quest
      * Records quest completion on-chain by creating a completion triple
-     * IQ awarding is handled off-chain by the platform
+     * Funds are accumulated in the contract instead of auto-forwarded.
      * @param questId The quest identifier
      * @param questAtomId The atom ID of the quest
      * @param userAtomId The atom ID of the user
@@ -91,13 +100,19 @@ contract ClaimIQ {
         onlyValidQuest(questId, questAtomId)
         notAlreadyClaimed(msg.sender, questId)
         correctPayment
+        nonReentrant
         returns (uint256 tripleId)
     {
-        // Transfer 1 TRUST to revenue wallet
-        (bool success,) = revenueWallet.call{value: msg.value}("");
-        require(success, "Failed to send TRUST to revenue wallet");
+        // 1. STATE UPDATES FIRST (Checks-Effects-Interactions)
+        // We mark as claimed *before* the external call to avoid reentrancy
+        questClaims[msg.sender][questId] = true;
+        questClaimTimestamps[msg.sender][questId] = block.timestamp;
+        
+        // Note: We don't have the tripleId yet, so we'll update that mapping after.
+        // But the critical 'questClaims' check is now safe.
 
-        // Create completion triple on MultiVault
+        // 2. EXTERNAL CALLS
+        // Creates completion triple on MultiVault
         // Triple: User -> Completed -> Quest
         bytes32[] memory subjectIds = new bytes32[](1);
         bytes32[] memory predicateIds = new bytes32[](1);
@@ -111,7 +126,7 @@ contract ClaimIQ {
 
         IEthMultiVault vault = IEthMultiVault(multiVault);
         uint256 tripleCost = vault.getTripleCost();
-
+        
         bytes32[] memory tripleIds = vault.createTriples{value: tripleCost}(
             subjectIds,
             predicateIds,
@@ -121,64 +136,23 @@ contract ClaimIQ {
 
         tripleId = uint256(tripleIds[0]);
 
-        // Record the claim
-        questClaims[msg.sender][questId] = true;
-        questClaimTimestamps[msg.sender][questId] = block.timestamp;
+        // 3. FINAL STATE UPDATE (with result)
         questTripleIds[msg.sender][questId] = tripleId;
 
-        // Emit event (IQ awarding handled off-chain)
         emit QuestClaimed(
             msg.sender,
             questId,
             questAtomId,
             userAtomId,
             tripleId,
-            0  // IQ amount is 0 since it's handled off-chain
+            0 
         );
 
         return tripleId;
     }
 
     /**
-     * @dev Check if user has claimed a specific quest
-     * @param user The user address
-     * @param questId The quest identifier
-     * @return True if claimed, false otherwise
-     */
-    function hasClaimedQuest(address user, bytes32 questId) external view returns (bool) {
-        return questClaims[user][questId];
-    }
-
-
-    /**
-     * @dev Get quest claim details
-     * @param user The user address
-     * @param questId The quest identifier
-     * @return tripleId The triple ID of the claim
-     * @return claimedAt The timestamp when claimed
-     */
-    function getQuestClaim(address user, bytes32 questId)
-        external
-        view
-        returns (uint256 tripleId, uint256 claimedAt)
-    {
-        return (questTripleIds[user][questId], questClaimTimestamps[user][questId]);
-    }
-
-    /**
-     * @dev Get the claim cost (1 TRUST)
-     * @return The cost in wei
-     */
-    function getClaimCost() external pure returns (uint256) {
-        return CLAIM_FEE;
-    }
-
-    /**
      * @dev Claim IQ-only quest (no escrow/deposit required)
-     * @param questId The quest identifier
-     * @param questAtomId The atom ID of the quest
-     * @param userAtomId The atom ID of the user
-     * @return tripleId The ID of the created completion triple
      */
     function claimIQOnlyQuest(
         bytes32 questId,
@@ -188,15 +162,13 @@ contract ClaimIQ {
         external
         payable
         notAlreadyClaimed(msg.sender, questId)
+        nonReentrant
         returns (uint256 tripleId)
     {
-        // For IQ-only quests, we still collect the revenue fee
         uint256 feeAmount = CLAIM_FEE;
         require(msg.value >= feeAmount, "Insufficient payment for claim fee");
 
-        // Transfer 1 TRUST to revenue wallet
-        (bool success,) = revenueWallet.call{value: feeAmount}("");
-        require(success, "Failed to send TRUST to revenue wallet");
+        // FUNDS ARE KEPT IN THE CONTRACT (No transfer to revenueWallet)
 
         // Return a dummy triple ID since no triple is created
         tripleId = 0;
@@ -206,7 +178,6 @@ contract ClaimIQ {
         questClaimTimestamps[msg.sender][questId] = block.timestamp;
         questTripleIds[msg.sender][questId] = tripleId;
 
-        // Emit event (IQ awarding handled off-chain)
         emit QuestClaimed(msg.sender, questId, questAtomId, userAtomId, tripleId, 0);
 
         // Refund any excess payment back to user
@@ -218,52 +189,69 @@ contract ClaimIQ {
         }
     }
 
-    /**
-     * @dev Add valid quest atoms (admin function)
-     * @param questAtomIds Array of quest atom IDs to mark as valid
-     */
-    function addValidQuestAtoms(bytes32[] calldata questAtomIds) external {
-        // TODO: Add admin modifier
+    // ... (View functions remain the same) ...
+
+    function hasClaimedQuest(address user, bytes32 questId) external view returns (bool) {
+        return questClaims[user][questId];
+    }
+
+    function getQuestClaim(address user, bytes32 questId)
+        external
+        view
+        returns (uint256 tripleId, uint256 claimedAt)
+    {
+        return (questTripleIds[user][questId], questClaimTimestamps[user][questId]);
+    }
+
+    function getClaimCost() external pure returns (uint256) {
+        return CLAIM_FEE;
+    }
+
+    // Admin functions
+
+    function addValidQuestAtoms(bytes32[] calldata questAtomIds) external onlyOwner {
         for (uint256 i = 0; i < questAtomIds.length; i++) {
             validQuestAtoms[questAtomIds[i]] = true;
         }
     }
 
-    /**
-     * @dev Remove valid quest atoms (admin function)
-     * @param questAtomIds Array of quest atom IDs to remove
-     */
-    function removeValidQuestAtoms(bytes32[] calldata questAtomIds) external {
-        // TODO: Add admin modifier
+    function removeValidQuestAtoms(bytes32[] calldata questAtomIds) external onlyOwner {
         for (uint256 i = 0; i < questAtomIds.length; i++) {
             validQuestAtoms[questAtomIds[i]] = false;
         }
     }
 
     /**
-     * @dev Emergency withdraw function (admin only)
+     * @dev Withdraw fees to the owner or revenue wallet
+     * This is the manual withdrawal function requested.
      */
-    function emergencyWithdraw() external {
-        require(msg.sender == revenueWallet, "Only revenue wallet can withdraw");
+    function withdrawFees() external onlyOwner nonReentrant {
         uint256 balance = address(this).balance;
         require(balance > 0, "No funds to withdraw");
-        (bool success,) = revenueWallet.call{value: balance}("");
-        require(success, "Emergency withdraw failed");
+        
+        // Withdraw to owner (deployer) as requested
+        (bool success,) = owner().call{value: balance}("");
+        require(success, "Withdraw failed");
+        
+        emit FundsWithdrawn(owner(), balance);
     }
-
-    /**
-     * @dev Emergency withdraw to deployer (for stuck funds recovery)
+    
+    /** 
+     * @dev Legacy emergency withdraw support targeting revenueWallet if preferred 
      */
-    function emergencyWithdrawToDeployer() external {
-        // Allow anyone to call this for stuck funds recovery
+    function withdrawToRevenueWallet() external onlyOwner nonReentrant {
         uint256 balance = address(this).balance;
         require(balance > 0, "No funds to withdraw");
-        // Send to deployer (the address that deployed this contract)
-        address payable deployer = payable(0x80D291e82C6f8a11cEC9A9BA699285AFe14d7F4D);
-        (bool success,) = deployer.call{value: balance}("");
-        require(success, "Emergency withdraw to deployer failed");
+        
+        (bool success,) = revenueWallet.call{value: balance}("");
+        require(success, "Withdraw failed");
+        
+        emit FundsWithdrawn(revenueWallet, balance);
     }
 
     // Receive function to accept TRUST payments
     receive() external payable {}
 }
+
+
+

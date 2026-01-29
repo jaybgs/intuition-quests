@@ -271,89 +271,16 @@ const createQuestSchema = z.object({
   winnerPrizes: z.array(z.any()),
   rewardDeposit: z.string().optional(),
   rewardToken: z.string().optional(),
-  rewardType: z.string().optional(),
+  reward_type: z.enum(['iq_only', 'trust_only', 'trust_and_iq']).optional(),
   expiresAt: z.number().optional(),
   endDate: z.string().optional(),
   endTime: z.string().optional(),
+  uniqueIdString: z.string().optional(),
+  questVersion: z.number().optional(),
 });
 
 // GET /api/quests/:questId/completions - Get completions for a specific quest
-router.get('/:questId/completions', async (req: Request, res: Response) => {
-  try {
-    const { questId } = req.params;
-    const limit = parseInt(req.query.limit as string) || 100;
-
-    const completions = await completionService.getQuestCompletions(questId, limit);
-    res.json({ completions });
-  } catch (error: any) {
-    console.error('Error fetching quest completions:', error);
-    return res.status(500).json({ error: 'Failed to fetch quest completions' });
-  }
-});
-
-// GET /api/quests/completions/:walletAddress - Get completed quests for wallet
-router.get('/completions/:walletAddress', async (req: Request, res: Response) => {
-  try {
-    const { walletAddress } = req.params;
-
-    const { data, error } = await supabase
-      .from('user_quests')
-      .select('quest_id, completed_at')
-      .eq('wallet_address', walletAddress.toLowerCase());
-
-    if (error) {
-      return res.status(500).json({ error: 'Failed to fetch quest completions' });
-    }
-
-    res.json({ completions: data || [] });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/quests - Get all published quests (with optional filters)
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const { status, projectId, spaceId, limit, offset } = req.query;
-
-    let query = supabase
-      .from('published_quests')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (status) {
-      query = query.eq('status', status);
-    }
-
-    if (projectId) {
-      query = query.eq('project_id', projectId);
-    }
-
-    if (spaceId) {
-      query = query.eq('space_id', spaceId);
-    }
-
-    if (limit) {
-      query = query.limit(parseInt(limit as string));
-    }
-
-    if (offset) {
-      query = query.range(parseInt(offset as string), parseInt(offset as string) + (parseInt(limit as string) || 100) - 1);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching quests:', error);
-      return res.status(500).json({ error: 'Failed to fetch quests' });
-    }
-
-    res.json({ quests: data || [] });
-  } catch (error: any) {
-    console.error('Error in GET /api/quests:', error);
-    res.status(500).json({ error: error.message || 'Failed to fetch quests' });
-  }
-});
+/* ... existing code ... */
 
 // POST /api/quests - Create/publish a new quest
 router.post('/', authenticateWallet, async (req: Request, res: Response) => {
@@ -361,9 +288,16 @@ router.post('/', authenticateWallet, async (req: Request, res: Response) => {
     const validated = createQuestSchema.parse(req.body);
     const walletAddress = req.walletAddress;
 
-    // Verify the quest creator matches the authenticated wallet
-    if (validated.creatorAddress.toLowerCase() !== walletAddress) {
-      return res.status(403).json({ error: 'Quest creator does not match authenticated wallet' });
+    // Verify the quest creator matches the authenticated wallet (case-insensitive)
+    console.log('--- Quest Creation Auth Check ---');
+    console.log('Creator (Payload):', validated.creatorAddress);
+    console.log('Wallet (Token):', walletAddress);
+    console.log('Match?', validated.creatorAddress.toLowerCase() === walletAddress.toLowerCase());
+    if (validated.creatorAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+      return res.status(403).json({
+        error: 'Quest creator does not match authenticated wallet',
+        details: `Expected ${walletAddress}, got ${validated.creatorAddress}`
+      });
     }
 
     // Insert quest into database
@@ -395,13 +329,16 @@ router.post('/', authenticateWallet, async (req: Request, res: Response) => {
         winner_prizes: validated.winnerPrizes,
         reward_deposit: validated.rewardDeposit || null,
         reward_token: validated.rewardToken || null,
-        reward_type: validated.rewardType || 'trust_and_iq',
+        reward_type: validated.reward_type || 'trust_and_iq',
         expires_at: validated.expiresAt || null,
         end_date: validated.endDate || null,
         end_time: validated.endTime || null,
+        unique_id_string: validated.uniqueIdString || null,
+        quest_version: validated.questVersion || 1,
       })
       .select()
       .single();
+
 
     if (error) {
       console.error('Database error creating quest:', error);

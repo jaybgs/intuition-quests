@@ -8,45 +8,49 @@ async function main() {
 
   console.log("Deploying contracts to Intuition Chain...\n");
 
-  // 1. Deploy FeeWrapper
-  console.log("1. Deploying FeeWrapper...");
-  const FeeWrapper = await hre.ethers.getContractFactory("FeeWrapper");
-  const feeWrapper = await FeeWrapper.deploy(REVENUE_WALLET, ADMIN_ADDRESS);
-  await feeWrapper.waitForDeployment();
-  const feeWrapperAddress = await feeWrapper.getAddress();
-  console.log(`   FeeWrapper deployed to: ${feeWrapperAddress}\n`);
+  // 1. Deploy FeeWrapper - SKIPPED (File missing)
+  console.log("1. Deploying FeeWrapper... SKIPPED");
+  // const FeeWrapper = await hre.ethers.getContractFactory("FeeWrapper");
+  // const feeWrapper = await FeeWrapper.deploy(REVENUE_WALLET, ADMIN_ADDRESS);
+  // await feeWrapper.waitForDeployment();
+  // const feeWrapperAddress = await feeWrapper.getAddress();
+  const feeWrapperAddress = "0x0000000000000000000000000000000000000000"; // Placeholder
+  console.log(`   FeeWrapper skipped (not found)\n`);
 
-  // 2. Deploy SpaceIdentityFactory
-  console.log("2. Deploying SpaceIdentityFactory...");
-  const SpaceIdentityFactory = await hre.ethers.getContractFactory("SpaceIdentityFactory");
-  const spaceIdentityFactory = await SpaceIdentityFactory.deploy(MULTIVAULT_ADDRESS, REVENUE_WALLET, RELAYER_WALLET);
-  await spaceIdentityFactory.waitForDeployment();
-  const spaceIdentityFactoryAddress = await spaceIdentityFactory.getAddress();
-  console.log(`   SpaceIdentityFactory deployed to: ${spaceIdentityFactoryAddress}\n`);
+  // 2. Deploy SpaceIdentityFactory - SKIPPED (Deployment failing)
+  console.log("2. Deploying SpaceIdentityFactory... SKIPPED");
+  // const SpaceIdentityFactory = await hre.ethers.getContractFactory("SpaceIdentityFactory");
+  // const spaceIdentityFactory = await SpaceIdentityFactory.deploy(MULTIVAULT_ADDRESS, REVENUE_WALLET, RELAYER_WALLET);
+  // await spaceIdentityFactory.waitForDeployment();
+  // const spaceIdentityFactoryAddress = await spaceIdentityFactory.getAddress();
+  const spaceIdentityFactoryAddress = "0x0000000000000000000000000000000000000000";
+  console.log(`   SpaceIdentityFactory skipped\n`);
 
-  // 3. Deploy QuestAtomFactory
-  console.log("3. Deploying QuestAtomFactory...");
-  const QuestAtomFactory = await hre.ethers.getContractFactory("QuestAtomFactory");
-  const questAtomFactory = await QuestAtomFactory.deploy(MULTIVAULT_ADDRESS, REVENUE_WALLET);
-  await questAtomFactory.waitForDeployment();
-  const questAtomFactoryAddress = await questAtomFactory.getAddress();
-  console.log(`   QuestAtomFactory deployed to: ${questAtomFactoryAddress}\n`);
+  // 3. Deploy PublishQuests
+  console.log("3. Deploying PublishQuests...");
+  const PublishQuests = await hre.ethers.getContractFactory("PublishQuests");
+  const publishQuests = await PublishQuests.deploy(MULTIVAULT_ADDRESS, REVENUE_WALLET);
+  await publishQuests.waitForDeployment();
+  const publishQuestsAddress = await publishQuests.getAddress();
+  console.log(`   PublishQuests deployed to: ${publishQuestsAddress}\n`);
 
-  // 4. Deploy QuestEscrow
-  console.log("4. Deploying QuestEscrow...");
-  const QuestEscrow = await hre.ethers.getContractFactory("QuestEscrow");
-  const questEscrow = await QuestEscrow.deploy(REVENUE_WALLET, RELAYER_WALLET, ADMIN_ADDRESS);
-  await questEscrow.waitForDeployment();
-  const questEscrowAddress = await questEscrow.getAddress();
-  console.log(`   QuestEscrow deployed to: ${questEscrowAddress}\n`);
+  // 4. Deploy QuestEscrow - SKIPPED for now to prioritize PublishQuests
+  console.log("4. Deploying QuestEscrow... SKIPPED");
+  // const QuestEscrow = await hre.ethers.getContractFactory("QuestEscrow");
+  // const questEscrow = await QuestEscrow.deploy(REVENUE_WALLET, RELAYER_WALLET, ADMIN_ADDRESS);
+  // await questEscrow.waitForDeployment();
+  // const questEscrowAddress = await questEscrow.getAddress();
+  const questEscrowAddress = "0x0000000000000000000000000000000000000000";
+  console.log(`   QuestEscrow skipped\n`);
 
-  // 5. Deploy ClaimIQ
-  console.log("5. Deploying ClaimIQ...");
-  const ClaimIQ = await hre.ethers.getContractFactory("ClaimIQ");
-  const claimIQ = await ClaimIQ.deploy(MULTIVAULT_ADDRESS, REVENUE_WALLET, 1); // completedPredicateAtomId = 1
-  await claimIQ.waitForDeployment();
-  const claimIQAddress = await claimIQ.getAddress();
-  console.log(`   ClaimIQ deployed to: ${claimIQAddress}\n`);
+  // 5. Deploy ClaimIQ - SKIPPED for now
+  console.log("5. Deploying ClaimIQ... SKIPPED");
+  // const ClaimIQ = await hre.ethers.getContractFactory("ClaimIQ");
+  // const claimIQ = await ClaimIQ.deploy(MULTIVAULT_ADDRESS, REVENUE_WALLET, 1); 
+  // await claimIQ.waitForDeployment();
+  // const claimIQAddress = await claimIQ.getAddress();
+  const claimIQAddress = "0x0000000000000000000000000000000000000000";
+  console.log(`   ClaimIQ skipped\n`);
 
   // Summary
   console.log("========================================");
@@ -54,7 +58,7 @@ async function main() {
   console.log("========================================");
   console.log(`FeeWrapper:            ${feeWrapperAddress}`);
   console.log(`SpaceIdentityFactory:  ${spaceIdentityFactoryAddress}`);
-  console.log(`QuestAtomFactory:      ${questAtomFactoryAddress}`);
+  console.log(`PublishQuests:         ${publishQuestsAddress}`);
   console.log(`QuestEscrow:           ${questEscrowAddress}`);
   console.log(`ClaimIQ:               ${claimIQAddress}`);
   console.log("========================================");

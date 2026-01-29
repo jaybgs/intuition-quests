@@ -42,6 +42,8 @@ import { getDiceBearAvatar } from './utils/avatar';
 import { isPCDevice } from './utils/deviceDetection';
 import DotGrid from './components/DotGrid';
 import StaggeredMenu from './components/StaggeredMenu';
+import { MobileProfileDropdown } from './components/MobileProfileDropdown';
+import { WalletSelectionModal } from './components/WalletSelectionModal';
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -226,15 +228,7 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
       </button>
       {isOpen && (
         <div className="profile-dropdown-menu">
-          {/* TRUST Balance - First item in dropdown for mobile only */}
-          <div className="dropdown-balance-item dropdown-balance-mobile">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v12M8 10l4-4 4 4M8 14l4 4 4-4" />
-            </svg>
-            <span className="dropdown-balance-amount">{formatBalance(balance?.value)} TRUST</span>
-          </div>
-          <div className="dropdown-divider dropdown-divider-mobile" />
+
           <button onClick={() => { onProfileClick(); setIsOpen(false); }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -265,10 +259,23 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
   );
 }
 
-function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick: () => void; onBuilderProfileClick?: () => void }) {
+
+
+// ... (keep existing imports)
+
+function LoginButton({
+  onProfileClick,
+  onBuilderProfileClick,
+  onDisconnect,
+  onShowLoginModal
+}: {
+  onProfileClick: () => void;
+  onBuilderProfileClick?: () => void;
+  onDisconnect: () => void;
+  onShowLoginModal: () => void;
+}) {
   const { address, isConnected, chainId } = useAccount();
-  const { connectors, connect, isPending, error: connectError } = useConnect();
-  const { disconnect } = useDisconnect();
+  const { isPending, error: connectError } = useConnect();
   const { switchChain } = useSwitchChain();
   const { authenticate, isAuthenticated, isAuthenticating } = useAuth();
   const hasAttemptedAuth = useRef(false);
@@ -313,65 +320,6 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
     }
   }, [connectError]);
 
-  const handleDisconnect = async () => {
-    try {
-      // Disconnect from wagmi first
-      await disconnect();
-    } catch (err) {
-      console.warn('Error during wagmi disconnect:', err);
-      // Continue with cleanup even if disconnect fails
-    }
-
-    // Clear authentication token
-    localStorage.removeItem('auth_token');
-
-    // Clear all wagmi/web3modal cached connection state to fully reset wallet session
-    // Clear all localStorage keys that start with wagmi or walletconnect
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (
-        key.startsWith('wagmi') ||
-        key.startsWith('walletconnect') ||
-        key.startsWith('wc@') ||
-        key.startsWith('W3M') ||
-        key.startsWith('w3m')
-      )) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-
-    // Also explicitly remove known keys (in case they weren't caught above)
-    localStorage.removeItem('wagmi.store');
-    localStorage.removeItem('walletconnect');
-    localStorage.removeItem('wc@2:client');
-    localStorage.removeItem('wc@2:core');
-    localStorage.removeItem('wc@2:ethereum_provider');
-
-    // Clear any user-specific cached data
-    if (address) {
-      const lowerAddress = address.toLowerCase();
-      localStorage.removeItem(`staked_amount_${lowerAddress}`);
-      localStorage.removeItem(`intuition_identity_${lowerAddress}`);
-      localStorage.removeItem(`verification_attempts_${lowerAddress}`);
-      localStorage.removeItem(`username_${lowerAddress}`);
-      localStorage.removeItem(`profile_pic_${lowerAddress}`);
-    }
-
-    // Clear connected wallets list
-    localStorage.removeItem('connected_wallets');
-
-    // Show success notification
-    showToast('Wallet disconnected successfully', 'success');
-
-    // Force a page reload to fully reset the app state
-    // This ensures all components re-initialize with disconnected state
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
-  };
-
   if (isConnected && address) {
     // Show network switch button if on wrong chain
     if (chainId && chainId !== 1155) {
@@ -389,51 +337,17 @@ function LoginButton({ onProfileClick, onBuilderProfileClick }: { onProfileClick
     return (
       <ProfileDropdown
         address={address}
-        onDisconnect={handleDisconnect}
+        onDisconnect={onDisconnect}
         onProfileClick={onProfileClick}
         onBuilderProfileClick={onBuilderProfileClick}
       />
     );
   }
 
-  const handleConnect = async () => {
-    if (!connectors || connectors.length === 0) {
-      showToast('No wallet connectors available. Please install a wallet extension like MetaMask.', 'error');
-      return;
-    }
-
-    try {
-      // Prefer MetaMask or injected connector, fallback to first available
-      const preferredConnector = connectors.find(c =>
-        c.id === 'io.metamask' ||
-        c.id === 'metaMask' ||
-        c.id === 'injected'
-      ) || connectors[0];
-
-      if (!preferredConnector) {
-        showToast('No wallet found. Please install MetaMask or another wallet extension.', 'error');
-        return;
-      }
-
-      showToast('Connecting wallet...', 'info');
-      await connect({ connector: preferredConnector });
-    } catch (error: any) {
-      // User rejection is handled silently
-      if (error?.message?.includes('rejected') || error?.message?.includes('denied')) {
-        showToast('Connection was rejected', 'warning');
-      } else if (error?.message?.includes('No Ethereum provider')) {
-        showToast('No wallet found. Please install MetaMask or another wallet extension.', 'error');
-      } else {
-        console.error('Connection error:', error);
-        showToast(`Failed to connect wallet: ${error?.message || 'Unknown error'}`, 'error');
-      }
-    }
-  };
-
   return (
     <button
       className="login-button"
-      onClick={handleConnect}
+      onClick={onShowLoginModal}
       disabled={isPending}
       aria-label="Connect Wallet"
     >
@@ -520,7 +434,9 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [pendingSpaceCreation, setPendingSpaceCreation] = useState<((tier: 'free' | 'pro') => void) | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hasCreatedSpaces, setHasCreatedSpaces] = useState<boolean>(false);
+  const [showMobileProfileMenu, setShowMobileProfileMenu] = useState<boolean>(false);
   const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
   const [isDatabasePro, setIsDatabasePro] = useState<boolean | null>(null);
   const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdmin();
   const { isPro: isLocalPro } = useSubscription();
@@ -558,6 +474,67 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       return false;
     }
   };
+
+  // Shared disconnect handler
+  const handleDisconnect = async () => {
+    try {
+      // Disconnect from wagmi first
+      await disconnect();
+    } catch (err) {
+      console.warn('Error during wagmi disconnect:', err);
+      // Continue with cleanup even if disconnect fails
+    }
+
+    // Clear authentication token
+    localStorage.removeItem('auth_token');
+
+    // Clear all wagmi/web3modal cached connection state to fully reset wallet session
+    // Clear all localStorage keys that start with wagmi or walletconnect
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.startsWith('wagmi') ||
+        key.startsWith('walletconnect') ||
+        key.startsWith('wc@') ||
+        key.startsWith('W3M') ||
+        key.startsWith('w3m')
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+    // Also explicitly remove known keys (in case they weren't caught above)
+    localStorage.removeItem('wagmi.store');
+    localStorage.removeItem('walletconnect');
+    localStorage.removeItem('wc@2:client');
+    localStorage.removeItem('wc@2:core');
+    localStorage.removeItem('wc@2:ethereum_provider');
+
+    // Clear any user-specific cached data
+    if (address) {
+      const lowerAddress = address.toLowerCase();
+      localStorage.removeItem(`staked_amount_${lowerAddress}`);
+      localStorage.removeItem(`intuition_identity_${lowerAddress}`);
+      localStorage.removeItem(`verification_attempts_${lowerAddress}`);
+      localStorage.removeItem(`username_${lowerAddress}`);
+      localStorage.removeItem(`profile_pic_${lowerAddress}`);
+    }
+
+    // Clear connected wallets list
+    localStorage.removeItem('connected_wallets');
+
+    // Show success notification
+    showToast('Wallet disconnected successfully', 'success');
+
+    // Force a page reload to fully reset the app state
+    // This ensures all components re-initialize with disconnected state
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  };
+
   const navRef = useRef<HTMLElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -1258,8 +1235,26 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         isConnected={isConnected}
         userAddress={address}
         userProfilePic={getStoredProfilePic(address) || undefined}
-        onProfileClick={() => navigateToTab('dashboard')}
+        onProfileClick={() => setShowMobileProfileMenu(!showMobileProfileMenu)}
       />
+
+      {/* Mobile Profile Dropdown */}
+      {isConnected && address && (
+        <MobileProfileDropdown
+          address={address}
+          isOpen={showMobileProfileMenu}
+          onClose={() => setShowMobileProfileMenu(false)}
+          onDisconnect={handleDisconnect}
+          onProfileClick={() => {
+            navigateToTab('dashboard');
+            setShowMobileProfileMenu(false);
+          }}
+          onBuilderProfileClick={hasCreatedSpaces ? () => {
+            navigateToTab('builder-dashboard');
+            setShowMobileProfileMenu(false);
+          } : undefined}
+        />
+      )}
 
       <div className="app-content-wrapper">
         <header className="app-header">
@@ -1386,6 +1381,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             <LoginButton
               onProfileClick={() => navigateToTab('dashboard')}
               onBuilderProfileClick={hasCreatedSpaces ? () => navigateToTab('builder-dashboard') : undefined}
+              onDisconnect={handleDisconnect}
+              onShowLoginModal={() => setShowWalletModal(true)}
             />
 
             {!isConnected && (
@@ -1897,6 +1894,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             }}
           />
         )}
+        <WalletSelectionModal
+          isOpen={showWalletModal}
+          onClose={() => setShowWalletModal(false)}
+        />
         <ToastContainer />
         <FAQButton />
       </div>

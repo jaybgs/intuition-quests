@@ -57,6 +57,8 @@ contracts/cache/
 contracts/typechain/
 contracts/typechain-types/
 hardhat.config.local.ts
+contracts/src/*.sol
+
 
 # Editor directories and files
 .vscode/*

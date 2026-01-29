@@ -3,6 +3,7 @@ import { spaceService } from '../services/spaceService';
 import { questServiceSupabase } from '../services/questServiceSupabase';
 import { useAccount } from 'wagmi';
 import { SpaceCardSkeleton } from './Skeleton';
+import GlareHover from './GlareHover';
 import type { Space } from '../types';
 import './Spaces.css';
 
@@ -171,8 +172,8 @@ export function Spaces({ onSpaceClick, onCreateSpace }: SpacesProps) {
       <div className="spaces-page-controls">
         <div className="spaces-page-search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="M21 21l-4.35-4.35"/>
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
           </svg>
           <input
             type="text"
@@ -196,9 +197,9 @@ export function Spaces({ onSpaceClick, onCreateSpace }: SpacesProps) {
             onClick={() => setSortByTrending(!sortByTrending)}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="3" y1="3" x2="21" y2="3"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
-              <line x1="3" y1="21" x2="21" y2="21"/>
+              <line x1="3" y1="3" x2="21" y2="3" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="21" x2="21" y2="21" />
             </svg>
             Trending
           </button>
@@ -207,9 +208,9 @@ export function Spaces({ onSpaceClick, onCreateSpace }: SpacesProps) {
             onClick={() => setSortByFollowing(!sortByFollowing)}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="8.5" cy="7" r="4"/>
-              <path d="M20 8v6M23 11h-6"/>
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="8.5" cy="7" r="4" />
+              <path d="M20 8v6M23 11h-6" />
             </svg>
             Following
           </button>
@@ -234,56 +235,72 @@ export function Spaces({ onSpaceClick, onCreateSpace }: SpacesProps) {
             const tokenInfo = getTokenStatus(space.id);
 
             return (
-              <div
+              <GlareHover
                 key={space.id}
-                className="space-card"
-                data-space-id={space.id}
-                data-space-name={space.name}
-                onClick={() => onSpaceClick?.(space)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSpaceClick?.(space);
-                  }
-                }}
+                width="100%"
+                height="100%"
+                background="transparent"
+                borderColor="transparent"
+                borderRadius="20px"
+                glareColor="#ffffff"
+                glareOpacity={1}
+                glareAngle={-30}
+                glareSize={325}
+                transitionDuration={1500}
+                playOnce={false}
+                style={{ display: 'grid', placeItems: 'stretch' }}
               >
-                <div className="space-card-header">
-                  <div className="space-logo">
-                    {space.logo ? (
-                      <img src={space.logo} alt={space.name} />
-                    ) : (
-                      <div className="space-logo-placeholder">
-                        {space.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                <div
+                  className="space-card"
+                  data-space-id={space.id}
+                  data-space-name={space.name}
+                  onClick={() => onSpaceClick?.(space)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSpaceClick?.(space);
+                    }
+                  }}
+                  style={{ height: '100%' }}
+                >
+                  <div className="space-card-header">
+                    <div className="space-logo">
+                      {space.logo ? (
+                        <img src={space.logo} alt={space.name} />
+                      ) : (
+                        <div className="space-logo-placeholder">
+                          {space.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-verified-badge">
+                      <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                    </div>
                   </div>
-                  <div className="space-verified-badge">
-                    <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                  <div className="space-card-content">
+                    <h3 className="space-name">{space.name}</h3>
+                    <div className="space-stats">
+                      <div className="space-followers">
+                        {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
+                      </div>
+                      <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
+                        {questCount} {questCount === 1 ? 'active quest' : 'active quests'}
+                      </div>
+                    </div>
+                    <div className="space-token">
+                      {tokenInfo.symbol ? (
+                        <div className="space-token-with-symbol">
+                          <span className="space-token-symbol">{tokenInfo.symbol}</span>
+                        </div>
+                      ) : (
+                        <span className="space-token-status">{tokenInfo.status}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="space-card-content">
-                  <h3 className="space-name">{space.name}</h3>
-                  <div className="space-stats">
-                    <div className="space-followers">
-                      {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
-                    </div>
-                    <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
-                      {questCount} {questCount === 1 ? 'active quest' : 'active quests'}
-                    </div>
-                  </div>
-                  <div className="space-token">
-                    {tokenInfo.symbol ? (
-                      <div className="space-token-with-symbol">
-                        <span className="space-token-symbol">{tokenInfo.symbol}</span>
-                      </div>
-                    ) : (
-                      <span className="space-token-status">{tokenInfo.status}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
+              </GlareHover>
             );
           })
         )}

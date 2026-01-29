@@ -14,6 +14,7 @@ import './WeeklyHighlights.css';
 import { Reveal } from './Reveal';
 import BlurText from './BlurText';
 import DecryptedText from './DecryptedText';
+import GlareHover from './GlareHover';
 
 interface Project {
   id: string;
@@ -689,55 +690,71 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
 
               return (
                 <Reveal key={space.id} delay={index * 50} width="100%">
-                  <div
-                    className="space-card"
-                    data-space-id={space.id}
-                    data-space-name={space.name}
-                    onClick={() => onSpaceClick?.(space)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onSpaceClick?.(space);
-                      }
-                    }}
+                  <GlareHover
+                    width="100%"
+                    height="100%"
+                    background="transparent"
+                    borderColor="transparent"
+                    borderRadius="20px"
+                    glareColor="#ffffff"
+                    glareOpacity={1}
+                    glareAngle={-30}
+                    glareSize={325}
+                    transitionDuration={1500}
+                    playOnce={false}
+                    style={{ display: 'grid', placeItems: 'stretch' }}
                   >
-                    <div className="space-card-header">
-                      <div className="space-logo">
-                        {space.logo ? (
-                          <img src={space.logo} alt={space.name} />
-                        ) : (
-                          <div className="space-logo-placeholder">
-                            {space.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                    <div
+                      className="space-card"
+                      data-space-id={space.id}
+                      data-space-name={space.name}
+                      onClick={() => onSpaceClick?.(space)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSpaceClick?.(space);
+                        }
+                      }}
+                      style={{ height: '100%' }}
+                    >
+                      <div className="space-card-header">
+                        <div className="space-logo">
+                          {space.logo ? (
+                            <img src={space.logo} alt={space.name} />
+                          ) : (
+                            <div className="space-logo-placeholder">
+                              {space.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-verified-badge">
+                          <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                        </div>
                       </div>
-                      <div className="space-verified-badge">
-                        <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                      <div className="space-card-content">
+                        <h3 className="space-name">{space.name}</h3>
+                        <div className="space-stats">
+                          <div className="space-followers">
+                            {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
+                          </div>
+                          <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
+                            {questCount} {questCount === 1 ? 'active quest' : 'active quests'}
+                          </div>
+                        </div>
+                        <div className="space-token">
+                          {tokenInfo.symbol ? (
+                            <div className="space-token-with-symbol">
+                              <span className="space-token-symbol">{tokenInfo.symbol}</span>
+                            </div>
+                          ) : (
+                            <span className="space-token-status">{tokenInfo.status}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="space-card-content">
-                      <h3 className="space-name">{space.name}</h3>
-                      <div className="space-stats">
-                        <div className="space-followers">
-                          {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
-                        </div>
-                        <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
-                          {questCount} {questCount === 1 ? 'active quest' : 'active quests'}
-                        </div>
-                      </div>
-                      <div className="space-token">
-                        {tokenInfo.symbol ? (
-                          <div className="space-token-with-symbol">
-                            <span className="space-token-symbol">{tokenInfo.symbol}</span>
-                          </div>
-                        ) : (
-                          <span className="space-token-status">{tokenInfo.status}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  </GlareHover>
                 </Reveal>
               );
             })
@@ -774,117 +791,213 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
           ) : (
             <>
               <Reveal delay={0} width="100%">
-                <a
-                  href="https://portal.intuition.systems/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ecosystem-dapp-card"
+                <GlareHover
+                  width="100%"
+                  height="100%"
+                  background="transparent"
+                  borderColor="transparent"
+                  borderRadius="20px"
+                  glareColor="#ffffff"
+                  glareOpacity={1}
+                  glareAngle={-30}
+                  glareSize={325}
+                  transitionDuration={1500}
+                  playOnce={false}
+                  style={{ display: 'grid', placeItems: 'stretch' }}
                 >
-                  <div className="ecosystem-dapp-icon">
-                    <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
-                  </div>
-                  <div className="ecosystem-dapp-content">
-                    <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
-                    <p className="ecosystem-dapp-description">
-                      Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
-                    </p>
-                  </div>
-                </a>
+                  <a
+                    href="https://portal.intuition.systems/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ecosystem-dapp-card"
+                    style={{ height: '100%' }}
+                  >
+                    <div className="ecosystem-dapp-icon">
+                      <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
+                    </div>
+                    <div className="ecosystem-dapp-content">
+                      <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
+                      <p className="ecosystem-dapp-description">
+                        Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
+                      </p>
+                    </div>
+                  </a>
+                </GlareHover>
               </Reveal>
 
               <Reveal delay={100} width="100%">
-                <a
-                  href="https://tns.intuition.box/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ecosystem-dapp-card"
+                <GlareHover
+                  width="100%"
+                  height="100%"
+                  background="transparent"
+                  borderColor="transparent"
+                  borderRadius="20px"
+                  glareColor="#ffffff"
+                  glareOpacity={1}
+                  glareAngle={-30}
+                  glareSize={325}
+                  transitionDuration={1500}
+                  playOnce={false}
+                  style={{ display: 'grid', placeItems: 'stretch' }}
                 >
-                  <div className="ecosystem-dapp-icon">
-                    <img src="/tns logo.svg" alt="Trust Name Services" />
-                  </div>
-                  <div className="ecosystem-dapp-content">
-                    <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
-                    <p className="ecosystem-dapp-description">
-                      Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
-                    </p>
-                  </div>
-                </a>
+                  <a
+                    href="https://tns.intuition.box/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ecosystem-dapp-card"
+                    style={{ height: '100%' }}
+                  >
+                    <div className="ecosystem-dapp-icon">
+                      <img src="/tns logo.svg" alt="Trust Name Services" />
+                    </div>
+                    <div className="ecosystem-dapp-content">
+                      <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
+                      <p className="ecosystem-dapp-description">
+                        Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
+                      </p>
+                    </div>
+                  </a>
+                </GlareHover>
               </Reveal>
 
               <Reveal delay={200} width="100%">
-                <a
-                  href="https://inturank.intuition.box/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ecosystem-dapp-card"
+                <GlareHover
+                  width="100%"
+                  height="100%"
+                  background="transparent"
+                  borderColor="transparent"
+                  borderRadius="20px"
+                  glareColor="#ffffff"
+                  glareOpacity={1}
+                  glareAngle={-30}
+                  glareSize={325}
+                  transitionDuration={1500}
+                  playOnce={false}
+                  style={{ display: 'grid', placeItems: 'stretch' }}
                 >
-                  <div className="ecosystem-dapp-icon">
-                    <img src="/inturank-logo.svg" alt="IntuRank" />
-                  </div>
-                  <div className="ecosystem-dapp-content">
-                    <h3 className="ecosystem-dapp-name">IntuRank</h3>
-                    <p className="ecosystem-dapp-description">
-                      Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
-                    </p>
-                  </div>
-                </a>
+                  <a
+                    href="https://inturank.intuition.box/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ecosystem-dapp-card"
+                    style={{ height: '100%' }}
+                  >
+                    <div className="ecosystem-dapp-icon">
+                      <img src="/inturank-logo.svg" alt="IntuRank" />
+                    </div>
+                    <div className="ecosystem-dapp-content">
+                      <h3 className="ecosystem-dapp-name">IntuRank</h3>
+                      <p className="ecosystem-dapp-description">
+                        Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
+                      </p>
+                    </div>
+                  </a>
+                </GlareHover>
               </Reveal>
 
               <Reveal delay={300} width="100%">
-                <a
-                  href="https://tribememe.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ecosystem-dapp-card"
+                <GlareHover
+                  width="100%"
+                  height="100%"
+                  background="transparent"
+                  borderColor="transparent"
+                  borderRadius="20px"
+                  glareColor="#ffffff"
+                  glareOpacity={1}
+                  glareAngle={-30}
+                  glareSize={325}
+                  transitionDuration={1500}
+                  playOnce={false}
+                  style={{ display: 'grid', placeItems: 'stretch' }}
                 >
-                  <div className="ecosystem-dapp-icon">
-                    <img src="/tribememe-logo.svg" alt="Tribememe" />
-                  </div>
-                  <div className="ecosystem-dapp-content">
-                    <h3 className="ecosystem-dapp-name">Tribememe</h3>
-                    <p className="ecosystem-dapp-description">
-                      A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
-                    </p>
-                  </div>
-                </a>
+                  <a
+                    href="https://tribememe.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ecosystem-dapp-card"
+                    style={{ height: '100%' }}
+                  >
+                    <div className="ecosystem-dapp-icon">
+                      <img src="/tribememe-logo.svg" alt="Tribememe" />
+                    </div>
+                    <div className="ecosystem-dapp-content">
+                      <h3 className="ecosystem-dapp-name">Tribememe</h3>
+                      <p className="ecosystem-dapp-description">
+                        A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
+                      </p>
+                    </div>
+                  </a>
+                </GlareHover>
               </Reveal>
 
               <Reveal delay={400} width="100%">
-                <a
-                  href="https://intuitionbets.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ecosystem-dapp-card"
+                <GlareHover
+                  width="100%"
+                  height="100%"
+                  background="transparent"
+                  borderColor="transparent"
+                  borderRadius="20px"
+                  glareColor="#ffffff"
+                  glareOpacity={1}
+                  glareAngle={-30}
+                  glareSize={325}
+                  transitionDuration={1500}
+                  playOnce={false}
+                  style={{ display: 'grid', placeItems: 'stretch' }}
                 >
-                  <div className="ecosystem-dapp-icon">
-                    <img src="/intuition-bets.svg" alt="IntuitionBets" />
-                  </div>
-                  <div className="ecosystem-dapp-content">
-                    <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
-                    <p className="ecosystem-dapp-description">
-                      Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
-                    </p>
-                  </div>
-                </a>
+                  <a
+                    href="https://intuitionbets.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ecosystem-dapp-card"
+                    style={{ height: '100%' }}
+                  >
+                    <div className="ecosystem-dapp-icon">
+                      <img src="/intuition-bets.svg" alt="IntuitionBets" />
+                    </div>
+                    <div className="ecosystem-dapp-content">
+                      <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
+                      <p className="ecosystem-dapp-description">
+                        Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
+                      </p>
+                    </div>
+                  </a>
+                </GlareHover>
               </Reveal>
 
               <Reveal delay={500} width="100%">
-                <a
-                  href="https://oraclelend.intuition.box/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ecosystem-dapp-card"
+                <GlareHover
+                  width="100%"
+                  height="100%"
+                  background="transparent"
+                  borderColor="transparent"
+                  borderRadius="20px"
+                  glareColor="#ffffff"
+                  glareOpacity={1}
+                  glareAngle={-30}
+                  glareSize={325}
+                  transitionDuration={1500}
+                  playOnce={false}
+                  style={{ display: 'grid', placeItems: 'stretch' }}
                 >
-                  <div className="ecosystem-dapp-icon">
-                    <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
-                  </div>
-                  <div className="ecosystem-dapp-content">
-                    <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
-                    <p className="ecosystem-dapp-description">
-                      Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
-                    </p>
-                  </div>
-                </a>
+                  <a
+                    href="https://oraclelend.intuition.box/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ecosystem-dapp-card"
+                    style={{ height: '100%' }}
+                  >
+                    <div className="ecosystem-dapp-icon">
+                      <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
+                    </div>
+                    <div className="ecosystem-dapp-content">
+                      <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
+                      <p className="ecosystem-dapp-description">
+                        Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
+                      </p>
+                    </div>
+                  </a>
+                </GlareHover>
               </Reveal>
             </>
           )}

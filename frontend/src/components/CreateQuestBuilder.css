@@ -783,6 +783,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  /* Allow text truncation in children */
 }
 
 .create-quest-builder-action-item-title {
@@ -797,6 +799,9 @@
   color: var(--text-secondary);
   margin: 4px 0 0 0;
   opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .create-quest-builder-action-item-warning {

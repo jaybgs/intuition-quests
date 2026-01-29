@@ -280,7 +280,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
   useEffect(() => {
     if (spaceId && address && space && isAuthorized === false) {
       const isOwner = address.toLowerCase() === space.ownerAddress.toLowerCase();
-      const newIsAuthorized = isOwner || isAdminUser;
+      const newIsAuthorized = isOwner || isAdminLoggedIn || hasAdminRole;
       if (newIsAuthorized) {
         setIsAuthorized(true);
       }
@@ -349,7 +349,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
     );
   }
 
-  const handleNavClick = (nav: 'dashboard' | 'quests' | 'settings' | 'analytics') => {
+  const handleNavClick = (nav: 'dashboard' | 'quests' | 'guide' | 'settings' | 'analytics') => {
     setActiveNav(nav);
     setIsMenuOpen(false); // Close menu on mobile when navigating
   };
@@ -386,40 +386,30 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 <button
                   className={`builder-nav-item ${activeNav === 'dashboard' ? 'active' : ''}`}
                   onClick={() => handleNavClick('dashboard')}
-                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '0px' }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                  </svg>
-                  <span>Dashboard</span>
+                  <span style={{ fontSize: '20px' }}>🏠</span>
+                  <span style={{ marginLeft: '-100px' }}>Dashboard</span>
                 </button>
               </DockIcon>
               <DockIcon>
                 <button
                   className={`builder-nav-item ${activeNav === 'quests' ? 'active' : ''}`}
                   onClick={() => handleNavClick('quests')}
-                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '0px' }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                  </svg>
-                  <span>Quests</span>
+                  <span style={{ fontSize: '20px' }}>⚔️</span>
+                  <span style={{ marginLeft: '-100px' }}>Quests</span>
                 </button>
               </DockIcon>
               <DockIcon>
                 <button
                   className={`builder-nav-item ${activeNav === 'guide' ? 'active' : ''}`}
                   onClick={() => handleNavClick('guide')}
-                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '0px' }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  </svg>
-                  <span>Guide</span>
+                  <span style={{ fontSize: '20px' }}>📚</span>
+                  <span style={{ marginLeft: '-100px' }}>Guide</span>
                 </button>
               </DockIcon>
               {isPro && (
@@ -427,14 +417,10 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                   <button
                     className={`builder-nav-item ${activeNav === 'analytics' ? 'active' : ''}`}
                     onClick={() => handleNavClick('analytics')}
-                    style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                    style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '0px' }}
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="20" x2="18" y2="10" />
-                      <line x1="12" y1="20" x2="12" y2="4" />
-                      <line x1="6" y1="20" x2="6" y2="14" />
-                    </svg>
-                    <span>Analytics</span>
+                    <span style={{ fontSize: '20px' }}>📊</span>
+                    <span style={{ marginLeft: '-100px' }}>Analytics</span>
                   </button>
                 </DockIcon>
               )}
@@ -442,13 +428,10 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 <button
                   className={`builder-nav-item ${activeNav === 'settings' ? 'active' : ''}`}
                   onClick={() => handleNavClick('settings')}
-                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '0px' }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" />
-                  </svg>
-                  <span>Settings</span>
+                  <span style={{ fontSize: '20px' }}>⚙️</span>
+                  <span style={{ marginLeft: '-100px' }}>Settings</span>
                 </button>
               </DockIcon>
             </Dock>
@@ -575,12 +558,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 <Reveal delay={0}>
                   <div className="builder-stat-card">
                     <div className="builder-stat-icon rocket">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
-                        <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
-                        <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-                        <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-                      </svg>
+                      <span style={{ fontSize: '24px' }}>🚀</span>
                     </div>
                     <div className="builder-stat-content">
                       <div className="builder-stat-label">Quests Launched</div>
@@ -594,7 +572,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 <Reveal delay={100}>
                   <div className="builder-stat-card">
                     <div className="builder-stat-icon checkmark">
-                      <img src="/verified.svg" alt="Verified" width="24" height="24" />
+                      <span style={{ fontSize: '24px' }}>✅</span>
                     </div>
                     <div className="builder-stat-content">
                       <div className="builder-stat-label">Rewards Distributed</div>
@@ -608,14 +586,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 <Reveal delay={200}>
                   <div className="builder-stat-card">
                     <div className="builder-stat-icon trophy">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                        <path d="M4 22h16" />
-                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                      </svg>
+                      <span style={{ fontSize: '24px' }}>🏆</span>
                     </div>
                     <div className="builder-stat-content">
                       <div className="builder-stat-label">Total Completions</div>
@@ -629,11 +600,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 <Reveal delay={300}>
                   <div className="builder-stat-card">
                     <div className="builder-stat-icon chart">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="20" x2="18" y2="10" />
-                        <line x1="12" y1="20" x2="12" y2="4" />
-                        <line x1="6" y1="20" x2="6" y2="14" />
-                      </svg>
+                      <span style={{ fontSize: '24px' }}>📈</span>
                     </div>
                     <div className="builder-stat-content">
                       <div className="builder-stat-label">Builder Rank</div>
@@ -663,10 +630,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                   <Reveal delay={500} width="100%">
                     <div className="builder-staked-card">
                       <div className="builder-staked-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10" />
-                          <path d="M12 6v6l4 2" />
-                        </svg>
+                        <span style={{ fontSize: '32px' }}>🔒</span>
                       </div>
                       <div className="builder-staked-info">
                         <div className="builder-staked-label">Staked</div>
@@ -683,14 +647,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 <div className="builder-section">
                   <div className="builder-rewards-header">
                     <div className="builder-rewards-icon">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                        <path d="M4 22h16" />
-                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                      </svg>
+                      <span style={{ fontSize: '24px' }}>🎁</span>
                     </div>
                     <h2 className="builder-section-title">Builder Rewards</h2>
                   </div>

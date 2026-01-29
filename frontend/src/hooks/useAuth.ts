@@ -57,7 +57,12 @@ export function useAuth() {
 
       return true;
     } catch (error: any) {
-      console.error('Authentication error:', error);
+      // Suppress specific wagmi connector errors that we can't control
+      if (error?.message?.includes('getChainId')) {
+        console.warn('⚠️ Connector validation failed, falling back to local auth');
+      } else {
+        console.error('Authentication error:', error);
+      }
 
       // Try fallback authentication if wallet signing fails
       try {

@@ -709,7 +709,7 @@ body {
 }
 
 .dropdown-balance-item.dropdown-balance-mobile {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
@@ -799,7 +799,7 @@ body {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+
   max-width: 100vw;
   box-sizing: border-box;
 }
@@ -2334,7 +2334,7 @@ body {
   flex-direction: column;
   gap: 5.6px;
   padding: 20px;
-  height: 200px;
+  height: 120px;
   background: rgba(26, 31, 53, 0.2);
   /* 80% transparency (20% opacity) */
   border: none;
@@ -2389,6 +2389,27 @@ body {
     'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   transform: translateY(-13px);
+}
+
+@media (max-width: 768px) {
+  .stats-section-no-bg {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat-rectangle {
+    height: 120px;
+    padding: 16px;
+  }
+
+  .stat-rectangle .stat-value {
+    font-size: 24px;
+    transform: translateY(-8px);
+  }
+
+  .stat-rectangle .stat-label {
+    font-size: 12px;
+  }
 }
 
 /* Legacy styles for other components */

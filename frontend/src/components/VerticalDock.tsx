@@ -19,7 +19,7 @@ export const Dock = ({ className, children, zoomMultiplier = 1.3 }: DockProps) =
 
     return (
         <motion.div
-            onMouseMove={(e) => mouseY.set(e.pageY)}
+            onMouseMove={(e) => mouseY.set(e.clientY)}
             onMouseLeave={() => mouseY.set(Infinity)}
             className={className}
             style={{

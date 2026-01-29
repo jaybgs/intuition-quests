@@ -194,13 +194,16 @@ export default function Stepper({
 
 function StepContentWrapper({ isCompleted, currentStep, direction, children, className }: any) {
     const [parentHeight, setParentHeight] = useState(0);
+    const [overflow, setOverflow] = useState('hidden');
 
     return (
         <motion.div
             className={className}
-            style={{ position: 'relative', overflow: 'hidden' }}
+            style={{ position: 'relative', overflow }}
             animate={{ height: isCompleted ? 0 : parentHeight }}
             transition={{ type: 'spring', duration: 0.4 }}
+            onAnimationStart={() => setOverflow('hidden')}
+            onAnimationComplete={() => setOverflow('visible')}
         >
             <AnimatePresence initial={false} mode="sync" custom={direction}>
                 {!isCompleted && (
@@ -287,7 +290,7 @@ function StepIndicator({ step, currentStep, onClickStep, disableStepIndicators }
 
 function StepConnector({ isComplete }: any) {
     const lineVariants = {
-        incomplete: { width: 0, backgroundColor: 'transparent' },
+        incomplete: { width: 0, backgroundColor: 'rgba(82, 39, 255, 0)' },
         complete: { width: '100%', backgroundColor: '#5227FF' }
     };
 

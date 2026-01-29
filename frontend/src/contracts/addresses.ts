@@ -20,17 +20,17 @@ export const CONTRACT_ADDRESSES = {
   // NOW USES SDK DIRECTLY - Custom contract had MultiVault compatibility issues
   SPACE_IDENTITY_FACTORY: '0x0000000000000000000000000000000000000000' as `0x${string}`,
 
-  // Contract 2: Quest Atom Creation
-  // NOW USES SDK DIRECTLY - Custom contract had MultiVault compatibility issues
-  QUEST_ATOM_FACTORY: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+  // Contract 2: PublishQuests - NEW CONTRACT
+  // Standardizes atom creation with unique naming format
+  PUBLISH_QUESTS: '0x9aD94f90588bBB82C11EE1518B291b5b6ceAEf02' as `0x${string}`,
 
   // Contract 3: Quest Escrow - NEW DEPLOYMENT Jan 22, 2026
   // Holds deposited rewards until quest ends, then distributes to winners
   QUEST_ESCROW: '0xeD01f2340e55f081bD572572F1a883276b11827b' as `0x${string}`,
 
-  // Contract 4: Claim IQ - UPDATED Jan 19, 2026
-  // IQ-only quests collect revenue fee but skip triple creation
-  CLAIM_IQ: '0x2880F8BE62237cdCa9C10DC6781B594bfF88E553' as `0x${string}`,
+  // Contract 4: Claim IQ - UPDATED Jan 28, 2026
+  // Secured with ReentrancyGuard + Checks-Effects-Interactions
+  CLAIM_IQ: '0x240A2a6a11704618F20b0807099738acEfe462D9' as `0x${string}`,
 
   // Trust Quests Payment - PRO SUBSCRIPTION (Native TRUST tokens)
   // Updated: Dec 31, 2025 - Added reset functions for testing

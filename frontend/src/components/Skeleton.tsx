@@ -159,9 +159,13 @@ export function CommunityPageSkeleton() {
       </div>
       <div>
         <Skeleton className="skeleton-section-title" />
-        {[...Array(5)].map((_, i) => (
-          <LeaderboardRowSkeleton key={i} />
-        ))}
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <tbody>
+            {[...Array(5)].map((_, i) => (
+              <LeaderboardRowSkeleton key={i} />
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -1,11 +1,11 @@
 /**
  * Quest Atom Service
- * Creates quest atoms on Intuition chain
- * Uses direct MultiVault calls with correct ABI
+ * Creates quest atoms via PublishQuests contract
+ * Enforces "questname_starttime_endtime" naming convention
  */
 
 import { type Hash, formatEther, keccak256, stringToHex, toHex } from 'viem';
-import { MULTIVAULT_ADDRESS } from '../contracts/addresses';
+import { CONTRACT_ADDRESSES, MULTIVAULT_ADDRESS } from '../contracts/addresses';
 import { fetcher, configureClient } from '@0xintuition/graphql';
 
 // Configure GraphQL client for mainnet
@@ -31,9 +31,25 @@ const GetAtomByDataDocument = `
   }
 `;
 
+const publishQuestsAddress = CONTRACT_ADDRESSES.PUBLISH_QUESTS;
 const multiVaultAddress = MULTIVAULT_ADDRESS;
 
-// Correct MultiVault ABI for atom creation
+// PublishQuests ABI
+const PUBLISH_QUESTS_ABI = [
+  {
+    name: 'createQuestAtom',
+    type: 'function',
+    stateMutability: 'payable',
+    inputs: [
+      { name: 'name', type: 'string' },
+      { name: 'startTime', type: 'uint256' },
+      { name: 'endTime', type: 'uint256' },
+    ],
+    outputs: [{ type: 'bytes32' }],
+  },
+] as const;
+
+// Legacy MultiVault ABI (fallback/cost info)
 const MULTIVAULT_ABI = [
   {
     name: 'getAtomCost',
@@ -42,27 +58,20 @@ const MULTIVAULT_ABI = [
     inputs: [],
     outputs: [{ type: 'uint256' }],
   },
-  {
-    name: 'createAtoms',
-    type: 'function',
-    stateMutability: 'payable',
-    inputs: [
-      { name: 'data', type: 'bytes[]' },
-      { name: 'assets', type: 'uint256[]' },
-    ],
-    outputs: [{ type: 'bytes32[]' }],
-  },
 ] as const;
 
 export interface CreateQuestAtomParams {
   questId: string;
   questTitle: string;
-  spaceAtomId?: string; // Optional: Link to space atom
+  startTime: number; // Unix timestamp
+  endTime: number;   // Unix timestamp
+  spaceAtomId?: string; // Optional: Link to space atom (kept for compatibility)
 }
 
 export interface CreateQuestAtomResult {
   atomId: string;
   transactionHash: Hash;
+  uniqueIdString: string;
 }
 
 /**
@@ -75,108 +84,107 @@ export async function checkAtomExists(atomData: string): Promise<boolean> {
   } catch (error) {
     console.error('Error checking if atom exists:', error);
     // If we can't check, assume it doesn't exist to allow creation
-    // This is safer than blocking creation due to API errors
     return false;
   }
 }
 
 /**
- * Convert quest ID string to bytes32
- */
-export function questIdToBytes32(questId: string): `0x${string}` {
-  return keccak256(stringToHex(questId)) as `0x${string}`;
-}
-
-/**
- * Create a quest atom on Intuition chain
+ * Create a quest atom on Intuition chain via PublishQuests contract
  */
 export async function createQuestAtom(
   params: CreateQuestAtomParams,
   walletClient: any,
   publicClient: any
 ): Promise<CreateQuestAtomResult> {
-  const { questId, questTitle, spaceAtomId } = params;
-  
+  const { questId, questTitle, startTime, endTime, spaceAtomId } = params;
+
   try {
-    // Get atom cost
+    // 1. Construct unique ID string locally for validation
+    // Format: name_startTime_endTime
+    const uniqueIdString = `${questTitle}_${startTime}_${endTime}`;
+
+    console.log('Creating quest atom via PublishQuests...');
+    console.log('  Quest Title:', questTitle);
+    console.log('  Start Time:', startTime);
+    console.log('  End Time:', endTime);
+    console.log('  Unique ID:', uniqueIdString);
+
+    // 2. Check if atom already exists
+    console.log('  Checking if atom already exists...');
+    const atomExists = await checkAtomExists(uniqueIdString);
+    if (atomExists) {
+      throw new Error(`An atom with the ID "${uniqueIdString}" already exists. Please modify the start or end time.`);
+    }
+
+    // 3. Get atom cost from MultiVault directly (PublishQuests forwards this cost)
     const atomCost = await publicClient.readContract({
       address: multiVaultAddress,
       abi: MULTIVAULT_ABI,
       functionName: 'getAtomCost',
     }) as bigint;
-    
+
     // Check balance
     const balance = await publicClient.getBalance({ address: walletClient.account.address });
     if (balance < atomCost) {
       throw new Error(`Insufficient balance. Need ${formatEther(atomCost)} TRUST to create quest atom.`);
     }
-    
-    // Create atom data - unique identifier for this quest
-    // Include quest ID to ensure uniqueness even with same titles
-    const atomData = `TrustQuests Quest: ${questTitle} [${questId}]`;
-    const atomDataBytes = toHex(new TextEncoder().encode(atomData));
 
-    console.log('Creating quest atom...');
-    console.log('  Quest ID:', questId);
-    console.log('  Quest Title:', questTitle);
-    console.log('  Space Atom ID:', spaceAtomId || 'none');
     console.log('  Cost:', formatEther(atomCost), 'TRUST');
 
-    // Check if atom already exists to prevent duplicate creation
-    console.log('  Checking if atom already exists...');
-    const atomExists = await checkAtomExists(atomData);
-    if (atomExists) {
-      throw new Error(`An atom with the name "${atomData}" already exists. Please choose a different quest title.`);
-    }
-    
-    // Create atom using MultiVault directly with correct ABI
-    // createAtoms(bytes[] data, uint256[] assets)
+    // 4. Create atom via PublishQuests contract
+    // createQuestAtom(string name, uint256 startTime, uint256 endTime)
     const hash = await walletClient.writeContract({
-      address: multiVaultAddress,
-      abi: MULTIVAULT_ABI,
-      functionName: 'createAtoms',
-      args: [[atomDataBytes], [atomCost]],
+      address: publishQuestsAddress,
+      abi: PUBLISH_QUESTS_ABI,
+      functionName: 'createQuestAtom',
+      args: [questTitle, BigInt(startTime), BigInt(endTime)],
       value: atomCost,
     });
-    
+
     // Wait for transaction
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    
-    // Extract atom ID from logs - look for AtomCreated event
-    // The atom ID is in topics[1] for logs with 3 topics and data length 66
-    // Store as bytes32 hex string for compatibility with triple creation
+
+    // Extract atom ID from logs - look for QuestPublished event
+    // Event QuestPublished(bytes32 indexed atomId, string uniqueIdString, address indexed creator, uint256 timestamp)
+    // The atom ID is in topics[1]
     let atomId = '0x0';
     for (const log of receipt.logs) {
-      if (log.address?.toLowerCase() === multiVaultAddress.toLowerCase() &&
-          log.topics?.length === 3 &&
-          log.data?.length === 66) {
+      if (log.address?.toLowerCase() === publishQuestsAddress.toLowerCase() &&
+        log.topics?.length >= 2) { // At least topic 0 (event sig) and topic 1 (atomId)
+
+        // We accept the first indexed argument as the atom ID
         const potentialId = log.topics[1];
-        // Skip if it looks like an address (starts with many zeros then address)
-        if (potentialId && !potentialId.startsWith('0x00000000000000000000000')) {
-          atomId = potentialId; // Keep as bytes32 hex string
+        if (potentialId) {
+          atomId = potentialId;
           break;
         }
       }
     }
-    
-    console.log('Quest atom created!');
+
+    if (atomId === '0x0') {
+      console.warn('Could not extract Atom ID from transaction receipt. Using fallback or manual check recommended.');
+      // Fallback: we might fetch it by the unique string if needed, or just warn
+    }
+
+    console.log('Quest atom created via factory!');
     console.log('  Atom ID:', atomId);
     console.log('  TX:', hash);
-    
+
     // Cache the quest atom ID
     const questAtoms = JSON.parse(localStorage.getItem('quest_atoms') || '{}');
-    questAtoms[questId] = { 
-      atomId, 
-      questTitle, 
-      spaceAtomId: spaceAtomId || null, 
+    questAtoms[questId] = {
+      atomId,
+      questTitle,
+      uniqueIdString,
       transactionHash: hash,
       createdAt: Date.now()
     };
     localStorage.setItem('quest_atoms', JSON.stringify(questAtoms));
-    
+
     return {
       atomId,
       transactionHash: hash,
+      uniqueIdString
     };
   } catch (error: any) {
     console.error('Error creating quest atom:', error);
@@ -185,16 +193,16 @@ export async function createQuestAtom(
 }
 
 /**
- * Get the cost to create a quest atom
+ * Get the cost to create a quest atom (reads from MultiVault)
  */
 export async function getQuestAtomCost(publicClient: any): Promise<{ cost: bigint }> {
   try {
     const cost = await publicClient.readContract({
-      address: multiVaultAddress,
+      address: MULTIVAULT_ADDRESS,
       abi: MULTIVAULT_ABI,
       functionName: 'getAtomCost',
     }) as bigint;
-    
+
     return { cost };
   } catch {
     // Fallback cost
@@ -213,6 +221,6 @@ export function getQuestAtomId(questId: string): string | null {
 /**
  * Get all cached quest atoms
  */
-export function getAllQuestAtoms(): Record<string, { atomId: string; questTitle: string; spaceAtomId: string | null }> {
+export function getAllQuestAtoms(): Record<string, any> {
   return JSON.parse(localStorage.getItem('quest_atoms') || '{}');
 }

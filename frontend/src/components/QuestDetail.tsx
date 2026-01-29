@@ -18,6 +18,8 @@ import { questServiceSupabase } from '../services/questServiceSupabase';
 import { useWalletSocialConnections } from '../hooks/useWalletSocialConnections';
 // TODO: Implement your own task verification service
 import './QuestDetail.css';
+import { QuizModal } from './QuizModal';
+import { PollModal } from './PollModal';
 
 interface QuestDetailProps {
   questId: string;
@@ -64,6 +66,15 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   const [showQuoteTweetModal, setShowQuoteTweetModal] = useState(false);
   const [currentQuoteStep, setCurrentQuoteStep] = useState<any>(null);
   const [quoteTweetUrl, setQuoteTweetUrl] = useState('');
+
+  // Quiz & Poll State
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [activeModalStep, setActiveModalStep] = useState<any>(null);
+
+  // Task Enforcement State: Track which steps have been clicked/opened
+  const [clickedSteps, setClickedSteps] = useState<Record<string, boolean>>({});
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
 
@@ -501,6 +512,36 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
+            const mergedStates = { ...parsed };
+
+            // Also fetch from Supabase if connected
+            questServiceSupabase.getStepCompletions(questId, address).then(completedSteps => {
+              let hasNewCompletions = false;
+              completedSteps.forEach(stepId => {
+                if (!mergedStates[stepId] || mergedStates[stepId].status !== 'verified') {
+                  mergedStates[stepId] = { status: 'verified' };
+                  hasNewCompletions = true;
+                }
+              });
+
+              if (hasNewCompletions) {
+                setVerificationStates(mergedStates);
+
+                // Update quest steps
+                setQuest(prev => {
+                  if (!prev) return null;
+                  const updatedSteps = prev.steps?.map(step => {
+                    const verificationState = mergedStates[step.id];
+                    if (verificationState?.status === 'verified') {
+                      return { ...step, completed: true };
+                    }
+                    return step;
+                  });
+                  return { ...prev, steps: updatedSteps };
+                });
+              }
+            });
+
             setVerificationStates(parsed);
 
             // Update quest steps to mark verified steps as completed
@@ -514,7 +555,52 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           } catch (error) {
             console.error('Error loading verification states:', error);
           }
+        } else {
+          // If no local storage, try fetching from Supabase directly
+          questServiceSupabase.getStepCompletions(questId, address).then(completedSteps => {
+            if (completedSteps.length > 0) {
+              const newStates: Record<string, StepVerificationState> = {};
+              completedSteps.forEach(stepId => {
+                newStates[stepId] = { status: 'verified' };
+              });
+              setVerificationStates(newStates);
+
+              // Update quest steps
+              setQuest(prev => {
+                if (!prev) return null;
+                const updatedSteps = prev.steps?.map(step => {
+                  if (completedSteps.includes(step.id)) {
+                    return { ...step, completed: true };
+                  }
+                  return step;
+                });
+                return { ...prev, steps: updatedSteps };
+              });
+            } else {
+              setVerificationStates({});
+            }
+          });
         }
+      } else {
+        setVerificationStates({});
+      }
+
+
+      // Restore clicked steps from localStorage if available (optional persistence)
+      if (address) {
+        const clickedKey = `quest_clicked_${questId}_${address.toLowerCase()}`;
+        const savedClicked = localStorage.getItem(clickedKey);
+        if (savedClicked) {
+          try {
+            setClickedSteps(JSON.parse(savedClicked));
+          } catch (e) {
+            console.error('Error parsing clicked steps', e);
+          }
+        } else {
+          setClickedSteps({});
+        }
+      } else {
+        setClickedSteps({});
       }
 
       setQuest(questWithDescription);
@@ -642,6 +728,14 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   }, [questId, quests, address]);
 
+  // Save clicked steps to localStorage whenever they change
+  useEffect(() => {
+    if (questId && address && Object.keys(clickedSteps).length > 0) {
+      const clickedKey = `quest_clicked_${questId}_${address.toLowerCase()}`;
+      localStorage.setItem(clickedKey, JSON.stringify(clickedSteps));
+    }
+  }, [clickedSteps, questId, address]);
+
   // Check if quest is already claimed - must be before early returns
   // Use questId instead of quest?.id to avoid conditional hook execution
   useEffect(() => {
@@ -747,6 +841,65 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       return;
     }
 
+    // Mark step as clicked/opened
+    setClickedSteps(prev => ({
+      ...prev,
+      [step.id]: true
+    }));
+
+    // Handle Quiz & Poll tasks
+    if (title === 'quiz' || title.includes('quiz')) {
+      const quizConfig = (quest as any).requirements?.find((r: any) =>
+        (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
+      )?.verification?.quizConfig || (quest as any).requirements?.find((r: any) =>
+        (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
+      )?.config?.quizConfig;
+
+      // Fallback: try to find by index if constructed from requirements
+      if (!quizConfig) {
+        // This logic depends on how steps map to requirements. 
+        // Assuming steps[i] corresponds to requirements[i-1] (since step 0 is description)
+        const stepIndex = parseInt(step.id.replace('step-', '')) - 1;
+        const req = (quest as any).requirements?.[stepIndex];
+        if (req && (req.verification?.quizConfig || req.config?.quizConfig)) {
+          setActiveModalStep({ ...step, quizConfig: req.verification?.quizConfig || req.config?.quizConfig });
+          setShowQuizModal(true);
+          return;
+        }
+      }
+
+      if (quizConfig) {
+        setActiveModalStep({ ...step, quizConfig });
+        setShowQuizModal(true);
+        return;
+      }
+    }
+
+    if (title === 'poll' || title.includes('poll')) {
+      const pollConfig = (quest as any).requirements?.find((r: any) =>
+        (r.title === step.title || r.description === step.description) && (r.verification?.pollConfig || r.config?.pollConfig)
+      )?.verification?.pollConfig || (quest as any).requirements?.find((r: any) =>
+        (r.title === step.title || r.description === step.description) && (r.verification?.pollConfig || r.config?.pollConfig)
+      )?.config?.pollConfig;
+
+      // Fallback by index
+      if (!pollConfig) {
+        const stepIndex = parseInt(step.id.replace('step-', '')) - 1;
+        const req = (quest as any).requirements?.[stepIndex];
+        if (req && (req.verification?.pollConfig || req.config?.pollConfig)) {
+          setActiveModalStep({ ...step, pollConfig: req.verification?.pollConfig || req.config?.pollConfig });
+          setShowPollModal(true);
+          return;
+        }
+      }
+
+      if (pollConfig) {
+        setActiveModalStep({ ...step, pollConfig });
+        setShowPollModal(true);
+        return;
+      }
+    }
+
     // If task has a link (e.g., Twitter profile), open it
     if (step.link) {
       window.open(step.link, '_blank', 'noopener,noreferrer');
@@ -757,6 +910,54 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         setCurrentStep(stepIndex + 1);
       }
     }
+  };
+
+  const handleQuizCompletion = (stepId: string) => {
+    // Mark as verified immediately
+    setVerificationStates(prev => ({
+      ...prev,
+      [stepId]: { status: 'verified' }
+    }));
+
+    // Save completion to Supabase
+    if (address && questId) {
+      questServiceSupabase.saveStepCompletion(questId, address, stepId);
+    }
+
+    if (quest) {
+      const updatedSteps = quest.steps?.map(s =>
+        s.id === stepId ? { ...s, completed: true } : s
+      );
+      setQuest({ ...quest, steps: updatedSteps });
+    }
+
+    showToast('Quiz completed successfully!', 'success');
+    setShowQuizModal(false);
+    setActiveModalStep(null);
+  };
+
+  const handlePollCompletion = (stepId: string) => {
+    // Mark as verified immediately
+    setVerificationStates(prev => ({
+      ...prev,
+      [stepId]: { status: 'verified' }
+    }));
+
+    // Save completion to Supabase
+    if (address && questId) {
+      questServiceSupabase.saveStepCompletion(questId, address, stepId);
+    }
+
+    if (quest) {
+      const updatedSteps = quest.steps?.map(s =>
+        s.id === stepId ? { ...s, completed: true } : s
+      );
+      setQuest({ ...quest, steps: updatedSteps });
+    }
+
+    showToast('Poll submitted successfully!', 'success');
+    setShowPollModal(false);
+    setActiveModalStep(null);
   };
 
   const handleDeleteQuest = async () => {
@@ -1021,6 +1222,11 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           [stepId]: { status: 'verified' }
         }));
 
+        // Save completion to Supabase
+        if (address && questId) {
+          questServiceSupabase.saveStepCompletion(questId, address, stepId);
+        }
+
         // Update quest step as completed
         if (quest) {
           const updatedSteps = quest.steps?.map(s =>
@@ -1089,6 +1295,11 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
             [stepId]: { status: 'verified' }
           }));
 
+          // Save completion to Supabase
+          if (address && questId) {
+            questServiceSupabase.saveStepCompletion(questId, address, stepId);
+          }
+
           if (quest) {
             const updatedSteps = quest.steps?.map(s =>
               s.id === stepId ? { ...s, completed: true } : s
@@ -1118,6 +1329,11 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         ...prev,
         [stepId]: { status: 'verified' }
       }));
+
+      // Save completion to Supabase
+      if (address && questId) {
+        questServiceSupabase.saveStepCompletion(questId, address, stepId);
+      }
 
       // Update quest step as completed
       if (quest) {
@@ -1314,6 +1530,28 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       return (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+        </svg>
+      );
+    }
+
+    const titleLower = (step.title || '').toLowerCase();
+
+    // Quiz Icon
+    if (titleLower === 'quiz' || titleLower.includes('quiz')) {
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <path d="M12 17h.01" />
+        </svg>
+      );
+    }
+
+    // Poll Icon
+    if (titleLower === 'poll' || titleLower.includes('poll')) {
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       );
     }
@@ -1529,8 +1767,20 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
               : 0;
             // Check if quest has expired
             const isExpired = quest.expiresAt ? Date.now() > quest.expiresAt : false;
-            const isDisabled = isVerifying || isCooldown || isExpired;
+
+            // Task Enforcement: Disable if not clicked (unless it's a quiz/poll which opens modal on click anyway)
+            // Quizzes and Polls are handled by opening the modal, so we don't need to disable them.
+            // External links (Twitter, etc.) and Read Docs need the disable logic.
+            const isInteractiveModal = (step.title?.toLowerCase().includes('quiz') || step.title?.toLowerCase().includes('poll'));
+            const hasBeenClicked = clickedSteps[step.id];
+
+            // If it's a modal task (Quiz/Poll), verification happens INSIDE the modal, so the main refresh button is less relevant 
+            // but we can keep it as a way to re-open if needed.
+            // For external links, we MUST force a click first.
+            const needsClick = !isInteractiveModal && !hasBeenClicked && !step.completed && !isVerified;
+
             const isCompleted = step.completed || isVerified;
+            const isDisabled = isVerifying || isCooldown || isExpired || (needsClick && !isCompleted);
 
             return (
               <div
@@ -1570,8 +1820,12 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                   className={`quest-detail-task-refresh-exact ${isVerifying ? 'verifying' : ''} ${isVerified ? 'verified' : ''} ${isDisabled ? 'disabled' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (!isDisabled) {
+                    if (isInteractiveModal) {
+                      handleTaskClick(step);
+                    } else if (!isDisabled) {
                       handleRefresh(step.id);
+                    } else if (needsClick) {
+                      showToast('Please complete the task first by clicking on it', 'info');
                     }
                   }}
                   disabled={isDisabled}
@@ -2084,6 +2338,33 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
             </div>
           </div>
         </div>
+      )}
+      {/* Quiz Modal */}
+      {showQuizModal && activeModalStep && (
+        <QuizModal
+          isOpen={showQuizModal}
+          onClose={() => {
+            setShowQuizModal(false);
+            setActiveModalStep(null);
+          }}
+          onComplete={() => handleQuizCompletion(activeModalStep.id)}
+          title={activeModalStep.title}
+          questions={activeModalStep.quizConfig?.questions || []}
+        />
+      )}
+
+      {/* Poll Modal */}
+      {showPollModal && activeModalStep && (
+        <PollModal
+          isOpen={showPollModal}
+          onClose={() => {
+            setShowPollModal(false);
+            setActiveModalStep(null);
+          }}
+          onComplete={() => handlePollCompletion(activeModalStep.id)}
+          title={activeModalStep.title}
+          questions={activeModalStep.pollConfig?.questions || []}
+        />
       )}
     </div>
   );

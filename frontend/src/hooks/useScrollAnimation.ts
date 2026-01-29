@@ -4,6 +4,7 @@ interface UseScrollAnimationOptions {
   threshold?: number;
   rootMargin?: string;
   delay?: number;
+  disabled?: boolean;
 }
 
 /**
@@ -13,13 +14,14 @@ interface UseScrollAnimationOptions {
 export function useScrollAnimation({
   threshold = 0.15,
   rootMargin = '0px',
-  delay = 0
+  delay = 0,
+  disabled = false
 }: UseScrollAnimationOptions = {}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const element = ref.current;
-    if (!element) return;
+    if (!element || disabled) return;
 
     // Initial state: Hidden below
     element.classList.add('reveal-status-hidden-below');
@@ -69,7 +71,8 @@ export function useScrollAnimation({
         observer.unobserve(element);
       }
     };
-  }, [threshold, rootMargin, delay]);
+
+  }, [threshold, rootMargin, delay, disabled]);
 
   return ref;
 }

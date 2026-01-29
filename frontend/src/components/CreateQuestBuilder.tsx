@@ -21,6 +21,7 @@ import { parseUnits, formatUnits, createPublicClient, http } from 'viem';
 import { intuitionChain } from '../config/wagmi';
 import Stepper, { Step } from './Stepper';
 import './CreateQuestBuilder.css';
+import { AVAILABLE_ACTIONS } from './QuestActionDefinitions';
 
 // Quest Templates
 const QUEST_TEMPLATES = [
@@ -1029,15 +1030,19 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       claimId?: string;
       checkAllClaims?: boolean;
     };
-    holdTokenConfig?: {
+    tokenConfig?: {
       tokenContractAddress?: string;
       tokenAmount?: string;
     };
-    holdNFTConfig?: {
+    nftConfig?: {
       nftContractAddress?: string;
       nftAmount?: string;
     };
+    readDocsConfig?: {
+      documents?: string[];
+    };
   }>({});
+  const [searchQuery, setSearchQuery] = useState('');
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [questDraftId, setQuestDraftId] = useState<string>(draftId || `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const [distributionType, setDistributionType] = useState<'fcfs' | 'raffle'>('fcfs');
@@ -1518,12 +1523,19 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         }
       }
 
+      // Preparation for factory call
+      const publishedAt = Date.now();
+      // If no end date, use 0 (or far future? 0 implies 'no end' in some logic, but for uniqueness it's fine)
+      const expirationTimestamp = endDate && endTime ? new Date(`${endDate}T${endTime}`).getTime() : 0;
+
       // Create quest atom
       const questIdForAtom = questDraftId || `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const atomResult = await createQuestAtom(
         {
           questId: questIdForAtom,
           questTitle: title.trim(),
+          startTime: publishedAt,
+          endTime: expirationTimestamp,
           spaceAtomId,
         },
         walletClient,
@@ -1532,6 +1544,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
 
       atomId = atomResult.atomId;
       atomTransactionHash = atomResult.transactionHash;
+      const uniqueIdString = atomResult.uniqueIdString; // New field from service
       tripleId = undefined; // No triple creation for quest publishing
       tripleTransactionHash = undefined;
 
@@ -1566,7 +1579,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       showToast('Publishing quest...', 'info');
 
       // Prepare complete quest data for backend
-      const publishedAt = Date.now();
+      // Use the SAME publishedAt we used for the atom creation
       const startDateStr = new Date(publishedAt).toISOString().split('T')[0];
       const startTimeStr = new Date(publishedAt).toTimeString().split(' ')[0].slice(0, 5);
 
@@ -1596,12 +1609,18 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         winnerPrizes,
         rewardDeposit,
         rewardToken,
-        rewardType,
-        expiresAt: endDate && endTime ? new Date(`${endDate}T${endTime}`).getTime() : undefined,
+        reward_type: rewardType,
+        expiresAt: expirationTimestamp > 0 ? expirationTimestamp : undefined,
         endDate,
         endTime,
         twitterLink: space?.twitterUrl,
+        uniqueIdString,
+        questVersion: 2,
       };
+
+      console.log('--- Publishing Quest Debug ---');
+      console.log('Authenticated Address (Hook):', address);
+      console.log('Payload Creator Address:', completeQuestData.creatorAddress);
 
       await apiClient.createQuest(completeQuestData);
 
@@ -1676,9 +1695,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         !difficulty ||
         !description.trim() ||
         !endDate ||
-        !endTime ||
-        !numberOfWinners ||
-        parseInt(numberOfWinners, 10) < 1
+        !endTime
+
       ) {
         showToast('Please fill in all required fields', 'warning');
         return false;
@@ -1688,6 +1706,10 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     // Validate Rewards step (step 3)
     if (stepToLeave === 3 && (rewardType === 'trust_only' || rewardType === 'trust_and_iq')) {
       const numWinners = parseInt(numberOfWinners, 10) || 0;
+      if (numWinners <= 0) {
+        showToast('Please set number of winners', 'warning');
+        return false;
+      }
       const allPrizesFilled = numWinners > 0 && winnerPrizes.slice(0, numWinners).every((prize, idx) => idx < numWinners && prize && prize.trim() !== '');
 
       if (!allPrizesFilled) {
@@ -1741,9 +1763,8 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         !difficulty ||
         !description.trim() ||
         !endDate ||
-        !endTime ||
-        !numberOfWinners ||
-        parseInt(numberOfWinners, 10) < 1
+        !endTime
+
       ) {
         return; // Validation already handled by disabled state
       }
@@ -1753,6 +1774,10 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     if (currentStep === 3 && (rewardType === 'trust_only' || rewardType === 'trust_and_iq')) {
       // Check if all fields are filled
       const numWinners = parseInt(numberOfWinners, 10) || 0;
+      if (numWinners <= 0) {
+        showToast('Please set number of winners', 'warning');
+        return;
+      }
       const allPrizesFilled = numWinners > 0 && winnerPrizes.slice(0, numWinners).every((prize, idx) => idx < numWinners && prize && prize.trim() !== '');
 
       if (!allPrizesFilled) {
@@ -2171,33 +2196,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
             <div className="create-quest-builder-form">
 
               {/* Distribution Type - FCFS or Raffle */}
-              <div className="create-quest-builder-field">
-                <label className="create-quest-builder-label">
-                  Reward Distribution <span className="required-asterisk">*</span>
-                </label>
-                <div className="create-quest-builder-distribution-options">
-                  <button
-                    type="button"
-                    className={`create-quest-builder-distribution-option ${distributionType === 'fcfs' ? 'active' : ''}`}
-                    onClick={() => setDistributionType('fcfs')}
-                  >
-                    <div className="create-quest-builder-distribution-content">
-                      <h4 className="create-quest-builder-distribution-title">First Come First Served (FCFS)</h4>
-                      <p className="create-quest-builder-distribution-desc">Rewards are distributed to the first users who complete the quest</p>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    className={`create-quest-builder-distribution-option ${distributionType === 'raffle' ? 'active' : ''}`}
-                    onClick={() => setDistributionType('raffle')}
-                  >
-                    <div className="create-quest-builder-distribution-content">
-                      <h4 className="create-quest-builder-distribution-title">Raffle</h4>
-                      <p className="create-quest-builder-distribution-desc">Winners are randomly selected from all users who complete the quest</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
+
 
               {/* Title */}
               <div className="create-quest-builder-field">
@@ -2235,48 +2234,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                 </select>
               </div>
 
-              {/* Number of Winners */}
-              <div className="create-quest-builder-field">
-                <label className="create-quest-builder-label">
-                  Number of Winners <span className="required-asterisk">*</span>
-                  {isFree && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>(Max 5 for Free plan)</span>}
-                </label>
-                <input
-                  type="number"
-                  className="create-quest-builder-input"
-                  placeholder="Enter number of winners"
-                  min="1"
-                  max={isFree ? 5 : undefined}
-                  value={numberOfWinners}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) > 0)) {
-                      const numValue = value === '' ? 1 : parseInt(value, 10);
-                      // Free plan: limit to 5 winners
-                      if (isFree && numValue > 5) {
-                        showToast('Free plan allows maximum 5 winners. Upgrade to Pro for unlimited winners.', 'warning');
-                        setNumberOfWinners('5');
-                        return;
-                      }
-                      setNumberOfWinners(value);
-                      // Update winner prizes array to match number of winners
-                      const currentPrizes = [...winnerPrizes];
-                      while (currentPrizes.length < numValue) {
-                        currentPrizes.push('');
-                      }
-                      while (currentPrizes.length > numValue) {
-                        currentPrizes.pop();
-                      }
-                      setWinnerPrizes(currentPrizes);
-                    }
-                  }}
-                />
-                <p className="create-quest-builder-hint">
-                  {isFree
-                    ? 'Free plan allows up to 5 winners. Upgrade to Pro for unlimited winners.'
-                    : 'Enter the number of winners for this quest'}
-                </p>
-              </div>
+
 
               {/* Description */}
               <div className="create-quest-builder-field">
@@ -2584,15 +2542,58 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                           type="text"
                           placeholder="Search for action..."
                           className="create-quest-builder-search-input"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
                         />
                       </div>
 
                       <div className="create-quest-builder-actions-content">
                         {/* Action Cards Grid - No Categories Sidebar */}
                         <div className="create-quest-builder-actions-grid">
-                          {false ? (
+                          {searchQuery ? (
                             <>
-                              {/* Wallet Actions */}
+                              {AVAILABLE_ACTIONS.filter(action => {
+                                const query = searchQuery.toLowerCase();
+                                return action.title.toLowerCase().includes(query) || action.description.toLowerCase().includes(query);
+                              }).map((action) => (
+                                <div
+                                  key={action.id}
+                                  className={`create-quest-builder-action-card ${action.disabled ? 'disabled' : ''} ${action.proOnly && isFree ? 'pro-disabled' : ''}`}
+                                  onClick={() => {
+                                    if (action.disabled) {
+                                      showToast('This action is currently disabled', 'warning');
+                                      return;
+                                    }
+                                    if (action.proOnly && isFree) {
+                                      setShowSubscribePopup(true);
+                                      return;
+                                    }
+                                    handleAddAction({ id: action.id, title: action.title });
+                                  }}
+                                  onMouseEnter={() => {
+                                    if (action.disabled && isPro && action.hoverKey) {
+                                      setHoveredDisabledAction(action.hoverKey);
+                                    }
+                                  }}
+                                  onMouseLeave={() => {
+                                    setHoveredDisabledAction(null);
+                                  }}
+                                  style={{ position: 'relative' }}
+                                >
+                                  {action.disabled && action.comingSoon && hoveredDisabledAction === action.hoverKey && isPro && (
+                                    <div className="coming-soon-tooltip">
+                                      Coming Soon!
+                                    </div>
+                                  )}
+                                  <div className={`create-quest-builder-action-icon ${action.color}`}>
+                                    {action.icon}
+                                  </div>
+                                  <h4 className="create-quest-builder-action-title">
+                                    {action.title} {action.proOnly && isFree && <span className="pro-badge">Pro</span>}
+                                  </h4>
+                                  <p className="create-quest-builder-action-desc">{action.description}</p>
+                                </div>
+                              ))}
                               <div className="create-quest-builder-action-card" onClick={() => {
                                 setSelectedActions([...selectedActions, { id: 37, title: 'EVM wallet connected' }]);
                                 setShowActionsModal(false);
@@ -3701,6 +3702,76 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
               {/* TRUST Token Rewards - Only show for trust_only and trust_and_iq */}
               {(rewardType === 'trust_only' || rewardType === 'trust_and_iq') && (
                 <>
+                  {/* Distribution Type - FCFS or Raffle - Moved here */}
+                  <div className="create-quest-builder-field">
+                    <label className="create-quest-builder-label">
+                      Reward Distribution <span className="required-asterisk">*</span>
+                    </label>
+                    <div className="create-quest-builder-distribution-options">
+                      <button
+                        type="button"
+                        className={`create-quest-builder-distribution-option ${distributionType === 'fcfs' ? 'active' : ''}`}
+                        onClick={() => setDistributionType('fcfs')}
+                      >
+                        <div className="create-quest-builder-distribution-content">
+                          <h4 className="create-quest-builder-distribution-title">First Come First Served (FCFS)</h4>
+                          <p className="create-quest-builder-distribution-desc">Rewards are distributed to the first users who complete the quest</p>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        className={`create-quest-builder-distribution-option ${distributionType === 'raffle' ? 'active' : ''}`}
+                        onClick={() => setDistributionType('raffle')}
+                      >
+                        <div className="create-quest-builder-distribution-content">
+                          <h4 className="create-quest-builder-distribution-title">Raffle</h4>
+                          <p className="create-quest-builder-distribution-desc">Winners are randomly selected from all users who complete the quest</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                  {/* Number of Winners - Moved here */}
+                  <div className="create-quest-builder-field">
+                    <label className="create-quest-builder-label">
+                      Number of Winners <span className="required-asterisk">*</span>
+                      {isFree && <span style={{ marginLeft: '8px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>(Max 5 for Free plan)</span>}
+                    </label>
+                    <input
+                      type="number"
+                      className="create-quest-builder-input"
+                      placeholder="Enter number of winners"
+                      min="1"
+                      max={isFree ? 5 : undefined}
+                      value={numberOfWinners}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) > 0)) {
+                          const numValue = value === '' ? 1 : parseInt(value, 10);
+                          // Free plan: limit to 5 winners
+                          if (isFree && numValue > 5) {
+                            showToast('Free plan allows maximum 5 winners. Upgrade to Pro for unlimited winners.', 'warning');
+                            setNumberOfWinners('5');
+                            return;
+                          }
+                          setNumberOfWinners(value);
+                          // Update winner prizes array to match number of winners
+                          const currentPrizes = [...winnerPrizes];
+                          while (currentPrizes.length < numValue) {
+                            currentPrizes.push('');
+                          }
+                          while (currentPrizes.length > numValue) {
+                            currentPrizes.pop();
+                          }
+                          setWinnerPrizes(currentPrizes);
+                        }
+                      }}
+                    />
+                    <p className="create-quest-builder-hint">
+                      {isFree
+                        ? 'Free plan allows up to 5 winners. Upgrade to Pro for unlimited winners.'
+                        : 'Enter the number of winners for this quest'}
+                    </p>
+                  </div>
                   {/* Reward Deposit Amount with Token Selection */}
                   <div className="create-quest-builder-field">
                     <label className="create-quest-builder-label">
@@ -3966,43 +4037,45 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
 
           </Step>
         </Stepper>
-      </div>
+      </div >
 
       {/* Subscribe to Pro Popup */}
-      {showSubscribePopup && (
-        <>
-          <div className="create-quest-builder-modal-overlay" onClick={() => setShowSubscribePopup(false)}></div>
-          <div className="create-quest-builder-subscribe-popup">
-            <div className="create-quest-builder-subscribe-popup-header">
-              <h3 className="create-quest-builder-subscribe-popup-title">Subscribe to Pro</h3>
-              <button
-                className="create-quest-builder-modal-close"
-                onClick={() => setShowSubscribePopup(false)}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+      {
+        showSubscribePopup && (
+          <>
+            <div className="create-quest-builder-modal-overlay" onClick={() => setShowSubscribePopup(false)}></div>
+            <div className="create-quest-builder-subscribe-popup">
+              <div className="create-quest-builder-subscribe-popup-header">
+                <h3 className="create-quest-builder-subscribe-popup-title">Subscribe to Pro</h3>
+                <button
+                  className="create-quest-builder-modal-close"
+                  onClick={() => setShowSubscribePopup(false)}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+              <div className="create-quest-builder-subscribe-popup-content">
+                <p className="create-quest-builder-subscribe-popup-message">
+                  This feature is available for Pro users only. Upgrade to Pro to unlock advanced quest actions and features.
+                </p>
+                <button
+                  className="create-quest-builder-button primary"
+                  onClick={() => {
+                    setShowSubscribePopup(false);
+                    // TODO: Navigate to subscription page or open subscription modal
+                    showToast('Redirecting to subscription page...', 'info');
+                  }}
+                >
+                  Upgrade to Pro
+                </button>
+              </div>
             </div>
-            <div className="create-quest-builder-subscribe-popup-content">
-              <p className="create-quest-builder-subscribe-popup-message">
-                This feature is available for Pro users only. Upgrade to Pro to unlock advanced quest actions and features.
-              </p>
-              <button
-                className="create-quest-builder-button primary"
-                onClick={() => {
-                  setShowSubscribePopup(false);
-                  // TODO: Navigate to subscription page or open subscription modal
-                  showToast('Redirecting to subscription page...', 'info');
-                }}
-              >
-                Upgrade to Pro
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+          </>
+        )
+      }
+    </div >
   );
 }

@@ -34,7 +34,7 @@
   -webkit-backdrop-filter: blur(36px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  padding: 24px;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -168,7 +168,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 16px;
+  padding: 12px 12px;
   background: transparent;
   border: none;
   border-radius: 12px;
@@ -767,5 +767,28 @@
 
   .builder-stat-card {
     padding: 16px;
+  }
+}
+
+/* Mobile Dock Wrapper - Hidden on desktop */
+.builder-mobile-dock-wrapper {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .builder-mobile-dock-wrapper {
+    display: block;
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    pointer-events: none;
+    /* Let clicks pass through wrapper */
+  }
+
+  /* Re-enable pointer events on the dock itself if needed */
+  .builder-mobile-dock-wrapper>* {
+    pointer-events: auto;
   }
 }

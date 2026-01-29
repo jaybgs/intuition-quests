@@ -112,7 +112,7 @@ export class QuestServiceSupabase {
           requirementsArray = [];
         }
       }
-      
+
       // Ensure completedBy is an array
       let completedByArray = quest.completedBy || [];
       if (typeof completedByArray === 'string') {
@@ -122,7 +122,7 @@ export class QuestServiceSupabase {
           completedByArray = [];
         }
       }
-      
+
       // Ensure winnerPrizes is an array
       let winnerPrizesArray = quest.winnerPrizes || [];
       if (typeof winnerPrizesArray === 'string') {
@@ -292,7 +292,59 @@ export class QuestServiceSupabase {
       console.error('Error deleting quests by space_id:', error);
       return this.fallbackDeleteQuestsBySpaceId(spaceId);
     }
-  }
+  /**
+   * Save a step completion to the database
+   */
+  async saveStepCompletion(questId: string, userAddress: string, stepId: string): Promise < boolean > {
+      if(!supabase) return false;
+
+      try {
+        const { error } = await supabase
+          .from('quest_step_completions')
+          .insert({
+            quest_id: questId,
+            user_address: userAddress.toLowerCase(),
+            step_id: stepId
+          });
+
+        if(error) {
+          // Ignore duplicate key errors (already completed)
+          if (error.code === '23505') return true;
+          console.error('Error saving step completion:', error);
+          return false;
+        }
+
+      return true;
+      } catch(error) {
+        console.error('Error saving step completion:', error);
+        return false;
+      }
+    }
+
+  /**
+   * Get all completed steps for a user on a specific quest
+   */
+  async getStepCompletions(questId: string, userAddress: string): Promise < string[] > {
+      if(!supabase) return [];
+
+      try {
+        const { data, error } = await supabase
+          .from('quest_step_completions')
+          .select('step_id')
+          .eq('quest_id', questId)
+          .eq('user_address', userAddress.toLowerCase());
+
+        if(error) {
+          console.error('Error fetching step completions:', error);
+          return [];
+        }
+
+      return data.map(row => row.step_id);
+      } catch(error) {
+        console.error('Error fetching step completions:', error);
+        return [];
+      }
+    }
 
   /**
    * Map database row to Quest interface
@@ -431,14 +483,14 @@ export class QuestServiceSupabase {
         const key = `published_quests_${quest.creatorAddress?.toLowerCase() || 'unknown'}`;
         const stored = localStorage.getItem(key);
         const quests = stored ? JSON.parse(stored) : [];
-        
+
         const existingIndex = quests.findIndex((q: any) => q.id === quest.id);
         if (existingIndex >= 0) {
           quests[existingIndex] = quest;
         } else {
           quests.push(quest);
         }
-        
+
         localStorage.setItem(key, JSON.stringify(quests));
       } catch (error) {
         console.error('Error saving quest to localStorage:', error);
@@ -483,14 +535,14 @@ export class QuestServiceSupabase {
           if (index >= 0) {
             quests.splice(index, 1);
             localStorage.setItem(key, JSON.stringify(quests));
-            
+
             // Dispatch custom event
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('questDeleted', {
                 detail: { questId }
               }));
             }
-            
+
             return true;
           }
         }

@@ -292,59 +292,60 @@ export class QuestServiceSupabase {
       console.error('Error deleting quests by space_id:', error);
       return this.fallbackDeleteQuestsBySpaceId(spaceId);
     }
+  }
   /**
    * Save a step completion to the database
    */
-  async saveStepCompletion(questId: string, userAddress: string, stepId: string): Promise < boolean > {
-      if(!supabase) return false;
+  async saveStepCompletion(questId: string, userAddress: string, stepId: string): Promise<boolean> {
+    if (!supabase) return false;
 
-      try {
-        const { error } = await supabase
-          .from('quest_step_completions')
-          .insert({
-            quest_id: questId,
-            user_address: userAddress.toLowerCase(),
-            step_id: stepId
-          });
+    try {
+      const { error } = await supabase
+        .from('quest_step_completions')
+        .insert({
+          quest_id: questId,
+          user_address: userAddress.toLowerCase(),
+          step_id: stepId
+        });
 
-        if(error) {
-          // Ignore duplicate key errors (already completed)
-          if (error.code === '23505') return true;
-          console.error('Error saving step completion:', error);
-          return false;
-        }
-
-      return true;
-      } catch(error) {
+      if (error) {
+        // Ignore duplicate key errors (already completed)
+        if (error.code === '23505') return true;
         console.error('Error saving step completion:', error);
         return false;
       }
+
+      return true;
+    } catch (error) {
+      console.error('Error saving step completion:', error);
+      return false;
     }
+  }
 
   /**
    * Get all completed steps for a user on a specific quest
    */
-  async getStepCompletions(questId: string, userAddress: string): Promise < string[] > {
-      if(!supabase) return [];
+  async getStepCompletions(questId: string, userAddress: string): Promise<string[]> {
+    if (!supabase) return [];
 
-      try {
-        const { data, error } = await supabase
-          .from('quest_step_completions')
-          .select('step_id')
-          .eq('quest_id', questId)
-          .eq('user_address', userAddress.toLowerCase());
+    try {
+      const { data, error } = await supabase
+        .from('quest_step_completions')
+        .select('step_id')
+        .eq('quest_id', questId)
+        .eq('user_address', userAddress.toLowerCase());
 
-        if(error) {
-          console.error('Error fetching step completions:', error);
-          return [];
-        }
-
-      return data.map(row => row.step_id);
-      } catch(error) {
+      if (error) {
         console.error('Error fetching step completions:', error);
         return [];
       }
+
+      return data.map(row => row.step_id);
+    } catch (error) {
+      console.error('Error fetching step completions:', error);
+      return [];
     }
+  }
 
   /**
    * Map database row to Quest interface

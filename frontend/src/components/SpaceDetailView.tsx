@@ -197,6 +197,13 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
             <div className="space-detail-wrapper">
                 {/* Banner Section */}
                 <div className="space-detail-banner">
+                    {/* Integrated Back Button */}
+                    <button className="space-detail-back-icon-btn" onClick={onBack} title="Go Back">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 12H5M12 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
                     {space.coverPhoto && (
                         <div
                             className="space-detail-banner-background"
@@ -441,13 +448,6 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
             </div>
             {/* End Combined Banner and Main Container */}
 
-            {/* Back Button */}
-            <button className="space-detail-back-button" onClick={onBack}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                Back
-            </button>
         </>
     );
 }

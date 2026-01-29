@@ -62,6 +62,21 @@ body {
   /* Prevent bounce effect showing background */
 }
 
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    min-height: 100vh;
+    /* Ensure full height */
+  }
+
+  #root,
+  .app {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+}
+
 /* High performance fixed gradient background */
 body::before {
   content: "";

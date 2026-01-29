@@ -62,6 +62,50 @@ export class QuestServiceSupabase {
   }
 
   /**
+   * Get quest counts grouped by space ID
+   */
+  async getQuestCountsBySpace(status?: string): Promise<Record<string, number>> {
+    if (!supabase) return {};
+
+    try {
+      let query = supabase
+        .from('published_quests')
+        .select('space_id');
+
+      if (status) {
+        query = query.eq('status', status.toLowerCase());
+
+        // If status is 'active', also check that it hasn't expired
+        if (status.toLowerCase() === 'active') {
+          const now = new Date().toISOString();
+          // Filter quests that either don't have an expiry date OR inherit expiring in future
+          query = query.or(`expires_at.is.null,expires_at.gt.${now}`);
+        }
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching quest counts:', error);
+        return {};
+      }
+
+      // Group and count by space_id
+      const counts: Record<string, number> = {};
+      (data || []).forEach((item: any) => {
+        if (item.space_id) {
+          counts[item.space_id] = (counts[item.space_id] || 0) + 1;
+        }
+      });
+
+      return counts;
+    } catch (error) {
+      console.error('Error fetching quest counts:', error);
+      return {};
+    }
+  }
+
+  /**
    * Get a quest by ID
    */
   async getQuestById(questId: string): Promise<Quest | null> {

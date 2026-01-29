@@ -353,8 +353,8 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
   const sortedSpaces = [...spaces].sort((a, b) => {
     const aVerified = a.userType === 'project';
     const bVerified = b.userType === 'project';
-    const aFollowers = parseInt(localStorage.getItem(`space_followers_${a.id}`) || '0');
-    const bFollowers = parseInt(localStorage.getItem(`space_followers_${b.id}`) || '0');
+    const aFollowers = a.followerCount || 0;
+    const bFollowers = b.followerCount || 0;
     const aFollowing = isFollowingSpace(a.id);
     const bFollowing = isFollowingSpace(b.id);
 
@@ -394,27 +394,9 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
   // Fetch active quest counts for all spaces from Supabase
   useEffect(() => {
     const fetchQuestCounts = async () => {
-      if (spaces.length === 0) return;
-
+      // Fetch active quest counts grouped by space
       try {
-        const counts: Record<string, number> = {};
-
-        // Fetch active quests for each space from Supabase
-        await Promise.all(
-          spaces.map(async (space) => {
-            try {
-              const activeQuests = await questServiceSupabase.getAllQuests({
-                spaceId: space.id,
-                status: 'active'
-              });
-              counts[space.id] = activeQuests.length;
-            } catch (error) {
-              console.error(`Error fetching quest count for space ${space.id}:`, error);
-              counts[space.id] = 0;
-            }
-          })
-        );
-
+        const counts = await questServiceSupabase.getQuestCountsBySpace('active');
         setQuestCounts(counts);
       } catch (error) {
         console.error('Error fetching quest counts:', error);
@@ -422,16 +404,16 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     };
 
     fetchQuestCounts();
-  }, [spaces]);
+  }, [spaces]); // Refresh when spaces list updates (e.g. initial load)
 
   // Get quest count for a space (from state)
   const getQuestCount = (spaceId: string): number => {
     return questCounts[spaceId] || 0;
   };
 
-  // Get follower count for a space (mock for now)
-  const getFollowerCount = (spaceId: string): number => {
-    return parseInt(localStorage.getItem(`space_followers_${spaceId}`) || '0');
+  // Get follower count for a space (mock for now, should be from space object)
+  const getFollowerCount = (space: Space): number => {
+    return space.followerCount || 0;
   };
 
   // Get token status for a space from Supabase project_type column
@@ -685,7 +667,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
           ) : (
             displayedSpaces.map((space, index) => {
               const questCount = getQuestCount(space.id);
-              const followerCount = getFollowerCount(space.id);
+              const followerCount = getFollowerCount(space);
               const tokenInfo = getTokenStatus(space.id);
 
               return (
@@ -737,7 +719,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
                         <h3 className="space-name">{space.name}</h3>
                         <div className="space-stats">
                           <div className="space-followers">
-                            {followerCount > 0 ? `${(followerCount / 1000).toFixed(1)}K+` : '0'} Followers
+                            {followerCount >= 1000 ? `${(followerCount / 1000).toFixed(1)}K+` : followerCount} Followers
                           </div>
                           <div className={`space-quests ${questCount > 0 ? 'active' : ''}`}>
                             {questCount} {questCount === 1 ? 'active quest' : 'active quests'}

@@ -95,5 +95,6 @@ export interface Space {
   createdAt: number;
   atomId?: string; // Intuition atom ID created on-chain
   atomTransactionHash?: string; // Transaction hash of atom creation
+  followerCount?: number; // Count of followers (fetched dynamically)
 }
 

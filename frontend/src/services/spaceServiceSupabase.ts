@@ -20,7 +20,7 @@ export class SpaceServiceSupabase {
     try {
       const { data, error } = await supabase
         .from('spaces')
-        .select('*')
+        .select('*, space_follows(count)')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -28,7 +28,10 @@ export class SpaceServiceSupabase {
         return [];
       }
 
-      return (data || []).map(space => this.mapSpaceFromDb(space));
+      return (data || []).map((space: any) => this.mapSpaceFromDb({
+        ...space,
+        follower_count: space.space_follows?.[0]?.count || 0
+      }));
     } catch (error) {
       console.error('Error fetching spaces from Supabase:', error);
       return [];
@@ -104,7 +107,7 @@ export class SpaceServiceSupabase {
     }
 
     const lowerQuery = query.toLowerCase().trim();
-    
+
     if (!lowerQuery) {
       return [];
     }
@@ -145,7 +148,7 @@ export class SpaceServiceSupabase {
     atomTransactionHash?: string;
   }): Promise<Space> {
     const slug = generateSlug(data.name);
-    
+
     if (!supabase) {
       return this.fallbackCreateSpace(data, slug);
     }
@@ -201,7 +204,7 @@ export class SpaceServiceSupabase {
         console.error('Error code:', error.code);
         console.error('Error message:', error.message);
         console.error('Error hint:', error.hint);
-        
+
         // Try backend API as fallback (uses service role key, bypasses RLS)
         console.log('Attempting to create space via backend API...');
         try {
@@ -236,21 +239,21 @@ export class SpaceServiceSupabase {
           }
 
           const response = await apiClient.post('/spaces', apiPayload);
-          
+
           const backendSpace = response.data.space;
           console.log('Space created successfully via backend API:', backendSpace.id);
-          
+
           // Backend returns Space object (already mapped by mapSpaceFromDb)
           // Map it to ensure consistent format
           const space = this.mapSpaceFromDb(backendSpace);
-          
+
           // Dispatch custom event
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('spaceCreated', {
               detail: { spaceId: space.id, ownerAddress: space.ownerAddress }
             }));
           }
-          
+
           return space;
         } catch (apiError: any) {
           console.error('Error creating space via backend API:', apiError);
@@ -451,6 +454,7 @@ export class SpaceServiceSupabase {
       createdAt: new Date(row.created_at).getTime(),
       atomId: row.atom_id || undefined,
       atomTransactionHash: row.atom_transaction_hash || undefined,
+      followerCount: row.follower_count || 0,
     };
   }
 
@@ -555,13 +559,13 @@ export class SpaceServiceSupabase {
     const spaces = this.fallbackToLocalStorage();
     const filtered = spaces.filter(space => space.id !== id);
     this.saveSpacesToLocalStorage(filtered);
-    
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('spaceDeleted', {
         detail: { spaceId: id }
       }));
     }
-    
+
     return true;
   }
 

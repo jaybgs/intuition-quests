@@ -1140,4 +1140,48 @@
   .ecosystem-dapp-description {
     font-size: 0.8125rem;
   }
+
+  /* Mobile Space Card Optimizations */
+  /* Mobile Space Card Optimizations */
+  .space-card {
+    padding: 12px 16px 0px 16px !important;
+    /* Reduced vertical padding further */
+  }
+
+  .space-logo {
+    width: 68px !important;
+    /* Increased from 54px */
+    height: 68px !important;
+    border-radius: 14px;
+    /* Slightly reduced radius */
+  }
+
+  .space-card-header {
+    margin-bottom: 0px !important;
+    /* Reduced from 16px */
+  }
+
+  .space-name {
+    font-size: 1.125rem !important;
+    /* Increased from 16px (1rem) on mobile */
+  }
+
+  .space-followers,
+  .space-quests {
+    font-size: 14px !important;
+    /* Increased from 13px */
+  }
+
+  .space-token,
+  .space-token-symbol,
+  .space-token-status {
+    font-size: 13px !important;
+    /* Increased from 12px */
+  }
+
+  .space-card-content {
+    gap: 8px !important;
+    /* Compact content gap */
+    margin-bottom: 0 !important;
+  }
 }

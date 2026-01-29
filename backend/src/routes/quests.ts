@@ -286,7 +286,7 @@ const createQuestSchema = z.object({
 router.post('/', authenticateWallet, async (req: Request, res: Response) => {
   try {
     const validated = createQuestSchema.parse(req.body);
-    const walletAddress = req.walletAddress;
+    const walletAddress = req.walletAddress || '';
 
     // Verify the quest creator matches the authenticated wallet (case-insensitive)
     console.log('--- Quest Creation Auth Check ---');

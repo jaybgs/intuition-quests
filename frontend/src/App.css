@@ -49,21 +49,31 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Cybernetic Dark Gradient */
-  /* User Defined Gradient */
-  background: linear-gradient(180deg, #012E38 0%, #000000 50%, rgb(54, 5, 5) 100%);
-  /* Fallback dark background */
-  background-attachment: fixed;
-  /* Keep gradient fixed on scroll */
+  background-color: #000000;
+  /* Dark fallback to prevent white flash */
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  /* Prevent horizontal scrolling */
   width: 100%;
   max-width: 100vw;
   position: relative;
-  /* Ensure text scales properly */
   font-size: inherit;
+  overscroll-behavior-y: none;
+  /* Prevent bounce effect showing background */
+}
+
+/* High performance fixed gradient background */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  background: linear-gradient(180deg, #012E38 0%, #000000 50%, rgb(54, 5, 5) 100%);
+  will-change: transform;
+  pointer-events: none;
 }
 
 .bg-video {

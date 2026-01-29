@@ -507,7 +507,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       <div className="dashboard-content">
 
         {/* User Stats Section */}
-        <Reveal delay={0} width="100%">
+        <Reveal delay={0} width="100%" disabled={isMobile}>
           <div className="stats-section-no-bg">
             <div className="stat-rectangle">
               <span className="stat-label">Claims</span>
@@ -526,7 +526,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
 
 
         {/* Social Connections Section */}
-        <Reveal delay={100} width="100%">
+        <Reveal delay={100} width="100%" disabled={isMobile}>
           <div className="section-no-bg">
             <div className="section-header-with-tabs">
               <h3 className="section-title">Social Connections</h3>

@@ -156,6 +156,11 @@ export function useSocialConnections() {
       const response = await apiClient.get(`/social/connect/${provider}?walletAddress=${address}`);
 
       if (response.data.authUrl) {
+        // Store codeVerifier in sessionStorage for Twitter PKCE flow
+        if (response.data.codeVerifier) {
+          sessionStorage.setItem('oauth_code_verifier', response.data.codeVerifier);
+          console.log('🔐 Stored PKCE code verifier in sessionStorage');
+        }
         // Redirect to OAuth provider (full page redirect)
         window.location.href = response.data.authUrl;
       } else {
@@ -190,7 +195,7 @@ export function useSocialConnections() {
         }
       }));
 
-        return { success: true };
+      return { success: true };
     } catch (error: any) {
       setState(prev => ({ ...prev, error: error.message }));
       return { success: false, error: error.message };

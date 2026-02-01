@@ -62,10 +62,18 @@ export function SocialCallback() {
 
         setStatus('Exchanging authorization code...');
 
-        // Send code and state to backend for processing
+        // Retrieve PKCE codeVerifier from sessionStorage (for Twitter)
+        const codeVerifier = sessionStorage.getItem('oauth_code_verifier');
+        if (codeVerifier) {
+          console.log('🔐 Retrieved PKCE code verifier from sessionStorage');
+          sessionStorage.removeItem('oauth_code_verifier'); // Clean up
+        }
+
+        // Send code, state, and codeVerifier to backend for processing
         const response = await apiClient.post('/social/callback', {
           code,
-          state
+          state,
+          ...(codeVerifier && { codeVerifier })
         });
 
         console.log('✅ OAuth callback successful:', response.data);

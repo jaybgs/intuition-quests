@@ -159,12 +159,15 @@ router.get('/connect/:provider', async (req: Request, res: Response) => {
 
     let authUrl: string;
 
+    let codeVerifier: string | undefined;
+
     if (provider === 'twitter') {
       // Twitter requires PKCE
-      const { codeVerifier, codeChallenge } = generatePKCE();
+      const pkce = generatePKCE();
+      codeVerifier = pkce.codeVerifier;
 
-      // Store codeVerifier with state
-      global.pkceStore!.set(state, codeVerifier);
+      // NOTE: We return codeVerifier to frontend for storage (stateless server)
+      // Frontend will send it back with the callback request
 
       authUrl = `${config.authorizationUrl}?` +
         `client_id=${encodeURIComponent(config.clientId)}&` +
@@ -172,7 +175,7 @@ router.get('/connect/:provider', async (req: Request, res: Response) => {
         `scope=${encodeURIComponent(config.scopes.join(' '))}&` +
         `response_type=code&` +
         `state=${encodeURIComponent(state)}&` +
-        `code_challenge=${encodeURIComponent(codeChallenge)}&` +
+        `code_challenge=${encodeURIComponent(pkce.codeChallenge)}&` +
         `code_challenge_method=S256`;
 
     } else {
@@ -187,7 +190,8 @@ router.get('/connect/:provider', async (req: Request, res: Response) => {
 
     console.log(`🔗 Generated ${provider} OAuth URL:`, authUrl.substring(0, 100) + '...');
 
-    res.json({ authUrl });
+    // Return codeVerifier for Twitter so frontend can store and resend
+    res.json({ authUrl, ...(codeVerifier && { codeVerifier }) });
 
   } catch (error: any) {
     console.error('OAuth connection initiation failed:', error);
@@ -201,7 +205,8 @@ router.post('/callback', async (req: Request, res: Response) => {
     console.log('🔄 OAuth Callback Received:');
     console.log('   Body:', JSON.stringify(req.body, null, 2));
 
-    const { code, state } = req.body;
+    // codeVerifier is now sent from frontend (stored in sessionStorage)
+    const { code, state, codeVerifier } = req.body;
 
     if (!code || !state) {
       console.error('❌ Missing required parameters:', { code: !!code, state: !!state });
@@ -218,24 +223,15 @@ router.post('/callback', async (req: Request, res: Response) => {
     const { walletAddress, provider } = stateData;
     console.log('✅ State verified for:', { walletAddress, provider });
 
-    // Retrieve codeVerifier from global store (only for Twitter)
-    let codeVerifier: string | undefined;
+    // Validate codeVerifier for Twitter (now comes from frontend)
     if (provider === 'twitter') {
       console.log('🔍 PKCE Debug (Twitter):');
-      console.log('   State received:', state);
-      console.log('   PKCE store size:', global.pkceStore?.size || 0);
-      console.log('   PKCE store keys:', Array.from(global.pkceStore?.keys() || []));
-
-      codeVerifier = global.pkceStore?.get(state);
-      console.log('   Code verifier found:', !!codeVerifier);
+      console.log('   Code verifier from frontend:', codeVerifier ? 'present' : 'missing');
 
       if (!codeVerifier) {
-        console.error('❌ Missing PKCE code verifier for state:', state);
-        return res.status(400).json({ error: 'Missing PKCE code verifier' });
+        console.error('❌ Missing PKCE code verifier from frontend');
+        return res.status(400).json({ error: 'Missing PKCE code verifier. Please try connecting again.' });
       }
-
-      console.log('✅ Found code verifier, deleting from store');
-      global.pkceStore!.delete(state);
     } else {
       console.log(`🔄 ${provider} OAuth: No PKCE required`);
     }

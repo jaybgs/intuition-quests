@@ -436,10 +436,14 @@ router.post('/complete', authenticateWallet, async (req: Request, res: Response)
     const { questId } = validated;
     const walletAddress = req.walletAddress;
 
+    if (!walletAddress) {
+      return res.status(401).json({ error: 'Unauthorized: No wallet address found' });
+    }
+
     // Fetch the quest details to get the correct IQ points
     const { data: questData, error: questError } = await supabase
       .from('published_quests')
-      .select('iq_points')
+      .select('iq_points, title')
       .eq('id', questId)
       .single();
 

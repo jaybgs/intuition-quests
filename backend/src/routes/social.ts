@@ -123,19 +123,19 @@ function encryptToken(text: string): string {
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag();
   return iv.toString('hex') + ':' + encrypted + ':' + authTag.toString('hex');
-  }
+}
 
 function decryptToken(encryptedText: string): string {
-    const parts = encryptedText.split(':');
-    const iv = Buffer.from(parts[0], 'hex');
-    const encrypted = parts[1];
+  const parts = encryptedText.split(':');
+  const iv = Buffer.from(parts[0], 'hex');
+  const encrypted = parts[1];
   const authTag = Buffer.from(parts[2], 'hex');
 
   const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
   decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
 }
 
 // GET /api/social/connect/:provider - Initiate OAuth flow
@@ -283,7 +283,8 @@ router.post('/callback', async (req: Request, res: Response) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'DiscordBot (https://trustquests.com, 1.0.0)'
         },
         body: new URLSearchParams({
           client_id: config.clientId,
@@ -318,8 +319,8 @@ router.post('/callback', async (req: Request, res: Response) => {
     if (provider === 'twitter') {
       // Get Twitter user info
       const userResponse = await fetch('https://api.twitter.com/2/users/me', {
-            headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
-          });
+        headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+      });
 
       if (!userResponse.ok) {
         console.error('Failed to get Twitter user info');
@@ -338,13 +339,16 @@ router.post('/callback', async (req: Request, res: Response) => {
     } else if (provider === 'discord') {
       // Get Discord user info
       const userResponse = await fetch('https://discord.com/api/users/@me', {
-            headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
-          });
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`,
+          'User-Agent': 'DiscordBot (https://trustquests.com, 1.0.0)'
+        }
+      });
 
       if (!userResponse.ok) {
         console.error('Failed to get Discord user info');
         return res.status(500).json({ error: 'Failed to get user information' });
-          }
+      }
 
       const userData: any = await userResponse.json();
       userId = userData.id;

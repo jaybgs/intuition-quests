@@ -45,9 +45,15 @@ const connectors: any[] = [
     shimDisconnect: true,
   }),
   // Explicit connectors for better feature support
-  metaMask(),
+  metaMask({
+    logging: {
+      developerMode: false,
+      sdk: false,
+    },
+  }),
   coinbaseWallet({
     appName: 'Intuition Quests',
+    headlessMode: true, // Reduces console noise
   }),
 ];
 

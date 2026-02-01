@@ -14,9 +14,9 @@ const OAUTH_PROVIDERS = {
   twitter: {
     clientId: process.env.TWITTER_CLIENT_ID!,
     clientSecret: process.env.TWITTER_CLIENT_SECRET!,
-    authorizationUrl: 'https://twitter.com/i/oauth2/authorize',
-    tokenUrl: 'https://api.twitter.com/2/oauth2/token',
-    scopes: ['tweet.read', 'users.read', 'follows.read'],
+    authorizationUrl: 'https://x.com/i/oauth2/authorize',
+    tokenUrl: 'https://api.x.com/2/oauth2/token',
+    scopes: ['tweet.read', 'users.read', 'follows.read', 'offline.access'],
     redirectUri: `${process.env.FRONTEND_URL}/auth/social-callback`
   },
   discord: {

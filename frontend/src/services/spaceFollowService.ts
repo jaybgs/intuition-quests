@@ -78,14 +78,14 @@ export class SpaceFollowService {
         .select('id')
         .eq('space_id', spaceId)
         .eq('user_address', userAddress.toLowerCase())
-        .maybeSingle();
+        .limit(1);
 
       if (error) {
         console.error('Error checking follow status:', error);
         return this.fallbackIsFollowing(spaceId, userAddress);
       }
 
-      return !!data;
+      return data && data.length > 0;
     } catch (error) {
       console.error('Error checking follow status:', error);
       return this.fallbackIsFollowing(spaceId, userAddress);
@@ -153,12 +153,12 @@ export class SpaceFollowService {
         followed.push(spaceId);
         localStorage.setItem(key, JSON.stringify(followed));
       }
-      
+
       // Update follower count
       const countKey = `space_followers_${spaceId}`;
       const currentCount = parseInt(localStorage.getItem(countKey) || '0');
       localStorage.setItem(countKey, String(currentCount + 1));
-      
+
       return true;
     } catch (error) {
       console.error('Error in fallback follow:', error);
@@ -172,12 +172,12 @@ export class SpaceFollowService {
       const followed = JSON.parse(localStorage.getItem(key) || '[]');
       const updated = followed.filter((id: string) => id !== spaceId);
       localStorage.setItem(key, JSON.stringify(updated));
-      
+
       // Update follower count
       const countKey = `space_followers_${spaceId}`;
       const currentCount = parseInt(localStorage.getItem(countKey) || '0');
       localStorage.setItem(countKey, String(Math.max(0, currentCount - 1)));
-      
+
       return true;
     } catch (error) {
       console.error('Error in fallback unfollow:', error);

@@ -104,7 +104,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
 
         // Sort by creation date (newest first)
         userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        
+
         setPublishedQuests(userQuests);
       } catch (error) {
         console.error('Error loading published quests from Supabase:', error);
@@ -133,7 +133,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
 
             // Sort by creation date (newest first)
             userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-            
+
             setPublishedQuests(userQuests);
           } catch (error) {
             console.error('Error loading published quests from Supabase:', error);
@@ -147,7 +147,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
       // Also clear selected quest if it was deleted
       setSelectedQuestId(null);
     };
-    
+
     window.addEventListener('questDeleted', handleQuestDeleted);
     return () => {
       window.removeEventListener('questDeleted', handleQuestDeleted);
@@ -164,10 +164,10 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
         if (savedDrafts) {
           try {
             const draftsList: QuestDraft[] = JSON.parse(savedDrafts);
-            const filteredDrafts = spaceId 
+            const filteredDrafts = spaceId
               ? draftsList.filter(d => {
-                  return d.spaceId === spaceId || !d.spaceId;
-                })
+                return d.spaceId === spaceId || !d.spaceId;
+              })
               : draftsList;
             filteredDrafts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
             setDrafts(filteredDrafts);
@@ -176,7 +176,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
           }
         }
       }
-      
+
       if (activeTab === 'published') {
         // Reload published quests from Supabase only
         const loadPublishedQuests = async () => {
@@ -190,7 +190,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
 
             userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             setPublishedQuests(userQuests);
-            } catch (error) {
+          } catch (error) {
             console.error('Error reloading published quests from Supabase:', error);
           } finally {
             setIsLoadingPublished(false);
@@ -237,8 +237,8 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
           if (existingWinners.length === 0 && quest.expiresAt && quest.distributionType && quest.numberOfWinners) {
             // Calculate winners if quest has ended and winners haven't been calculated
             try {
-              const numWinners = typeof quest.numberOfWinners === 'string' 
-                ? parseInt(quest.numberOfWinners, 10) 
+              const numWinners = typeof quest.numberOfWinners === 'string'
+                ? parseInt(quest.numberOfWinners, 10)
                 : quest.numberOfWinners;
               if (numWinners > 0) {
                 calculateAndSaveWinners(
@@ -260,7 +260,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
           const bTime = b.expiresAt || b.createdAt || 0;
           return bTime - aTime;
         });
-        
+
         setWinnersQuests(concludedQuests);
       } catch (error) {
         console.error('Error loading winners quests:', error);
@@ -283,7 +283,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     try {
       // Find the quest in published quests
       let questToEdit: Quest | null = null;
-      
+
       // Try to find in published quests from localStorage
       const publishedQuestsKey = `published_quests_${address.toLowerCase()}`;
       const storedPublishedQuests = localStorage.getItem(publishedQuestsKey);
@@ -311,20 +311,20 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
       const now = Date.now();
       const isExpired = questToEdit.expiresAt && questToEdit.expiresAt < now;
       const hasCompletions = questToEdit.completedBy && questToEdit.completedBy.length > 0;
-      
+
       if (isExpired) {
         showToast('Cannot edit quest: Quest has already expired', 'error');
         return;
       }
-      
+
       if (hasCompletions) {
         showToast('Cannot edit quest: Users have already completed and claimed IQ points', 'error');
         return;
       }
 
       // Convert quest to draft format
-      const draftId = `draft_${questId}_${Date.now()}`;
-      
+      const draftId = `quest_draft_${questId}_${Date.now()}`;
+
       // Convert requirements back to actions format
       const selectedActions = questToEdit.requirements?.map((req: any) => {
         let config = {};
@@ -337,7 +337,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
         } catch (e) {
           config = {};
         }
-        
+
         return {
           type: req.type || 'action',
           title: req.description || '',
@@ -386,7 +386,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     // Check if we're editing a published quest
     const isEditingPublished = selectedDraftId ? localStorage.getItem(`editing_quest_${selectedDraftId}`) !== null : false;
     const originalQuestId = selectedDraftId ? localStorage.getItem(`editing_quest_${selectedDraftId}`) || undefined : undefined;
-    
+
     return (
       <CreateQuestBuilder
         onBack={() => {
@@ -417,7 +417,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
       {onBack && (
         <button className="builder-quests-back-button" onClick={onBack}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
+            <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Back
         </button>
@@ -469,7 +469,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
                 <div className="builder-quests-draft-header">
                   <div className="builder-quests-draft-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                     </svg>
                   </div>
                   <div className="builder-quests-draft-status">
@@ -522,8 +522,8 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
             >
               <div className="builder-quests-draft-new-content">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
                 <span className="builder-quests-draft-new-text">Create New Quest</span>
               </div>
@@ -533,7 +533,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
           <div className="builder-quests-empty-state">
             <div className="builder-quests-empty-icon">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
             </div>
             <h2 className="builder-quests-empty-title">No drafts found</h2>
@@ -546,8 +546,8 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
               onCreateQuest?.();
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               Create Quest
             </button>
@@ -563,7 +563,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
             <h2 className="builder-quests-empty-title">Loading published quests...</h2>
           </div>
         ) : selectedQuestId ? (
-          <QuestDetail 
+          <QuestDetail
             questId={selectedQuestId}
             onBack={() => setSelectedQuestId(null)}
             isFromBuilder={true}
@@ -581,7 +581,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
                 <div className="builder-quests-draft-header">
                   <div className="builder-quests-draft-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                     </svg>
                   </div>
                   <div className="builder-quests-draft-status">
@@ -604,7 +604,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
           <div className="builder-quests-empty-state">
             <div className="builder-quests-empty-icon">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
             </div>
             <h2 className="builder-quests-empty-title">No published quests found</h2>
@@ -623,7 +623,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
             <h2 className="builder-quests-empty-title">Loading winners quests...</h2>
           </div>
         ) : selectedQuestId ? (
-          <QuestWinnersView 
+          <QuestWinnersView
             questId={selectedQuestId}
             onBack={() => setSelectedQuestId(null)}
           />
@@ -708,7 +708,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
       try {
         // Load quest from localStorage or backend
         let foundQuest: Quest | null = null;
-        
+
         if (isAdminUser) {
           // Admin can search all localStorage keys for quests
           const allKeys = Object.keys(localStorage);
@@ -769,8 +769,8 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
             try {
               const calculatedWinners = calculateAndSaveWinners(
                 questId,
-                typeof foundQuest.numberOfWinners === 'string' 
-                  ? parseInt(foundQuest.numberOfWinners, 10) 
+                typeof foundQuest.numberOfWinners === 'string'
+                  ? parseInt(foundQuest.numberOfWinners, 10)
                   : foundQuest.numberOfWinners,
                 foundQuest.distributionType,
                 foundQuest.expiresAt
@@ -891,18 +891,18 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <button 
-        className="builder-quests-back-button" 
+      <button
+        className="builder-quests-back-button"
         onClick={onBack}
         style={{ marginBottom: '2rem' }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
+          <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
         Back to Winners
       </button>
 
-      <div style={{ 
+      <div style={{
         background: 'rgba(26, 31, 53, 0.3)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: '16px',
@@ -916,9 +916,9 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
           {quest.description}
         </p>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <span style={{ 
-            padding: '0.5rem 1rem', 
-            background: 'rgba(251, 191, 36, 0.2)', 
+          <span style={{
+            padding: '0.5rem 1rem',
+            background: 'rgba(251, 191, 36, 0.2)',
             color: '#fbbf24',
             borderRadius: '8px',
             fontSize: '0.875rem',
@@ -927,9 +927,9 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
             {quest.distributionType?.toUpperCase() || 'FCFS'}
           </span>
           {quest.expiresAt && (
-            <span style={{ 
-              padding: '0.5rem 1rem', 
-              background: 'rgba(255, 255, 255, 0.05)', 
+            <span style={{
+              padding: '0.5rem 1rem',
+              background: 'rgba(255, 255, 255, 0.05)',
               color: 'rgba(255, 255, 255, 0.7)',
               borderRadius: '8px',
               fontSize: '0.875rem'
@@ -940,7 +940,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
         </div>
       </div>
 
-      <div style={{ 
+      <div style={{
         background: 'rgba(26, 31, 53, 0.3)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: '16px',
@@ -981,7 +981,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
               {isDistributing ? (
                 <>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display: 'inline-block', marginRight: '8px', animation: 'spin 1s linear infinite' }}>
-                    <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                    <path d="M21 12a9 9 0 11-6.219-8.56" />
                   </svg>
                   Distributing...
                 </>
@@ -1013,7 +1013,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
             {winners.map((winnerAddress, index) => {
               const completion = completions.find(c => c.address.toLowerCase() === winnerAddress.toLowerCase());
               return (
-                <div 
+                <div
                   key={winnerAddress}
                   style={{
                     display: 'flex',
@@ -1066,9 +1066,9 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
             })}
           </div>
         ) : (
-          <div style={{ 
-            padding: '3rem', 
-            textAlign: 'center', 
+          <div style={{
+            padding: '3rem',
+            textAlign: 'center',
             color: 'rgba(255, 255, 255, 0.6)'
           }}>
             <p>No winners selected yet.</p>
@@ -1082,7 +1082,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
       </div>
 
       {completions.length > 0 && (
-        <div style={{ 
+        <div style={{
           background: 'rgba(26, 31, 53, 0.3)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '16px',
@@ -1098,7 +1098,7 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
               .map((completion, index) => {
                 const isWinner = winners.includes(completion.address.toLowerCase());
                 return (
-                  <div 
+                  <div
                     key={completion.address}
                     style={{
                       display: 'flex',
@@ -1111,8 +1111,8 @@ function QuestWinnersView({ questId, onBack }: QuestWinnersViewProps) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ 
-                        fontSize: '0.875rem', 
+                      <span style={{
+                        fontSize: '0.875rem',
                         color: 'rgba(255, 255, 255, 0.5)',
                         minWidth: '2rem'
                       }}>

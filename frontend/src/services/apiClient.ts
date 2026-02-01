@@ -214,6 +214,11 @@ class ApiClient {
   async delete(url: string, config?: any) {
     return this.client.delete(url, config);
   }
+  // Analytics endpoints
+  async getBuilderAnalytics(creatorAddress: string) {
+    const response = await this.client.get(`/analytics/builder/${creatorAddress}`);
+    return response.data;
+  }
 }
 
 // Export singleton instance

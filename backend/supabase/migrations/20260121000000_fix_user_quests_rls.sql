@@ -10,3 +10,4 @@ ALTER TABLE user_quests DISABLE ROW LEVEL SECURITY;
 -- Optional: If you want to keep RLS enabled but allow service role access, use this instead:
 -- CREATE POLICY "service_role_user_quests" ON user_quests
 --   FOR ALL USING (true);
+

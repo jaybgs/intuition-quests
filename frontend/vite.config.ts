@@ -29,5 +29,18 @@ export default defineConfig({
   css: {
     devSourcemap: true,
   },
+  // Proxy API requests to backend
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/social': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
+  },
 });
 

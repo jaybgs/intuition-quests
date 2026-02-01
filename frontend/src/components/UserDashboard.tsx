@@ -126,6 +126,9 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   // Track quest completions count from database
   const [questsCompletedCount, setQuestsCompletedCount] = useState(0);
 
+  // Track IQ balance from database
+  const [iqBalance, setIqBalance] = useState(0);
+
   // Store previous stats to prevent flickering during loading
   const [previousStats, setPreviousStats] = useState({
     claimsStaked: 0,
@@ -193,6 +196,26 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       }
     };
     fetchQuestsCompleted();
+  }, [address]);
+
+  // Fetch IQ balance from database when address changes
+  useEffect(() => {
+    const fetchIqBalance = async () => {
+      if (address) {
+        try {
+          const response = await fetch(`/api/quests/iq-balance/${address}`);
+          const data = await response.json();
+          if (data.success) {
+            setIqBalance(data.iqBalance || 0);
+          }
+        } catch (error) {
+          console.error('Error fetching IQ balance:', error);
+        }
+      } else {
+        setIqBalance(0);
+      }
+    };
+    fetchIqBalance();
   }, [address]);
 
   // Get user stats from backend or use defaults
@@ -485,12 +508,12 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
                   <div
                     className="iq-progress-bar-fill"
                     style={{
-                      width: `${Math.min(100, (currentLevelXP / possibleXP) * 100)}%`,
+                      width: `${Math.min(100, (iqBalance % 100))}%`,
                     }}
                   />
                 </div>
                 <span className="iq-progress-text">
-                  {currentLevelXP} / {possibleXP} IQ
+                  {iqBalance} IQ
                 </span>
               </div>
 

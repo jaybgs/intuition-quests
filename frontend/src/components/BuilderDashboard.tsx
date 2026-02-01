@@ -5,7 +5,7 @@ import type { Space } from '../types';
 import { useQuests } from '../hooks/useQuests';
 import { useAdmin } from '../hooks/useAdmin';
 import { useBuilderStats } from '../hooks/useBuilderStats';
-import { useScrollAnimation } from '../hooks/useScrollAnimation';
+
 import { useSubscription } from '../hooks/useSubscription';
 import { BuilderSettings } from './BuilderSettings';
 import { BuilderQuests } from './BuilderQuests';
@@ -545,7 +545,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
             <>
               <div style={{ marginBottom: '0.5rem' }}>
                 <BlurText
-                  text="Creator's Dashboard"
+                  text="Space Dashboard"
                   delay={150}
                   animateBy="words"
                   direction="top"
@@ -572,7 +572,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                 <Reveal delay={100}>
                   <div className="builder-stat-card">
                     <div className="builder-stat-icon checkmark">
-                      <span style={{ fontSize: '24px' }}>✅</span>
+                      <img src="/intuition-logo.png" alt="Intuition" style={{ width: '54px', height: '54px' }} />
                     </div>
                     <div className="builder-stat-content">
                       <div className="builder-stat-label">Rewards Distributed</div>
@@ -630,7 +630,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
                   <Reveal delay={500} width="100%">
                     <div className="builder-staked-card">
                       <div className="builder-staked-icon">
-                        <span style={{ fontSize: '32px' }}>🔒</span>
+                        <img src="/intuition-logo.png" alt="Intuition" style={{ width: '72px', height: '72px' }} />
                       </div>
                       <div className="builder-staked-info">
                         <div className="builder-staked-label">Staked</div>

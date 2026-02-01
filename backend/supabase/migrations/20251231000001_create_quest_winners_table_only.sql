@@ -26,3 +26,4 @@ ALTER TABLE quest_winners ENABLE ROW LEVEL SECURITY;
 -- Create RLS Policies
 CREATE POLICY "public_read_quest_winners" ON quest_winners FOR SELECT USING (true);
 CREATE POLICY "service_role_manage_quest_winners" ON quest_winners FOR ALL USING (true);
+

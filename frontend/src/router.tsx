@@ -37,7 +37,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'builder-dashboard',
-        element: <App initialTab="builder-dashboard" />,
+        element: <Navigate to="/space-dashboard" replace />,
+      },
+      {
+        path: 'space-dashboard',
+        element: <App initialTab="space-dashboard" />,
       },
       {
         path: 'create-space',

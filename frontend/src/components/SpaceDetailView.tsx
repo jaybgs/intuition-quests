@@ -279,9 +279,9 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                                 <button
                                     className="space-detail-follow-button"
                                     onClick={() => onBuilderAccess(space.id)}
-                                    title={isAdminLoggedIn && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
+                                    title={isAdminLoggedIn && !isOwner ? "Admin: Access Space Dashboard" : "Space Dashboard"}
                                 >
-                                    {isAdminLoggedIn && !isOwner ? "Admin: Builder Dashboard" : "Builder Dashboard"}
+                                    {isAdminLoggedIn && !isOwner ? "Admin: Space Dashboard" : "Space Dashboard"}
                                 </button>
                             )}
                             {!isOwner && (
@@ -326,7 +326,7 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                                     <button
                                         className="space-detail-follow-button mobile-follow-btn"
                                         onClick={() => onBuilderAccess(space.id)}
-                                        title={isAdminLoggedIn && !isOwner ? "Admin: Access Builder Dashboard" : "Builder Dashboard"}
+                                        title={isAdminLoggedIn && !isOwner ? "Admin: Access Space Dashboard" : "Space Dashboard"}
                                     >
                                         {isAdminLoggedIn && !isOwner ? "Admin: Dashboard" : "Dashboard"}
                                     </button>

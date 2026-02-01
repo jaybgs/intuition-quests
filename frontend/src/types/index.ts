@@ -67,6 +67,7 @@ export interface LeaderboardEntry {
   rank: number;
   address: string;
   totalXP: number;
+  iqBalance?: number; // Added IQ balance
   questsCompleted: number;
   displayName?: string;
 }
@@ -96,5 +97,6 @@ export interface Space {
   atomId?: string; // Intuition atom ID created on-chain
   atomTransactionHash?: string; // Transaction hash of atom creation
   followerCount?: number; // Count of followers (fetched dynamically)
+  isPro?: boolean; // Whether the space owner has a Pro subscription
 }
 

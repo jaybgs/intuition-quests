@@ -13,6 +13,7 @@ import questDraftRoutes from './routes/questDrafts.js';
 import questRoutes from './routes/quests.js';
 import socialRoutes from './routes/social.js';
 import subscriptionRoutes from './routes/subscription.js';
+import analyticsRoutes from './routes/analytics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,12 +35,12 @@ const corsOptions = {
       'http://127.0.0.1:5173',
       'http://127.0.0.1:3000',
     ];
-    
+
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
       return callback(null, true);
     }
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -59,8 +60,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'TrustQuests API is running',
     timestamp: new Date().toISOString(),
   });
@@ -75,6 +76,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/spaces', spaceRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -80,17 +80,14 @@ export class FollowService {
         .select('id')
         .eq('user_address', userAddress.toLowerCase())
         .eq('space_id', spaceId)
-        .single();
+        .limit(1);
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          return false; // Not found = not following
-        }
         console.error('Error checking follow status:', error);
         return false;
       }
 
-      return !!data;
+      return data && data.length > 0;
     } catch (error) {
       console.error('Error checking follow status:', error);
       return false;

@@ -22,15 +22,15 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
   const leaderboard: LeaderboardEntry[] = leaderboardData || [];
 
   useEffect(() => {
-      // Find user's rank
+    // Find user's rank
     if (address && leaderboard.length > 0) {
-      const rank = leaderboard.findIndex(entry => 
+      const rank = leaderboard.findIndex(entry =>
         entry.address.toLowerCase() === address.toLowerCase()
-        );
-        setUserRank(rank >= 0 ? rank + 1 : null);
+      );
+      setUserRank(rank >= 0 ? rank + 1 : null);
     } else {
       setUserRank(null);
-      }
+    }
   }, [address, leaderboard]);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
       setFilteredLeaderboard(leaderboard);
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = leaderboard.filter(entry => 
+      const filtered = leaderboard.filter(entry =>
         entry.displayName?.toLowerCase().includes(query) ||
         entry.address.toLowerCase().includes(query)
       );
@@ -71,7 +71,7 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
         <div className="full-leaderboard-header">
           <button className="back-button" onClick={onBack}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
+              <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Back
           </button>
@@ -108,8 +108,8 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
 
           <div className="full-leaderboard-search">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
             </svg>
             <input
               type="text"
@@ -124,8 +124,8 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
                 onClick={() => setSearchQuery('')}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             )}
@@ -136,7 +136,7 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
           <div className="full-leaderboard-user-rank">
             <div className="user-rank-badge">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
               Your Rank: #{userRank}
             </div>
@@ -199,7 +199,7 @@ export function FullLeaderboard({ onBack }: FullLeaderboardProps) {
                       </td>
                       <td>
                         <div className="full-leaderboard-xp">
-                          {entry.totalXP.toLocaleString()} IQ
+                          {(entry.iqBalance ?? entry.totalXP).toLocaleString()} IQ
                         </div>
                       </td>
                       <td>

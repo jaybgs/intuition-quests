@@ -12,6 +12,7 @@ import {
   checkBalance,
   getQuestDeposit,
   getGracePeriod,
+  getMinDeposit,
 } from '../services/questEscrowService';
 import { questDraftService } from '../services/questDraftService';
 import { createQuestAtom } from '../services/questAtomService';
@@ -997,6 +998,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
     accountUrl?: string;
     accountName?: string;
     customTitle?: string;
+    url?: string;
     pollConfig?: {
       questions?: Array<{
         id: string;
@@ -1372,7 +1374,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
 
     try {
       // Generate draft ID if it doesn't exist
-      const draftIdToSave = questDraftId || `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const draftIdToSave = questDraftId || `quest_draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       if (!questDraftId) {
         setQuestDraftId(draftIdToSave);
       }
@@ -1529,7 +1531,9 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       const expirationTimestamp = endDate && endTime ? new Date(`${endDate}T${endTime}`).getTime() : 0;
 
       // Create quest atom
-      const questIdForAtom = questDraftId || `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // ALWAYS generate a new ID for the published quest to ensure it starts with 'quest_' and matches backend
+      const publishedQuestId = `quest_${publishedAt}_${Math.random().toString(36).substr(2, 9)}`;
+      const questIdForAtom = publishedQuestId;
       const atomResult = await createQuestAtom(
         {
           questId: questIdForAtom,
@@ -1584,7 +1588,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
       const startTimeStr = new Date(publishedAt).toTimeString().split(' ')[0].slice(0, 5);
 
       const completeQuestData = {
-        id: `quest_${publishedAt}_${Math.random().toString(36).substr(2, 9)}`,
+        id: publishedQuestId,
         title: title.trim(),
         description: description.trim(),
         projectId,
@@ -1909,6 +1913,19 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         );
         setIsDepositing(false);
         return;
+      }
+
+      // Check minimum deposit from contract
+      try {
+        const minDepositStr = await getMinDeposit(client);
+        const minDepositVal = parseEther(minDepositStr);
+        if (totalCost < minDepositVal) {
+          showToast(`Deposit amount too low. Minimum required: ${minDepositStr} TRUST`, 'error');
+          setIsDepositing(false);
+          return;
+        }
+      } catch (e) {
+        console.warn('Could not check min deposit, proceeding:', e);
       }
 
       // Calculate quest expiry time
@@ -3271,24 +3288,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                           }}
                         />
                       )}
-                      {selectedActions[editingActionIndex]?.title === 'Open Link' && (
-                        <OpenLinkEditor
-                          config={{
-                            ...(editingActionConfig.openLinkConfig || {}),
-                            customTitle: editingActionConfig.customTitle
-                          }}
-                          onChange={(openLinkConfig) => {
-                            setEditingActionConfig({
-                              ...editingActionConfig,
-                              openLinkConfig: {
-                                link: openLinkConfig.link,
-                                ctaText: openLinkConfig.ctaText
-                              },
-                              customTitle: openLinkConfig.customTitle
-                            });
-                          }}
-                        />
-                      )}
+
                       {selectedActions[editingActionIndex]?.title === 'Visit website' && (
                         <>
                           <div className="create-quest-builder-field">
@@ -3515,6 +3515,35 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                           </div>
                         </>
                       )}
+                      {selectedActions[editingActionIndex]?.title === 'Open Link' && (
+                        <>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Custom Title
+                            </label>
+                            <input
+                              type="text"
+                              className="create-quest-builder-input"
+                              placeholder="Enter custom title (optional)"
+                              value={editingActionConfig.customTitle || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
+                            />
+                          </div>
+                          <div className="create-quest-builder-field">
+                            <label className="create-quest-builder-label">
+                              Link URL <span className="required-asterisk">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="create-quest-builder-input"
+                              placeholder="https://example.com"
+                              value={editingActionConfig.url || ''}
+                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, url: e.target.value })}
+                            />
+                            <p className="create-quest-builder-hint">Enter the URL to open</p>
+                          </div>
+                        </>
+                      )}
                       {selectedActions[editingActionIndex]?.title === 'Staked on a claim' && (
                         <StakedOnClaimEditor
                           config={{
@@ -3589,20 +3618,21 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                           disabled={
                             selectedActions[editingActionIndex]?.title === 'Poll' ||
                               selectedActions[editingActionIndex]?.title === 'Quiz' ||
-                              selectedActions[editingActionIndex]?.title === 'Open Link' ||
                               selectedActions[editingActionIndex]?.title === 'Wait'
                               ? false
-                              : selectedActions[editingActionIndex]?.title === 'Read docs'
-                                ? !(editingActionConfig.readDocsConfig?.documents && editingActionConfig.readDocsConfig.documents.length > 0 && editingActionConfig.readDocsConfig.documents.every((doc: string) => doc.trim()))
-                                : selectedActions[editingActionIndex]?.title === 'Visit website'
-                                  ? !editingActionConfig.accountUrl
-                                  : selectedActions[editingActionIndex]?.title === 'Staked on a claim'
-                                    ? !(editingActionConfig.stakedClaimConfig?.checkAllClaims || editingActionConfig.stakedClaimConfig?.claimId)
-                                    : selectedActions[editingActionIndex]?.title === 'Hold a token'
-                                      ? !(editingActionConfig.holdTokenConfig?.tokenContractAddress && editingActionConfig.holdTokenConfig?.tokenAmount)
-                                      : selectedActions[editingActionIndex]?.title === 'Hold an NFT'
-                                        ? !(editingActionConfig.holdNFTConfig?.nftContractAddress && editingActionConfig.holdNFTConfig?.nftAmount)
-                                        : !editingActionConfig.accountUrl && !editingActionConfig.accountName
+                              : selectedActions[editingActionIndex]?.title === 'Open Link'
+                                ? !editingActionConfig.url
+                                : selectedActions[editingActionIndex]?.title === 'Read docs'
+                                  ? !(editingActionConfig.readDocsConfig?.documents && editingActionConfig.readDocsConfig.documents.length > 0 && editingActionConfig.readDocsConfig.documents.every((doc: string) => doc.trim()))
+                                  : selectedActions[editingActionIndex]?.title === 'Visit website'
+                                    ? !editingActionConfig.accountUrl
+                                    : selectedActions[editingActionIndex]?.title === 'Staked on a claim'
+                                      ? !(editingActionConfig.stakedClaimConfig?.checkAllClaims || editingActionConfig.stakedClaimConfig?.claimId)
+                                      : selectedActions[editingActionIndex]?.title === 'Hold a token'
+                                        ? !(editingActionConfig.holdTokenConfig?.tokenContractAddress && editingActionConfig.holdTokenConfig?.tokenAmount)
+                                        : selectedActions[editingActionIndex]?.title === 'Hold an NFT'
+                                          ? !(editingActionConfig.holdNFTConfig?.nftContractAddress && editingActionConfig.holdNFTConfig?.nftAmount)
+                                          : !editingActionConfig.accountUrl && !editingActionConfig.accountName
                           }
                         >
                           Save

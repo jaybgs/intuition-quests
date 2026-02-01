@@ -1,0 +1,379 @@
+.creator-dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    min-height: 100vh;
+}
+
+.creator-dashboard-header {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.creator-dashboard-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.creator-dashboard-header p {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.creator-dashboard-error {
+    background: #fee;
+    border: 1px solid #fcc;
+    color: #c33;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-weight: 500;
+}
+
+.creator-dashboard-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 16px;
+}
+
+.creator-dashboard-tabs .tab {
+    padding: 12px 24px;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.creator-dashboard-tabs .tab:hover {
+    background: #f7fafc;
+    color: #334155;
+}
+
+.creator-dashboard-tabs .tab.active {
+    color: #667eea;
+    background: #f0f4ff;
+}
+
+.creator-dashboard-tabs .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -18px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #667eea;
+}
+
+.creator-dashboard-loading {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 1.2rem;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.creator-dashboard-empty {
+    text-align: center;
+    padding: 80px 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e0;
+}
+
+.creator-dashboard-empty h2 {
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+    color: #334155;
+}
+
+.creator-dashboard-empty p {
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+.creator-dashboard-quests {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+.creator-quest-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.creator-quest-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.quest-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 12px;
+}
+
+.quest-card-header h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.3;
+    flex: 1;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.status-badge.expired {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.distributing_rewards {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.rewards_distributed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.quest-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-row .label {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.detail-row .value {
+    font-size: 0.95rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.detail-row .value.tx-hash {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #667eea;
+}
+
+.quest-card-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: white;
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+.btn-secondary:hover {
+    background: #f0f4ff;
+}
+
+.iq-only-message {
+    padding: 12px 20px;
+    text-align: center;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Winners Modal */
+.winners-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.winners-modal {
+    background: white;
+    border-radius: 16px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.winners-list {
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.winners-list table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.winners-list thead {
+    background: #f8fafc;
+    position: sticky;
+    top: 0;
+}
+
+.winners-list th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.winners-list td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.winners-list .wallet-address {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #667eea;
+}
+
+.distribution-status {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.distribution-status.distributed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.distribution-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+@media (max-width: 768px) {
+    .creator-dashboard-quests {
+        grid-template-columns: 1fr;
+    }
+
+    .creator-dashboard-tabs {
+        flex-direction: column;
+    }
+
+    .quest-card-actions {
+        flex-direction: column;
+    }
+}

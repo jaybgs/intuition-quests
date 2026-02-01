@@ -28,9 +28,9 @@ export const CONTRACT_ADDRESSES = {
   // Holds deposited rewards until quest ends, then distributes to winners
   QUEST_ESCROW: '0xeD01f2340e55f081bD572572F1a883276b11827b' as `0x${string}`,
 
-  // Contract 4: Claim IQ - UPDATED Jan 28, 2026
+  // Contract 4: Claim IQ - UPDATED Jan 30, 2026 - Redeployed with funds accumulation fix
   // Secured with ReentrancyGuard + Checks-Effects-Interactions
-  CLAIM_IQ: '0x240A2a6a11704618F20b0807099738acEfe462D9' as `0x${string}`,
+  CLAIM_IQ: '0x507736bC7D79bf5588a8A94ab62c82C69592F514' as `0x${string}`,
 
   // Trust Quests Payment - PRO SUBSCRIPTION (Native TRUST tokens)
   // Updated: Dec 31, 2025 - Added reset functions for testing

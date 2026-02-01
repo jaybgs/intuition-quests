@@ -61,8 +61,38 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({ isOp
         const lowerId = id.toLowerCase();
         const lowerName = name.toLowerCase();
 
+        // Exact matches preferred
+        if (lowerId === 'injected' || lowerName === 'injected') {
+            // Generic wallet icon for injected provider
+            return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgMTJWMhhjMCAxLjEtLjkgMi0yIDJINmMtMS4xIDAtMi0uOS0yLTJ2LTZINGEyIDIgMCAwIDEgMi0yaDE2bC0zLTZINlY1YzAtMS4xLjktMiAyLTJ6Ii8+PHBhdGggZD0iTTEyIDEyVjZoNCIvPjwvc3ZnPg==';
+        }
+
         if (lowerId.includes('metamask') || lowerName.includes('metamask')) {
-            return '/metamask.svg';
+            return '/metamask.png';
+        }
+        if (lowerId.includes('rabby') || lowerName.includes('rabby')) {
+            return '/rabby wallet.png';
+        }
+        if (lowerId.includes('zeal') || lowerName.includes('zeal')) {
+            return '/zeal.png';
+        }
+        if (lowerId.includes('zerion') || lowerName.includes('zerion')) {
+            return '/zerion.png';
+        }
+        if (lowerId.includes('phantom') || lowerName.includes('phantom')) {
+            return '/phantom.png';
+        }
+        if (lowerId.includes('solflare') || lowerName.includes('solflare')) {
+            return '/solflare.png';
+        }
+        if (lowerId.includes('okx') || lowerName.includes('okx')) {
+            return '/okx.png';
+        }
+        if (lowerId.includes('brave') || lowerName.includes('brave')) {
+            return '/brave.png';
+        }
+        if (lowerId.includes('trust') || lowerName.includes('trust')) {
+            return '/trust wallet.webp';
         }
         if (lowerId.includes('coinbase') || lowerName.includes('coinbase')) {
             return '/coinbase.svg';
@@ -70,8 +100,9 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({ isOp
         if (lowerId.includes('walletconnect') || lowerName.includes('walletconnect')) {
             return '/walletconnect.svg';
         }
-        // Default generic wallet icon
-        return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgMTJWMhhjMCAxLjEtLjkgMi0yIDJINmMtMS4xIDAtMi0uOS0yLTJ2LTZINGEyIDIgMCAwIDEgMi0yaDE2bC0zLTZINlY1YzAtMS4xLjktMiAyLTJ6Ii8+PHBhdGggZD0iTTEyIDEyVjZoNCIvPjwvc3ZnPg==';
+
+        // Default generic wallet icon (Blue filled wallet)
+        return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNiODJmNiI+PHBhdGggZD0iTTQgNEMyLjg5NTQzIDQgMiA0Ljg5NTQzIDIgNlYxOEMyIDE5LjEwNDYgMi44OTU0MyAyMCA0IDIwSDIwQzIxLjEwNDYgMjAgMjIgMTkuMTA0NiAyMiAxOFYxMy41QzIyIDEzLjUgMjIgMTIuNSAyMiAxMi41QzIyIDEyLjUgMjIgMTEuNSAyMiAxMS41VjZDMjIgNC44OTU0MyAyMS4xMDQ2IDQgMjAgNEg0Wk0yMCA2SDRWMThIMjBWMTQuMDUzQzE5LjcyNzcgMTQuMjg2MiAxOS4zODA3IDE0LjUgMTkgMTQuNUgxNkMxNS40NDc3IDE0LjUgMTUgMTQuMDUyMyAxNSAxMy41VjEwLjVDMTUgOS45NDc3MiAxNS40NDc3IDkuNSAxNiA5LjVIMTlDMTkuMzgwNyA5LjUgMTkuNzI3NyA5LjcxMzg1IDIwIDkuOTQ3MDFWNloiLz48L3N2Zz4=';
     };
 
     const handleConnect = (connector: any) => {

@@ -115,6 +115,38 @@ router.get('/earnings/:walletAddress', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/quests/creator/:walletAddress - Get all quests created by a wallet
+router.get('/creator/:walletAddress', async (req: Request, res: Response) => {
+  try {
+    const { walletAddress } = req.params;
+
+    if (!walletAddress) {
+      return res.status(400).json({ error: 'Wallet address is required' });
+    }
+
+    // Fetch all quests created by this wallet
+    const { data: quests, error } = await supabase
+      .from('published_quests')
+      .select('*')
+      .eq('creator_address', walletAddress.toLowerCase())
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching creator quests:', error);
+      return res.status(500).json({ error: 'Failed to fetch creator quests' });
+    }
+
+    res.json({
+      success: true,
+      quests: quests || []
+    });
+
+  } catch (error) {
+    console.error('Error in creator quests endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/quests/:questId/select-winners - Select winners for expired quest
 router.post('/:questId/select-winners', authenticateWallet, async (req: Request, res: Response) => {
   try {
@@ -279,8 +311,49 @@ const createQuestSchema = z.object({
   questVersion: z.number().optional(),
 });
 
+// GET /api/quests - Get all published quests
+router.get('/', async (req, res) => {
+  try {
+    const { data: quests, error } = await supabase
+      .from('published_quests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching quests:', error);
+      return res.status(500).json({ error: 'Failed to fetch quests' });
+    }
+
+    res.json({ success: true, quests: quests || [] });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/quests/:questId/completions - Get completions for a specific quest
-/* ... existing code ... */
+router.get('/:questId/completions', async (req: Request, res: Response) => {
+  try {
+    const { questId } = req.params;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+
+    const { data: completions, error } = await supabase
+      .from('user_quests')
+      .select('wallet_address, completed_at, iq_earned')
+      .eq('quest_id', questId)
+      .order('completed_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching quest completions:', error);
+      return res.status(500).json({ error: 'Failed to fetch completions' });
+    }
+
+    res.json({ success: true, completions: completions || [] });
+  } catch (error: any) {
+    console.error('Error in completions endpoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // POST /api/quests - Create/publish a new quest
 router.post('/', authenticateWallet, async (req: Request, res: Response) => {
@@ -317,7 +390,7 @@ router.post('/', authenticateWallet, async (req: Request, res: Response) => {
         start_at: validated.startAt,
         start_date: validated.startDate || null,
         start_time: validated.startTime || null,
-        creator_address: validated.creatorAddress,
+        creator_address: validated.creatorAddress.toLowerCase(),
         atom_id: validated.atomId || null,
         atom_transaction_hash: validated.atomTransactionHash || null,
         distribution_type: validated.distributionType,
@@ -363,6 +436,21 @@ router.post('/complete', authenticateWallet, async (req: Request, res: Response)
     const { questId } = validated;
     const walletAddress = req.walletAddress;
 
+    // Fetch the quest details to get the correct IQ points
+    const { data: questData, error: questError } = await supabase
+      .from('published_quests')
+      .select('iq_points')
+      .eq('id', questId)
+      .single();
+
+    if (questError || !questData) {
+      console.error('Error fetching quest details:', questError);
+      return res.status(404).json({ error: 'Quest not found' });
+    }
+
+    const iqReward = questData.iq_points || 20; // Use actual IQ points, fallback to 20 only if missing
+    console.log(`💰 Awarding ${iqReward} IQ points for quest completion`);
+
     // Check if already completed
     const { data: existing } = await supabase
       .from('user_quests')
@@ -384,8 +472,9 @@ router.post('/complete', authenticateWallet, async (req: Request, res: Response)
       .insert({
         wallet_address: walletAddress,
         quest_id: questId,
-        iq_earned: 20, // IQ points awarded immediately upon completion
-        // trust_earned will be set to 0 by default and updated later during reward distribution
+        iq_earned: iqReward, // Use dynamic IQ reward
+        // trust_earned: 0, // Removed to prevent PGRST204 error (column missing in DB)
+        completed_at: new Date().toISOString(), // Ensure completion time is set
       })
       .select();
 
@@ -400,8 +489,204 @@ router.post('/complete', authenticateWallet, async (req: Request, res: Response)
 
     console.log('Quest completion saved to user_quests:', userQuestData);
 
-    // Note: XP updates and earnings are handled separately
-    // This keeps quest completion simple and focused on recording completion
+    // 2. Update published_quests.completed_by array
+    // This is CRITICAL for quest listings to show accurate completion counts
+    try {
+      // First try using completionService (handles XP and leaderboard too)
+      await completionService.completeQuest(questId, walletAddress);
+      console.log('✅ completionService.completeQuest executed successfully');
+    } catch (completionError: any) {
+      console.error('⚠️ completionService.completeQuest failed:', completionError.message);
+
+      // FALLBACK: Directly update published_quests.completed_by
+      console.log('📝 Attempting direct update to published_quests.completed_by...');
+      try {
+        const { data: currentQuest, error: fetchError } = await supabase
+          .from('published_quests')
+          .select('completed_by')
+          .eq('id', questId)
+          .single();
+
+        if (!fetchError && currentQuest) {
+          const completedBy = currentQuest.completed_by || [];
+          if (!completedBy.includes(walletAddress.toLowerCase())) {
+            completedBy.push(walletAddress.toLowerCase());
+
+            const { error: updateError } = await supabase
+              .from('published_quests')
+              .update({ completed_by: completedBy })
+              .eq('id', questId);
+
+            if (updateError) {
+              console.error('❌ Failed to update published_quests.completed_by:', updateError);
+            } else {
+              console.log('✅ Successfully updated published_quests.completed_by');
+            }
+          }
+        }
+      } catch (fallbackError: any) {
+        console.error('❌ Fallback update also failed:', fallbackError);
+      }
+    }
+
+    // 3. Update user_earnings (IQ Rewards)
+    // This is critical for the "Earnings" tab to match actual completions
+    try {
+      // iqReward is already defined above from quest data
+
+      // Check if earnings record exists
+      const { data: earnings, error: earningsFetchError } = await supabase
+        .from('user_earnings')
+        .select('*')
+        .eq('wallet_address', walletAddress)
+        .single();
+
+      if (earningsFetchError && earningsFetchError.code !== 'PGRST116') {
+        console.error('Error fetching user_earnings:', earningsFetchError);
+      }
+
+      if (earnings) {
+        // Update existing earnings
+        const { error: updateError } = await supabase
+          .from('user_earnings')
+          .update({
+            quest_rewards: (earnings.quest_rewards || 0) + iqReward,
+            total_trust_earned: (earnings.total_trust_earned || 0) + iqReward, // Assuming trust = IQ for now, or just track total value
+            updated_at: new Date().toISOString()
+          })
+          .eq('wallet_address', walletAddress);
+
+        if (updateError) console.error('Error updating user_earnings:', updateError);
+        else console.log('✅ Updated user_earnings for wallet:', walletAddress);
+
+      } else {
+        // Create new earnings record
+        const { error: insertError } = await supabase
+          .from('user_earnings')
+          .insert({
+            wallet_address: walletAddress,
+            total_trust_earned: iqReward,
+            quest_rewards: iqReward,
+            staking_rewards: 0,
+            referral_rewards: 0,
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) console.error('Error creating user_earnings:', insertError);
+        else console.log('✅ Created new user_earnings for wallet:', walletAddress);
+      }
+
+    } catch (earningsError) {
+      console.error('Error handling user_earnings update:', earningsError);
+    }
+
+    // 4. Update IQ tracking tables (user_iq_balance, iq_earnings_history, leaderboard)
+    try {
+      // Update or create user_iq_balance
+      const { data: iqBalance, error: iqBalanceFetchError } = await supabase
+        .from('user_iq_balance')
+        .select('*')
+        .eq('wallet_address', walletAddress)
+        .single();
+
+      if (iqBalanceFetchError && iqBalanceFetchError.code !== 'PGRST116') {
+        console.error('Error fetching user_iq_balance:', iqBalanceFetchError);
+      }
+
+      if (iqBalance) {
+        // Update existing balance
+        const { error: updateBalanceError } = await supabase
+          .from('user_iq_balance')
+          .update({
+            iq_balance: (iqBalance.iq_balance || 0) + iqReward,
+            total_iq_earned: (iqBalance.total_iq_earned || 0) + iqReward,
+            updated_at: new Date().toISOString()
+          })
+          .eq('wallet_address', walletAddress);
+
+        if (updateBalanceError) console.error('Error updating user_iq_balance:', updateBalanceError);
+        else console.log('✅ Updated user_iq_balance for wallet:', walletAddress);
+      } else {
+        // Create new balance record
+        const { error: insertBalanceError } = await supabase
+          .from('user_iq_balance')
+          .insert({
+            wallet_address: walletAddress,
+            iq_balance: iqReward,
+            total_iq_earned: iqReward,
+            total_iq_spent: 0
+          });
+
+        if (insertBalanceError) console.error('Error creating user_iq_balance:', insertBalanceError);
+        else console.log('✅ Created user_iq_balance for wallet:', walletAddress);
+      }
+
+      // Log to iq_earnings_history
+      const { error: historyError } = await supabase
+        .from('iq_earnings_history')
+        .insert({
+          wallet_address: walletAddress,
+          quest_id: questId,
+          quest_title: questData.title || 'Quest',
+          iq_amount: iqReward,
+          transaction_type: 'quest_completion',
+          description: `Completed quest: ${questData.title || questId}`
+        });
+
+      if (historyError) console.error('Error logging to iq_earnings_history:', historyError);
+      else console.log('✅ Logged IQ earning to history');
+
+      // Update leaderboard
+      const { data: leaderboardEntry, error: leaderboardFetchError } = await supabase
+        .from('leaderboard')
+        .select('*')
+        .ilike('address', walletAddress)
+        .single();
+
+      if (leaderboardFetchError && leaderboardFetchError.code !== 'PGRST116') {
+        console.error('Error fetching leaderboard entry:', leaderboardFetchError);
+      }
+
+      const newIqBalance = (iqBalance?.iq_balance || 0) + iqReward;
+      const questsCompleted = await supabase
+        .from('user_quests')
+        .select('quest_id', { count: 'exact', head: true })
+        .eq('wallet_address', walletAddress);
+
+      if (leaderboardEntry) {
+        // Update existing leaderboard entry
+        const { error: updateLeaderboardError } = await supabase
+          .from('leaderboard')
+          .update({
+            total_xp: (leaderboardEntry.total_xp || 0) + iqReward,
+            iq_balance: newIqBalance,
+            quests_completed: questsCompleted.count || 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', leaderboardEntry.id);
+
+        if (updateLeaderboardError) console.error('Error updating leaderboard:', updateLeaderboardError);
+        else console.log('✅ Updated leaderboard entry');
+      } else {
+        // Create new leaderboard entry
+        const { error: insertLeaderboardError } = await supabase
+          .from('leaderboard')
+          .insert({
+            address: walletAddress,
+            total_xp: iqReward,
+            iq_balance: newIqBalance,
+            quests_completed: questsCompleted.count || 0,
+            rank: 0, // Will be updated by rank calculation
+            level: 1
+          });
+
+        if (insertLeaderboardError) console.error('Error creating leaderboard entry:', insertLeaderboardError);
+        else console.log('✅ Created leaderboard entry');
+      }
+
+    } catch (iqTrackingError) {
+      console.error('Error handling IQ tracking update:', iqTrackingError);
+    }
 
     res.json({ success: true, message: 'Quest completed successfully' });
   } catch (error: any) {
@@ -426,11 +711,37 @@ router.get('/stats/:walletAddress', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to fetch quest stats' });
     }
 
+    res.json({ success: true, count: count || 0 });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/quests/iq-balance/:walletAddress - Get IQ balance for wallet
+router.get('/iq-balance/:walletAddress', async (req: Request, res: Response) => {
+  try {
+    const { walletAddress } = req.params;
+
+    const { data: iqBalance, error } = await supabase
+      .from('user_iq_balance')
+      .select('*')
+      .eq('wallet_address', walletAddress.toLowerCase())
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching IQ balance:', error);
+      return res.status(500).json({ error: 'Failed to fetch IQ balance' });
+    }
+
+    // Return 0 if no balance record exists  
     res.json({
-      totalCompleted: count || 0,
-      walletAddress: walletAddress.toLowerCase()
+      success: true,
+      iqBalance: iqBalance?.iq_balance || 0,
+      totalEarned: iqBalance?.total_iq_earned || 0,
+      totalSpent: iqBalance?.total_iq_spent || 0
     });
   } catch (error: any) {
+    console.error('Error in IQ balance endpoint:', error);
     res.status(500).json({ error: error.message });
   }
 });

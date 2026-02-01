@@ -1,35 +1,42 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense, useTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { useAccount, useConnect, useDisconnect, useSwitchChain, useBalance } from 'wagmi';
-import { QuestList } from './components/QuestList';
-import { Leaderboard } from './components/Leaderboard';
-import { CreateQuest } from './components/CreateQuest';
-import { UserProfile } from './components/UserProfile';
-import { WeeklyHighlights } from './components/WeeklyHighlights';
-import { UserDashboard } from './components/UserDashboard';
-import { EditProfile } from './components/EditProfile';
-import { SignupModal } from './components/SignupModal';
-import { OnboardingSetup } from './components/OnboardingSetup';
-import { ToastContainer, showToast } from './components/Toast';
-import { Search } from './components/Search';
-import { Community } from './components/Community';
-import { AllQuests } from './components/AllQuests';
-import { Rewards } from './components/Rewards';
-import { QuestDetail } from './components/QuestDetail';
-import { Bounties } from './components/Bounties';
-import { Raids } from './components/Raids';
-import { SpaceBuilder } from './components/SpaceBuilder';
-import { SpaceDetailView } from './components/SpaceDetailView';
-import { BuilderDashboard } from './components/BuilderDashboard';
-import { SubscriptionModal } from './components/SubscriptionModal';
-import { Spaces } from './components/Spaces';
-import { AdminLogin } from './components/AdminLogin';
+
+// Lazy load route components for memory optimization
+const QuestList = lazy(() => import('./components/QuestList').then(m => ({ default: m.QuestList })));
+const Leaderboard = lazy(() => import('./components/Leaderboard').then(m => ({ default: m.Leaderboard })));
+const CreateQuest = lazy(() => import('./components/CreateQuest').then(m => ({ default: m.CreateQuest })));
+const UserProfile = lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
+const WeeklyHighlights = lazy(() => import('./components/WeeklyHighlights').then(m => ({ default: m.WeeklyHighlights })));
+const UserDashboard = lazy(() => import('./components/UserDashboard').then(m => ({ default: m.UserDashboard })));
+const EditProfile = lazy(() => import('./components/EditProfile').then(m => ({ default: m.EditProfile })));
+const SignupModal = lazy(() => import('./components/SignupModal').then(m => ({ default: m.SignupModal })));
+const OnboardingSetup = lazy(() => import('./components/OnboardingSetup').then(m => ({ default: m.OnboardingSetup })));
+// Toast is critical, load eagerly? Or lazy is fine.
+const ToastContainer = lazy(() => import('./components/Toast').then(m => ({ default: m.ToastContainer })));
+import { showToast } from './components/Toast'; // Keep showToast eager as it is a function
+const Search = lazy(() => import('./components/Search').then(m => ({ default: m.Search })));
+const Community = lazy(() => import('./components/Community').then(m => ({ default: m.Community })));
+const AllQuests = lazy(() => import('./components/AllQuests').then(m => ({ default: m.AllQuests })));
+const Rewards = lazy(() => import('./components/Rewards').then(m => ({ default: m.Rewards })));
+const QuestDetail = lazy(() => import('./components/QuestDetail').then(m => ({ default: m.QuestDetail })));
+const Bounties = lazy(() => import('./components/Bounties').then(m => ({ default: m.Bounties })));
+const Raids = lazy(() => import('./components/Raids').then(m => ({ default: m.Raids })));
+const SpaceBuilder = lazy(() => import('./components/SpaceBuilder').then(m => ({ default: m.SpaceBuilder })));
+const SpaceDetailView = lazy(() => import('./components/SpaceDetailView').then(m => ({ default: m.SpaceDetailView })));
+const BuilderDashboard = lazy(() => import('./components/BuilderDashboard').then(m => ({ default: m.BuilderDashboard })));
+const CreatorDashboard = lazy(() => import('./components/CreatorDashboard').then(m => ({ default: m.CreatorDashboard })));
+const SubscriptionModal = lazy(() => import('./components/SubscriptionModal').then(m => ({ default: m.SubscriptionModal })));
+const Spaces = lazy(() => import('./components/Spaces').then(m => ({ default: m.Spaces })));
+const AdminLogin = lazy(() => import('./components/AdminLogin').then(m => ({ default: m.AdminLogin })));
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { FAQButton } from './components/FAQButton';
-import { HighlightsEditor } from './components/HighlightsEditor';
-import Footer from './components/Footer';
+const FAQButton = lazy(() => import('./components/FAQButton').then(m => ({ default: m.FAQButton })));
+const HighlightsEditor = lazy(() => import('./components/HighlightsEditor').then(m => ({ default: m.HighlightsEditor })));
+
+import Footer from './components/Footer'; // Keep footer eager for layout stability, or lazy if huge.
+
 import { spaceService } from './services/spaceService';
 import { questServiceSupabase } from './services/questServiceSupabase';
 import { apiClient } from './services/apiClient';
@@ -174,9 +181,10 @@ interface ProfileDropdownProps {
   onDisconnect: () => void;
   onProfileClick: () => void;
   onBuilderProfileClick?: () => void;
+  spaceName?: string;
 }
 
-function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfileClick }: ProfileDropdownProps) {
+function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfileClick, spaceName }: ProfileDropdownProps) {
   const profilePic = getStoredProfilePic(address);
   const username = getStoredUsername(address);
   const [isOpen, setIsOpen] = useState(false);
@@ -209,6 +217,12 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
     if (!value) return '0.00';
     const num = Number(value) / 1e18;
     return num >= 1 ? num.toFixed(2) : num.toFixed(4);
+  };
+
+  // Abbreviate space name if too long
+  const abbreviateSpaceName = (name: string, maxLength: number = 20): string => {
+    if (name.length <= maxLength) return name;
+    return name.substring(0, maxLength - 3) + '...';
   };
 
   return (
@@ -244,7 +258,7 @@ function ProfileDropdown({ address, onDisconnect, onProfileClick, onBuilderProfi
                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
                 <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
-              Builder Dashboard
+              {spaceName ? abbreviateSpaceName(spaceName) : 'Space Dashboard'}
             </button>
           )}
           <button onClick={() => { onDisconnect(); setIsOpen(false); }}>
@@ -269,12 +283,14 @@ function LoginButton({
   onProfileClick,
   onBuilderProfileClick,
   onDisconnect,
-  onShowLoginModal
+  onShowLoginModal,
+  spaceName
 }: {
   onProfileClick: () => void;
   onBuilderProfileClick?: () => void;
   onDisconnect: () => void;
   onShowLoginModal: () => void;
+  spaceName?: string;
 }) {
   const { address, isConnected, chainId } = useAccount();
   const { isPending, error: connectError } = useConnect();
@@ -342,6 +358,7 @@ function LoginButton({
         onDisconnect={onDisconnect}
         onProfileClick={onProfileClick}
         onBuilderProfileClick={onBuilderProfileClick}
+        spaceName={spaceName}
       />
     );
   }
@@ -366,7 +383,14 @@ interface AppContentProps {
 
 function AppContent({ initialTab = 'discover', questName = null, spaceName = null }: AppContentProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'builder-dashboard' | 'all-quests' | 'edit-slideshow'>(initialTab as any);
+  const [isPending, startTransition] = useTransition();
+  const [activeTab, _setActiveTab] = useState<'quests' | 'leaderboard' | 'create' | 'profile' | 'discover' | 'community' | 'rewards' | 'bounties' | 'raids' | 'dashboard' | 'edit-profile' | 'full-leaderboard' | 'quest-detail' | 'space-builder' | 'space-detail' | 'space-dashboard' | 'all-quests' | 'edit-slideshow'>(initialTab as any);
+
+  const setActiveTab = useCallback((tab: any) => {
+    startTransition(() => {
+      _setActiveTab(tab);
+    });
+  }, []);
 
   // Try to restore selectedSpace from localStorage on mount
   const getInitialSpace = (): Space | null => {
@@ -442,6 +466,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [isDatabasePro, setIsDatabasePro] = useState<boolean | null>(null);
   const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdmin();
   const { isPro: isLocalPro } = useSubscription();
+  const [userSpace, setUserSpace] = useState<Space | null>(null);
 
   // Auto-logout admin on mobile devices (real mobile only, not desktop resize)
   /*
@@ -562,24 +587,47 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     }
   }, [activeTab, initialTab, selectedSpace]);
 
+  // Fetch user's space for dropdown display
+  useEffect(() => {
+    const fetchUserSpace = async () => {
+      if (address && isConnected) {
+        try {
+          const spaces = await spaceService.getSpacesByOwner(address);
+          if (spaces.length > 0) {
+            setUserSpace(spaces[0]); // Get the first space
+            setHasCreatedSpaces(true);
+          } else {
+            setUserSpace(null);
+            setHasCreatedSpaces(false);
+          }
+        } catch (error) {
+          console.error('Error fetching user space:', error);
+          setUserSpace(null);
+          setHasCreatedSpaces(false);
+        }
+      } else {
+        setUserSpace(null);
+        setHasCreatedSpaces(false);
+      }
+    };
+
+    fetchUserSpace();
+  }, [address, isConnected]);
+
+
   // Restore quest from localStorage or URL when on quest-detail tab
   useEffect(() => {
     if ((activeTab === 'quest-detail' || initialTab === 'quest-detail') && !selectedQuestId) {
-      // First, try to get from localStorage
-      const storedQuestId = localStorage.getItem('selectedQuestId');
-      if (storedQuestId) {
-        console.log('📦 Restoring quest from localStorage:', storedQuestId);
-        setSelectedQuestId(storedQuestId);
-        return;
-      }
-
-      // If not in localStorage, try to get from URL (questName)
+      // First, check if we have a questName from URL (prioritize deep links)
       if (questName) {
         const decodedQuestName = decodeURIComponent(questName);
         console.log('📦 Using questName from URL as questId:', decodedQuestName);
         setSelectedQuestId(decodedQuestName);
-        localStorage.setItem('selectedQuestId', decodedQuestName);
+        // Don't save to localStorage yet, let the validation logic below handle it
+        return;
       }
+
+      // Removed localStorage fallback (User Request) to prevent loading stale drafts
     }
   }, [activeTab, initialTab, selectedQuestId, questName]);
 
@@ -629,7 +677,20 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
     if (questName) {
       // Check if questName is actually a questId (starts with 'quest_' or matches ID pattern)
       const decodedQuestName = decodeURIComponent(questName);
-      const isQuestId = decodedQuestName.startsWith('quest_') || decodedQuestName.length > 20;
+
+      // Explicitly check for draft vs published quest
+      const isDraftId = decodedQuestName.startsWith('quest_draft_');
+      const isQuestId = (decodedQuestName.startsWith('quest_') && !isDraftId) || decodedQuestName.length > 20;
+
+      if (isDraftId) {
+        console.log('🔍 Detected draft ID in URL, redirecting to builder:', decodedQuestName);
+        // If we have a draft ID in the URL, we should likely be in builder mode
+        // For now, let's just not treat it as a published quest ID
+        // The router should handle /builder/draft/:id properly if configured, 
+        // but if we are here (QuestDetail route), we should probably redirect
+        window.location.hash = `#/builder?draftId=${decodedQuestName}`;
+        return;
+      }
 
       if (isQuestId) {
         // If it's a questId, use it directly
@@ -835,7 +896,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       'bounties': '/bounties',
       'raids': '/raids',
       'dashboard': '/dashboard',
-      'builder-dashboard': '/builder-dashboard',
+      'space-dashboard': '/space-dashboard',
       'space-builder': '/create-space',
       'create': '/create-quest',
       'edit-slideshow': '/edit-slideshow',
@@ -1252,9 +1313,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
             setShowMobileProfileMenu(false);
           }}
           onBuilderProfileClick={hasCreatedSpaces ? () => {
-            navigateToTab('builder-dashboard');
+            navigateToTab('space-dashboard');
             setShowMobileProfileMenu(false);
           } : undefined}
+          spaceName={userSpace?.name}
         />
       )}
 
@@ -1344,7 +1406,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                 isAdmin={isAdminAuthenticated}
                 onBuilderAccess={(space) => {
                   setSelectedSpaceId(space.id);
-                  navigateToTab('builder-dashboard');
+                  navigateToTab('space-dashboard');
                 }}
               />
             </div>
@@ -1382,9 +1444,10 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
 
             <LoginButton
               onProfileClick={() => navigateToTab('dashboard')}
-              onBuilderProfileClick={hasCreatedSpaces ? () => navigateToTab('builder-dashboard') : undefined}
+              onBuilderProfileClick={hasCreatedSpaces ? () => navigateToTab('space-dashboard') : undefined}
               onDisconnect={handleDisconnect}
               onShowLoginModal={() => setShowWalletModal(true)}
+              spaceName={userSpace?.name}
             />
 
             {!isConnected && (
@@ -1437,471 +1500,525 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         </header>
 
         <main className="app-main">
-          {showOnboarding ? (
-            <OnboardingSetup onComplete={() => {
-              setShowOnboarding(false);
-              navigateToTab('discover');
-            }} />
-          ) : (
-            <>
-              {activeTab === 'quests' && (
-                <QuestList
-                  onQuestClick={(questId) => {
-                    setSelectedQuestId(questId);
-                    navigateToTab('quest-detail', { questId });
-                  }}
-                />
-              )}
+          <Suspense fallback={
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '50vh',
+              width: '100%',
+              color: 'rgba(255, 255, 255, 0.5)'
+            }}>
+              Loading...
+            </div>
+          }>
+            {showOnboarding ? (
+              <OnboardingSetup onComplete={() => {
+                setShowOnboarding(false);
+                navigateToTab('discover');
+              }} />
+            ) : (
+              <>
+                {activeTab === 'quests' && (
+                  <QuestList
+                    onQuestClick={(questId) => {
+                      setSelectedQuestId(questId);
+                      navigateToTab('quest-detail', { questId });
+                    }}
+                  />
+                )}
 
-              {activeTab === 'discover' && (
-                <WeeklyHighlights
-                  onQuestClick={(questId) => {
-                    setSelectedQuestId(questId);
-                    navigateToTab('quest-detail', { questId });
-                  }}
-                  onCreateSpace={async () => {
-                    // Check if user already has a space
-                    if (address) {
-                      try {
-                        const existingSpaces = await spaceService.getSpacesByOwner(address);
-                        if (existingSpaces.length > 0) {
-                          showToast('You can only create one space. Redirecting to your existing space...', 'warning');
-                          setSelectedSpaceId(existingSpaces[0].id);
-                          navigateToTab('builder-dashboard');
-                          return;
-                        }
-                      } catch (error) {
-                        console.error('Error checking existing spaces:', error);
-                        // Continue with space creation if space check fails
-                      }
-                    }
-
-                    localStorage.setItem('spaceBuilderSource', 'discover');
-                    localStorage.setItem('previousTab', 'discover');
-
-                    // Check database for pro subscription status
-                    console.log('🔍 Checking database for pro subscription...');
-                    const hasDatabasePro = await checkDatabaseProStatus();
-
-                    if (hasDatabasePro) {
-                      console.log('✅ Database confirms pro subscription, proceeding to space builder');
-                      navigateToTab('space-builder');
-                    } else {
-                      console.log('⚠️ Database shows no pro subscription, showing payment modal');
-                      setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
-                        if (tier === 'free') {
-                          // Free users can create spaces with limitations
-                          console.log('✅ Free plan selected, proceeding to space builder with limitations');
-                          navigateToTab('space-builder');
-                        } else {
-                          // Double-check database after pro payment
-                          console.log('🔄 Re-checking database after pro payment...');
-                          const confirmedPro = await checkDatabaseProStatus();
-                          if (confirmedPro) {
-                            console.log('✅ Database confirms pro payment, proceeding to space builder');
-                            navigateToTab('space-builder');
-                          } else {
-                            console.error('❌ Database does not confirm pro subscription after payment');
-                            showToast('Payment verification failed. Please contact support.', 'error');
+                {activeTab === 'discover' && (
+                  <WeeklyHighlights
+                    onQuestClick={(questId) => {
+                      setSelectedQuestId(questId);
+                      navigateToTab('quest-detail', { questId });
+                    }}
+                    onCreateSpace={async () => {
+                      // Check if user already has a space
+                      if (address) {
+                        try {
+                          const existingSpaces = await spaceService.getSpacesByOwner(address);
+                          if (existingSpaces.length > 0) {
+                            showToast('You can only create one space. Redirecting to your existing space...', 'warning');
+                            setSelectedSpaceId(existingSpaces[0].id);
+                            navigateToTab('space-dashboard');
+                            return;
                           }
+                        } catch (error) {
+                          console.error('Error checking existing spaces:', error);
+                          // Continue with space creation if space check fails
                         }
-                      });
-                      setShowSubscriptionModal(true);
-                    }
-                  }}
-                  onSpaceClick={(space) => {
-                    try {
-                      console.log('🔄 Space card clicked, space:', space.name);
+                      }
 
-                      // Store in localStorage first for persistence
+                      localStorage.setItem('spaceBuilderSource', 'discover');
                       localStorage.setItem('previousTab', 'discover');
-                      localStorage.setItem('selectedSpaceId', space.id);
-                      localStorage.setItem('selectedSpace', JSON.stringify(space));
 
-                      // Set space data immediately
-                      setSelectedSpace(space);
-                      setSelectedSpaceId(space.id);
+                      // Check database for pro subscription status
+                      console.log('🔍 Checking database for pro subscription...');
+                      const hasDatabasePro = await checkDatabaseProStatus();
 
-                      // Navigate to space detail using React Router
-                      const spaceSlug = space.slug || (space.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                      console.log('📍 Navigating to space detail:', spaceSlug);
-                      navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name || space.id });
-                    } catch (error) {
-                      console.error('❌ Error navigating to space:', error);
-                      showToast('Failed to load space details', 'error');
-                    }
-                  }}
-                  onSeeMoreSpaces={() => {
-                    navigateToTab('spaces');
-                  }}
-                  isAdmin={isAdminAuthenticated}
-                  onEditHighlights={() => {
-                    navigateToTab('edit-slideshow');
-                  }}
-                />
-              )}
-
-              {activeTab === 'edit-slideshow' && (
-                isAdminAuthenticated ? (
-                  <HighlightsEditor
-                    onBack={() => navigateToTab('discover')}
-                  />
-                ) : (
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '50vh',
-                    padding: '20px',
-                    textAlign: 'center'
-                  }}>
-                    <h2 style={{ color: '#ef4444', marginBottom: '16px' }}>Admin Access Required</h2>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '20px' }}>
-                      You need admin privileges to edit weekly highlights.
-                    </p>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '14px' }}>
-                      Press <kbd style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>Ctrl+Shift+A</kbd> to login as admin.
-                    </p>
-                    <button
-                      onClick={() => navigateToTab('discover')}
-                      style={{
-                        marginTop: '20px',
-                        padding: '10px 20px',
-                        background: 'rgba(59, 130, 246, 0.9)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Back to Discover
-                    </button>
-                  </div>
-                )
-              )}
-
-              {activeTab === 'leaderboard' && <Leaderboard />}
-              {activeTab === 'create' && <CreateQuest />}
-              {activeTab === 'profile' && <UserProfile />}
-              {activeTab === 'dashboard' && <UserDashboard onEditProfile={() => {
-                console.log('onEditProfile called, setting activeTab to edit-profile');
-                console.log('Current activeTab before:', activeTab);
-                setActiveTab('edit-profile');
-                console.log('Set activeTab to edit-profile');
-              }} />}
-              {activeTab === 'edit-profile' && (() => {
-                console.log('Rendering EditProfile component');
-                return <EditProfile onBack={() => {
-                  console.log('EditProfile onBack called');
-                  setActiveTab('dashboard');
-                  navigate('/dashboard');
-                }} />;
-              })()}
-              {activeTab === 'community' && (
-                <Community
-                  onSeeMoreLeaderboard={() => setActiveTab('full-leaderboard')}
-                  onQuestClick={(questId) => {
-                    setSelectedQuestId(questId);
-                    navigateToTab('quest-detail', { questId });
-                  }}
-                  onCreateSpace={async () => {
-                    // Check if user already has a space
-                    if (address) {
-                      try {
-                        const existingSpaces = await spaceService.getSpacesByOwner(address);
-                        if (existingSpaces.length > 0) {
-                          showToast('You can only create one space. Redirecting to your existing space...', 'warning');
-                          setSelectedSpaceId(existingSpaces[0].id);
-                          navigateToTab('builder-dashboard');
-                          return;
-                        }
-                      } catch (error) {
-                        console.error('Error checking existing spaces:', error);
-                        // Continue with space creation if space check fails
-                      }
-                    }
-
-                    localStorage.setItem('spaceBuilderSource', 'community');
-                    localStorage.setItem('previousTab', 'community');
-
-                    // Check database for pro subscription status
-                    console.log('🔍 Checking database for pro subscription...');
-                    const hasDatabasePro = await checkDatabaseProStatus();
-
-                    if (hasDatabasePro) {
-                      console.log('✅ Database confirms pro subscription, proceeding to space builder');
-                      navigateToTab('space-builder');
-                    } else {
-                      console.log('⚠️ Database shows no pro subscription, showing payment modal');
-                      setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
-                        if (tier === 'free') {
-                          // Free users can create spaces with limitations
-                          console.log('✅ Free plan selected, proceeding to space builder with limitations');
-                          navigateToTab('space-builder');
-                        } else {
-                          // Double-check database after pro payment
-                          console.log('🔄 Re-checking database after pro payment...');
-                          const confirmedPro = await checkDatabaseProStatus();
-                          if (confirmedPro) {
-                            console.log('✅ Database confirms pro payment, proceeding to space builder');
+                      if (hasDatabasePro) {
+                        console.log('✅ Database confirms pro subscription, proceeding to space builder');
+                        navigateToTab('space-builder');
+                      } else {
+                        console.log('⚠️ Database shows no pro subscription, showing payment modal');
+                        setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
+                          if (tier === 'free') {
+                            // Free users can create spaces with limitations
+                            console.log('✅ Free plan selected, proceeding to space builder with limitations');
                             navigateToTab('space-builder');
                           } else {
-                            console.error('❌ Database does not confirm pro subscription after payment');
-                            showToast('Payment verification failed. Please contact support.', 'error');
+                            // Double-check database after pro payment
+                            console.log('🔄 Re-checking database after pro payment...');
+                            const confirmedPro = await checkDatabaseProStatus();
+                            if (confirmedPro) {
+                              console.log('✅ Database confirms pro payment, proceeding to space builder');
+                              navigateToTab('space-builder');
+                            } else {
+                              console.error('❌ Database does not confirm pro subscription after payment');
+                              showToast('Payment verification failed. Please contact support.', 'error');
+                            }
                           }
-                        }
-                      });
-                      setShowSubscriptionModal(true);
-                    }
-                  }}
-                  onSeeMoreQuests={() => setActiveTab('all-quests')}
-                />
-              )}
-              {activeTab === 'rewards' && <Rewards />}
-              {activeTab === 'bounties' && <Bounties />}
-              {activeTab === 'raids' && <Raids />}
-              {activeTab === 'full-leaderboard' && <Leaderboard />}
-              {activeTab === 'all-quests' && (
-                <AllQuests
-                  onBack={() => navigateToTab('community')}
-                  onQuestClick={(questId) => {
-                    setSelectedQuestId(questId);
-                    navigateToTab('quest-detail', { questId });
-                  }}
-                />
-              )}
-              {(() => {
-                if (activeTab !== 'quest-detail') return null;
-                const qId = selectedQuestId || questName;
-                if (!qId) return null;
-                return (
-                  <QuestDetail
-                    key={`quest-detail-${qId}`}
-                    questId={qId}
-                    onBack={() => {
-                      // Always navigate back to community as per user request
-                      // The button label is "Back to Community"
-                      navigateToTab('community');
+                        });
+                        setShowSubscriptionModal(true);
+                      }
                     }}
-                    onNavigateToProfile={() => {
-                      // Navigate to user dashboard
-                      navigateToTab('dashboard');
+                    onSpaceClick={(space) => {
+                      try {
+                        console.log('🔄 Space card clicked, space:', space.name);
+
+                        // Store in localStorage first for persistence
+                        localStorage.setItem('previousTab', 'discover');
+                        localStorage.setItem('selectedSpaceId', space.id);
+                        localStorage.setItem('selectedSpace', JSON.stringify(space));
+
+                        // Set space data immediately
+                        setSelectedSpace(space);
+                        setSelectedSpaceId(space.id);
+
+                        // Navigate to space detail using React Router
+                        const spaceSlug = space.slug || (space.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                        console.log('📍 Navigating to space detail:', spaceSlug);
+                        navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name || space.id });
+                      } catch (error) {
+                        console.error('❌ Error navigating to space:', error);
+                        showToast('Failed to load space details', 'error');
+                      }
+                    }}
+                    onSeeMoreSpaces={() => {
+                      navigateToTab('spaces');
+                    }}
+                    isAdmin={isAdminAuthenticated}
+                    onEditHighlights={() => {
+                      navigateToTab('edit-slideshow');
                     }}
                   />
-                );
-              })()}
-              {activeTab === 'space-builder' && (
-                <SpaceBuilder
-                  onSpaceCreated={(spaceId) => {
-                    setSelectedSpaceId(spaceId);
-                    // Update hasCreatedSpaces immediately
-                    setHasCreatedSpaces(true);
-                    // Dispatch event to trigger refresh
-                    window.dispatchEvent(new CustomEvent('spaceCreated'));
-                    const source = localStorage.getItem('spaceBuilderSource') || 'discover';
-                    const previousTab = localStorage.getItem('previousTab') || source;
-                    navigateToTab('builder-dashboard');
-                  }}
-                  onBack={() => {
-                    const previousTab = localStorage.getItem('previousTab') || 'discover';
-                    navigateToTab(previousTab);
-                  }}
-                />
-              )}
-              {(() => {
-                const isSpaceDetailTab = activeTab === 'space-detail' || initialTab === 'space-detail';
-                console.log('🎯 Rendering check - activeTab:', activeTab, 'initialTab:', initialTab, 'selectedSpace:', selectedSpace?.name, 'isSpaceDetailTab:', isSpaceDetailTab);
+                )}
 
-                if (isSpaceDetailTab && selectedSpace) {
+                {activeTab === 'edit-slideshow' && (
+                  isAdminAuthenticated ? (
+                    <HighlightsEditor
+                      onBack={() => navigateToTab('discover')}
+                    />
+                  ) : (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: '50vh',
+                      padding: '20px',
+                      textAlign: 'center'
+                    }}>
+                      <h2 style={{ color: '#ef4444', marginBottom: '16px' }}>Admin Access Required</h2>
+                      <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '20px' }}>
+                        You need admin privileges to edit weekly highlights.
+                      </p>
+                      <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '14px' }}>
+                        Press <kbd style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>Ctrl+Shift+A</kbd> to login as admin.
+                      </p>
+                      <button
+                        onClick={() => navigateToTab('discover')}
+                        style={{
+                          marginTop: '20px',
+                          padding: '10px 20px',
+                          background: 'rgba(59, 130, 246, 0.9)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Back to Discover
+                      </button>
+                    </div>
+                  )
+                )}
+
+                {activeTab === 'leaderboard' && <Leaderboard />}
+                {activeTab === 'create' && <CreateQuest />}
+                {activeTab === 'profile' && <UserProfile />}
+                {activeTab === 'dashboard' && <UserDashboard onEditProfile={() => {
+                  console.log('onEditProfile called, setting activeTab to edit-profile');
+                  console.log('Current activeTab before:', activeTab);
+                  setActiveTab('edit-profile');
+                  console.log('Set activeTab to edit-profile');
+                }} />}
+                {activeTab === 'edit-profile' && (() => {
+                  console.log('Rendering EditProfile component');
+                  return <EditProfile onBack={() => {
+                    console.log('EditProfile onBack called');
+                    setActiveTab('dashboard');
+                    navigate('/dashboard');
+                  }} />;
+                })()}
+                {activeTab === 'community' && (
+                  <Community
+                    onSeeMoreLeaderboard={() => setActiveTab('full-leaderboard')}
+                    onQuestClick={(questId) => {
+                      setSelectedQuestId(questId);
+                      navigateToTab('quest-detail', { questId });
+                    }}
+                    onCreateSpace={async () => {
+                      // Check if user already has a space
+                      if (address) {
+                        try {
+                          const existingSpaces = await spaceService.getSpacesByOwner(address);
+                          if (existingSpaces.length > 0) {
+                            showToast('You can only create one space. Redirecting to your existing space...', 'warning');
+                            setSelectedSpaceId(existingSpaces[0].id);
+                            navigateToTab('space-dashboard');
+                            return;
+                          }
+                        } catch (error) {
+                          console.error('Error checking existing spaces:', error);
+                          // Continue with space creation if space check fails
+                        }
+                      }
+
+                      localStorage.setItem('spaceBuilderSource', 'community');
+                      localStorage.setItem('previousTab', 'community');
+
+                      // Check database for pro subscription status
+                      console.log('🔍 Checking database for pro subscription...');
+                      const hasDatabasePro = await checkDatabaseProStatus();
+
+                      if (hasDatabasePro) {
+                        console.log('✅ Database confirms pro subscription, proceeding to space builder');
+                        navigateToTab('space-builder');
+                      } else {
+                        console.log('⚠️ Database shows no pro subscription, showing payment modal');
+                        setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
+                          if (tier === 'free') {
+                            // Free users can create spaces with limitations
+                            console.log('✅ Free plan selected, proceeding to space builder with limitations');
+                            navigateToTab('space-builder');
+                          } else {
+                            // Double-check database after pro payment
+                            console.log('🔄 Re-checking database after pro payment...');
+                            const confirmedPro = await checkDatabaseProStatus();
+                            if (confirmedPro) {
+                              console.log('✅ Database confirms pro payment, proceeding to space builder');
+                              navigateToTab('space-builder');
+                            } else {
+                              console.error('❌ Database does not confirm pro subscription after payment');
+                              showToast('Payment verification failed. Please contact support.', 'error');
+                            }
+                          }
+                        });
+                        setShowSubscriptionModal(true);
+                      }
+                    }}
+                    onSeeMoreQuests={() => setActiveTab('all-quests')}
+                  />
+                )}
+                {activeTab === 'rewards' && <Rewards />}
+                {activeTab === 'bounties' && <Bounties />}
+                {activeTab === 'raids' && <Raids />}
+                {activeTab === 'full-leaderboard' && <Leaderboard />}
+                {activeTab === 'all-quests' && (
+                  <AllQuests
+                    onBack={() => navigateToTab('community')}
+                    onQuestClick={(questId) => {
+                      setSelectedQuestId(questId);
+                      navigateToTab('quest-detail', { questId });
+                    }}
+                  />
+                )}
+                {(() => {
+                  if (activeTab !== 'quest-detail') return null;
+                  const qId = selectedQuestId || questName;
+                  if (!qId) return null;
                   return (
-                    <SpaceDetailView
-                      key={`space-detail-${selectedSpace.id}`}
-                      space={selectedSpace}
+                    <QuestDetail
+                      key={`quest-detail-${qId}`}
+                      questId={qId}
                       onBack={() => {
-                        const previousTab = localStorage.getItem('previousTab') || 'discover';
-                        navigateToTab(previousTab);
+                        // Always navigate back to community as per user request
+                        // The button label is "Back to Community"
+                        navigateToTab('community');
                       }}
-                      onQuestClick={(questId) => {
-                        console.log('🎯 SpaceDetailView onQuestClick:', questId);
-                        // Store current space-detail as previous tab for back navigation
-                        localStorage.setItem('previousTab', 'space-detail');
-                        // Set quest ID first
-                        setSelectedQuestId(questId);
-                        localStorage.setItem('selectedQuestId', questId);
-                        // Then navigate - use /quest/ format for proper routing
-                        setActiveTab('quest-detail');
-                        navigate(`/quest/${questId}`);
+                      onNavigateToProfile={() => {
+                        // Navigate to user dashboard
+                        navigateToTab('dashboard');
                       }}
-                      onBuilderAccess={(spaceId) => {
-                        console.log('🔧 SpaceDetailView onBuilderAccess called with spaceId:', spaceId);
-                        setSelectedSpaceId(spaceId);
-                        console.log('🔧 Set selectedSpaceId to:', spaceId);
-                        navigateToTab('builder-dashboard');
-                        console.log('🔧 Navigated to builder-dashboard tab');
+                      onNavigateToSpace={async (creatorAddress) => {
+                        try {
+                          // Fetch spaces for the creator
+                          const creatorSpaces = await spaceService.getSpacesByOwner(creatorAddress);
+                          if (creatorSpaces.length > 0) {
+                            // Navigate to the first space
+                            const space = creatorSpaces[0];
+                            setSelectedSpace(space);
+                            setSelectedSpaceId(space.id);
+                            navigateToTab('space-detail');
+                          } else {
+                            showToast('Creator has no space yet', 'error');
+                          }
+                        } catch (error) {
+                          console.error('Error fetching creator space:', error);
+                          showToast('Failed to load creator space', 'error');
+                        }
+                      }}
+                      onSpaceClick={async (spaceId) => {
+                        try {
+                          const space = await spaceService.getSpaceById(spaceId);
+                          if (space) {
+                            setSelectedSpace(space);
+                            setSelectedSpaceId(space.id);
+                            // Navigate to the correct URL to persist state
+                            // Using /space/:slug format
+                            navigate(`/space/${space.slug}`);
+                            setActiveTab('space-detail');
+                          } else {
+                            showToast('Space not found', 'error');
+                          }
+                        } catch (error) {
+                          console.error('Error fetching space:', error);
+                          showToast('Failed to load space', 'error');
+                        }
                       }}
                     />
                   );
-                } else if (isSpaceDetailTab && !selectedSpace) {
-                  return (
-                    <div style={{
-                      padding: '40px',
-                      textAlign: 'center',
-                      color: 'var(--text-secondary)',
-                      minHeight: '400px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <div>
-                        <p>Loading space...</p>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-              {activeTab === 'builder-dashboard' && (() => {
-                console.log('🔧 Rendering BuilderDashboard with selectedSpaceId:', selectedSpaceId);
-                return (
-                  <BuilderDashboard
-                    spaceId={selectedSpaceId || ''}
+                })()}
+                {activeTab === 'space-builder' && (
+                  <SpaceBuilder
+                    onSpaceCreated={(spaceId) => {
+                      setSelectedSpaceId(spaceId);
+                      // Update hasCreatedSpaces immediately
+                      setHasCreatedSpaces(true);
+                      // Dispatch event to trigger refresh
+                      window.dispatchEvent(new CustomEvent('spaceCreated'));
+                      const source = localStorage.getItem('spaceBuilderSource') || 'discover';
+                      const previousTab = localStorage.getItem('previousTab') || source;
+                      navigateToTab('space-dashboard');
+                    }}
                     onBack={() => {
-                      console.log('🔧 BuilderDashboard onBack called, navigating to discover');
-                      navigateToTab('discover');
+                      const previousTab = localStorage.getItem('previousTab') || 'discover';
+                      navigateToTab(previousTab);
                     }}
                   />
-                );
-              })()}
-              {activeTab === 'spaces' && (
-                <Spaces
-                  onSpaceClick={(space) => {
-                    try {
-                      localStorage.setItem('previousTab', 'spaces');
-                      localStorage.setItem('selectedSpaceId', space.id);
-                      localStorage.setItem('selectedSpace', JSON.stringify(space));
-                      setSelectedSpace(space);
-                      setSelectedSpaceId(space.id);
-                      navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name || space.id });
-                    } catch (error) {
-                      console.error('Error navigating to space:', error);
-                      showToast('Failed to load space details', 'error');
-                    }
-                  }}
-                  onCreateSpace={async () => {
-                    // Check if user already has a space
-                    if (address) {
+                )}
+                {(() => {
+                  const isSpaceDetailTab = activeTab === 'space-detail' || initialTab === 'space-detail';
+                  console.log('🎯 Rendering check - activeTab:', activeTab, 'initialTab:', initialTab, 'selectedSpace:', selectedSpace?.name, 'isSpaceDetailTab:', isSpaceDetailTab);
+
+                  if (isSpaceDetailTab && selectedSpace) {
+                    return (
+                      <SpaceDetailView
+                        key={`space-detail-${selectedSpace.id}`}
+                        space={selectedSpace}
+                        onBack={() => {
+                          // Always navigate back to discover as per user request
+                          navigateToTab('discover');
+                        }}
+                        onQuestClick={(questId) => {
+                          console.log('🎯 SpaceDetailView onQuestClick:', questId);
+                          // Store current space-detail as previous tab for back navigation
+                          localStorage.setItem('previousTab', 'space-detail');
+                          // Set quest ID first
+                          setSelectedQuestId(questId);
+                          localStorage.setItem('selectedQuestId', questId);
+                          // Then navigate - use /quest/ format for proper routing
+                          setActiveTab('quest-detail');
+                          navigate(`/quest/${questId}`);
+                        }}
+                        onBuilderAccess={(spaceId) => {
+                          console.log('🔧 SpaceDetailView onBuilderAccess called with spaceId:', spaceId);
+                          setSelectedSpaceId(spaceId);
+                          console.log('🔧 Set selectedSpaceId to:', spaceId);
+                          navigateToTab('space-dashboard');
+                          console.log('🔧 Navigated to space-dashboard tab');
+                        }}
+                      />
+                    );
+                  } else if (isSpaceDetailTab && !selectedSpace) {
+                    return (
+                      <div style={{
+                        padding: '40px',
+                        textAlign: 'center',
+                        color: 'var(--text-secondary)',
+                        minHeight: '400px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <div>
+                          <p>Loading space...</p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+                {activeTab === 'space-dashboard' && (() => {
+                  console.log('🔧 Rendering BuilderDashboard with selectedSpaceId:', selectedSpaceId);
+                  return (
+                    <BuilderDashboard
+                      spaceId={selectedSpaceId || ''}
+                      onBack={() => {
+                        console.log('🔧 BuilderDashboard onBack called, navigating to discover');
+                        navigateToTab('discover');
+                      }}
+                    />
+                  );
+                })()}
+                {activeTab === 'creator-dashboard' && (
+                  <CreatorDashboard />
+                )}
+                {activeTab === 'spaces' && (
+                  <Spaces
+                    onSpaceClick={(space) => {
                       try {
-                        const existingSpaces = await spaceService.getSpacesByOwner(address);
-                        if (existingSpaces.length > 0) {
-                          showToast('You can only create one space. Redirecting to your existing space...', 'warning');
-                          setSelectedSpaceId(existingSpaces[0].id);
-                          navigateToTab('builder-dashboard');
-                          return;
-                        }
+                        localStorage.setItem('previousTab', 'spaces');
+                        localStorage.setItem('selectedSpaceId', space.id);
+                        localStorage.setItem('selectedSpace', JSON.stringify(space));
+                        setSelectedSpace(space);
+                        setSelectedSpaceId(space.id);
+                        navigateToTab('space-detail', { spaceId: space.id, spaceName: space.name || space.id });
                       } catch (error) {
-                        console.error('Error checking existing spaces:', error);
-                        // Continue with space creation if space check fails
+                        console.error('Error navigating to space:', error);
+                        showToast('Failed to load space details', 'error');
                       }
-                    }
+                    }}
+                    onCreateSpace={async () => {
+                      // Check if user already has a space
+                      if (address) {
+                        try {
+                          const existingSpaces = await spaceService.getSpacesByOwner(address);
+                          if (existingSpaces.length > 0) {
+                            showToast('You can only create one space. Redirecting to your existing space...', 'warning');
+                            setSelectedSpaceId(existingSpaces[0].id);
+                            navigateToTab('space-dashboard');
+                            return;
+                          }
+                        } catch (error) {
+                          console.error('Error checking existing spaces:', error);
+                          // Continue with space creation if space check fails
+                        }
+                      }
 
-                    localStorage.setItem('spaceBuilderSource', 'spaces');
-                    localStorage.setItem('previousTab', 'spaces');
+                      localStorage.setItem('spaceBuilderSource', 'spaces');
+                      localStorage.setItem('previousTab', 'spaces');
 
-                    // Check database for pro subscription status
-                    console.log('🔍 Checking database for pro subscription...');
-                    const hasDatabasePro = await checkDatabaseProStatus();
+                      // Check database for pro subscription status
+                      console.log('🔍 Checking database for pro subscription...');
+                      const hasDatabasePro = await checkDatabaseProStatus();
 
-                    if (hasDatabasePro) {
-                      console.log('✅ Database confirms pro subscription, proceeding to space builder');
-                      navigateToTab('space-builder');
-                    } else {
-                      console.log('⚠️ Database shows no pro subscription, showing payment modal');
-                      setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
-                        if (tier === 'free') {
-                          // Free users can create spaces with limitations
-                          console.log('✅ Free plan selected, proceeding to space builder with limitations');
-                          navigateToTab('space-builder');
-                        } else {
-                          // Double-check database after pro payment
-                          console.log('🔄 Re-checking database after pro payment...');
-                          const confirmedPro = await checkDatabaseProStatus();
-                          if (confirmedPro) {
-                            console.log('✅ Database confirms pro payment, proceeding to space builder');
+                      if (hasDatabasePro) {
+                        console.log('✅ Database confirms pro subscription, proceeding to space builder');
+                        navigateToTab('space-builder');
+                      } else {
+                        console.log('⚠️ Database shows no pro subscription, showing payment modal');
+                        setPendingSpaceCreation(() => async (tier: 'free' | 'pro') => {
+                          if (tier === 'free') {
+                            // Free users can create spaces with limitations
+                            console.log('✅ Free plan selected, proceeding to space builder with limitations');
                             navigateToTab('space-builder');
                           } else {
-                            console.error('❌ Database does not confirm pro subscription after payment');
-                            showToast('Payment verification failed. Please contact support.', 'error');
+                            // Double-check database after pro payment
+                            console.log('🔄 Re-checking database after pro payment...');
+                            const confirmedPro = await checkDatabaseProStatus();
+                            if (confirmedPro) {
+                              console.log('✅ Database confirms pro payment, proceeding to space builder');
+                              navigateToTab('space-builder');
+                            } else {
+                              console.error('❌ Database does not confirm pro subscription after payment');
+                              showToast('Payment verification failed. Please contact support.', 'error');
+                            }
                           }
-                        }
-                      });
-                      setShowSubscriptionModal(true);
-                    }
-                  }}
-                />
-              )}
-            </>
-          )}
+                        });
+                        setShowSubscriptionModal(true);
+                      }
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </Suspense>
         </main>
 
         <Footer />
 
-        <SignupModal
-          isOpen={showSignupModal}
-          onClose={() => setShowSignupModal(false)}
-          onSignupComplete={() => {
-            setShowSignupModal(false);
-            if (isConnected && address) {
-              const isNewUser = localStorage.getItem('isNewUser') === 'true';
-              if (isNewUser) {
-                setShowOnboarding(true);
+        <Suspense fallback={null}>
+          <SignupModal
+            isOpen={showSignupModal}
+            onClose={() => setShowSignupModal(false)}
+            onSignupComplete={() => {
+              setShowSignupModal(false);
+              if (isConnected && address) {
+                const isNewUser = localStorage.getItem('isNewUser') === 'true';
+                if (isNewUser) {
+                  setShowOnboarding(true);
+                }
               }
-            }
-          }}
-        />
-        {showOnboarding && (
-          <OnboardingSetup
-            onComplete={() => {
-              setShowOnboarding(false);
-              navigateToTab('discover');
             }}
           />
-        )}
-        <SubscriptionModal
-          isOpen={showSubscriptionModal}
-          onClose={() => {
-            setShowSubscriptionModal(false);
-            setPendingSpaceCreation(null);
-          }}
-          onProceed={(tier: 'free' | 'pro') => {
-            setShowSubscriptionModal(false);
-
-            if (pendingSpaceCreation) {
-              // Pass the selected tier to the pending space creation function
-              pendingSpaceCreation(tier);
+          {showOnboarding && (
+            <OnboardingSetup
+              onComplete={() => {
+                setShowOnboarding(false);
+                navigateToTab('discover');
+              }}
+            />
+          )}
+          <SubscriptionModal
+            isOpen={showSubscriptionModal}
+            onClose={() => {
+              setShowSubscriptionModal(false);
               setPendingSpaceCreation(null);
-            } else if (tier === 'free') {
-              // Fallback: Free users can proceed directly to space builder
-              console.log('✅ Free plan selected, proceeding to space builder');
-              navigateToTab('space-builder');
-            }
-          }}
-        />
-        {showAdminLogin && (
-          <AdminLogin
-            onCancel={() => setShowAdminLogin(false)}
-            onSuccess={() => {
-              setShowAdminLogin(false);
-              showToast('Admin login successful', 'success');
+            }}
+            onProceed={(tier: 'free' | 'pro') => {
+              setShowSubscriptionModal(false);
+
+              if (pendingSpaceCreation) {
+                // Pass the selected tier to the pending space creation function
+                pendingSpaceCreation(tier);
+                setPendingSpaceCreation(null);
+              } else if (tier === 'free') {
+                // Fallback: Free users can proceed directly to space builder
+                console.log('✅ Free plan selected, proceeding to space builder');
+                navigateToTab('space-builder');
+              }
             }}
           />
-        )}
-        <WalletSelectionModal
-          isOpen={showWalletModal}
-          onClose={() => setShowWalletModal(false)}
-        />
-        <ToastContainer />
-        <FAQButton />
+          {showAdminLogin && (
+            <AdminLogin
+              onCancel={() => setShowAdminLogin(false)}
+              onSuccess={() => {
+                setShowAdminLogin(false);
+                showToast('Admin login successful', 'success');
+              }}
+            />
+          )}
+          <WalletSelectionModal
+            isOpen={showWalletModal}
+            onClose={() => setShowWalletModal(false)}
+          />
+          <ToastContainer />
+          <FAQButton />
+        </Suspense>
       </div>
     </div>
   );

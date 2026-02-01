@@ -16,7 +16,8 @@ export default function AppWithRouter() {
     '/bounties': 'bounties',
     '/raids': 'raids',
     '/dashboard': 'dashboard',
-    '/builder-dashboard': 'builder-dashboard',
+    '/space-dashboard': 'space-dashboard',
+    '/creator-dashboard': 'creator-dashboard',
     '/create-space': 'space-builder',
     '/create-quest': 'create',
     '/edit-slideshow': 'edit-slideshow',
@@ -32,7 +33,7 @@ export default function AppWithRouter() {
       console.log('🔍 AppWithRouter: Detected quest route, returning quest-detail');
       return 'quest-detail';
     }
-    if (path.startsWith('/space/') || path.startsWith('/space-')) {
+    if (path.startsWith('/space/') || (path.startsWith('/space-') && path !== '/space-dashboard')) {
       console.log('🔍 AppWithRouter: Detected space route, returning space-detail');
       return 'space-detail';
     }
@@ -75,7 +76,7 @@ export default function AppWithRouter() {
       console.log('🔍 AppWithRouter: Extracted space name from /space/:', spacePart);
       return decodeURIComponent(spacePart);
     }
-    if (path.startsWith('/space-')) {
+    if (path.startsWith('/space-') && path !== '/space-dashboard') {
       const spacePart = path.replace('/space-', '');
       console.log('🔍 AppWithRouter: Extracted space name from /space-:', spacePart);
       return decodeURIComponent(spacePart);

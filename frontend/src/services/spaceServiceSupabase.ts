@@ -28,10 +28,12 @@ export class SpaceServiceSupabase {
         return [];
       }
 
-      return (data || []).map((space: any) => this.mapSpaceFromDb({
+      const spaces = (data || []).map((space: any) => this.mapSpaceFromDb({
         ...space,
         follower_count: space.space_follows?.[0]?.count || 0
       }));
+
+      return this.populateProStatus(spaces);
     } catch (error) {
       console.error('Error fetching spaces from Supabase:', error);
       return [];
@@ -61,7 +63,12 @@ export class SpaceServiceSupabase {
         return this.fallbackGetSpaceById(id);
       }
 
-      return data ? this.mapSpaceFromDb(data) : null;
+      const space = data ? this.mapSpaceFromDb(data) : null;
+      if (space) {
+        const [spaceWithPro] = await this.populateProStatus([space]);
+        return spaceWithPro;
+      }
+      return null;
     } catch (error) {
       console.error('Error fetching space:', error);
       return this.fallbackGetSpaceById(id);
@@ -91,7 +98,12 @@ export class SpaceServiceSupabase {
         return this.fallbackGetSpaceBySlug(slug);
       }
 
-      return data ? this.mapSpaceFromDb(data) : null;
+      const space = data ? this.mapSpaceFromDb(data) : null;
+      if (space) {
+        const [spaceWithPro] = await this.populateProStatus([space]);
+        return spaceWithPro;
+      }
+      return null;
     } catch (error) {
       console.error('Error fetching space by slug:', error);
       return this.fallbackGetSpaceBySlug(slug);
@@ -124,7 +136,8 @@ export class SpaceServiceSupabase {
         return this.fallbackSearchSpaces(query);
       }
 
-      return (data || []).map(space => this.mapSpaceFromDb(space));
+      const spaces = (data || []).map(space => this.mapSpaceFromDb(space));
+      return this.populateProStatus(spaces);
     } catch (error) {
       console.error('Error searching spaces:', error);
       return this.fallbackSearchSpaces(query);
@@ -396,7 +409,8 @@ export class SpaceServiceSupabase {
         return this.fallbackGetSpacesByOwner(ownerAddress);
       }
 
-      return (data || []).map(space => this.mapSpaceFromDb(space));
+      const spaces = (data || []).map(space => this.mapSpaceFromDb(space));
+      return this.populateProStatus(spaces);
     } catch (error) {
       console.error('Error fetching spaces by owner:', error);
       return this.fallbackGetSpacesByOwner(ownerAddress);
@@ -585,6 +599,40 @@ export class SpaceServiceSupabase {
       localStorage.setItem('spaces', JSON.stringify(spaces));
     } catch (error) {
       console.error('Error saving spaces to localStorage:', error);
+    }
+  }
+  /**
+   * Populate isPro status for spaces
+   */
+  private async populateProStatus(spaces: Space[]): Promise<Space[]> {
+    if (spaces.length === 0 || !supabase) return spaces;
+
+    try {
+      // Get unique owner addresses
+      const ownerAddresses = [...new Set(spaces.map(s => s.ownerAddress.toLowerCase()))];
+
+      // Fetch active pro subscriptions
+      const { data, error } = await supabase
+        .from('pro_users')
+        .select('wallet_address')
+        .in('wallet_address', ownerAddresses)
+        .eq('status', 'active')
+        .gt('expires_at', new Date().toISOString());
+
+      if (error) {
+        console.error('Error fetching pro users:', error);
+        return spaces;
+      }
+
+      const proAddresses = new Set((data || []).map((u: any) => u.wallet_address.toLowerCase()));
+
+      return spaces.map(space => ({
+        ...space,
+        isPro: proAddresses.has(space.ownerAddress.toLowerCase())
+      }));
+    } catch (error) {
+      console.error('Error populating pro status:', error);
+      return spaces;
     }
   }
 }

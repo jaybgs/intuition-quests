@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { keccak256, toHex } from 'viem';
 import { useAccount, useWalletClient, usePublicClient, useChainId, useSwitchChain } from 'wagmi';
 import { useQuests } from '../hooks/useQuests';
 import { useSocialConnections } from '../hooks/useSocialConnections';
@@ -20,6 +21,7 @@ import { useWalletSocialConnections } from '../hooks/useWalletSocialConnections'
 import './QuestDetail.css';
 import { QuizModal } from './QuizModal';
 import { PollModal } from './PollModal';
+import { QuizCard } from './QuizCard';
 
 interface QuestDetailProps {
   questId: string;
@@ -27,6 +29,8 @@ interface QuestDetailProps {
   onNavigateToProfile?: () => void;
   isFromBuilder?: boolean;
   onEdit?: (questId: string) => void;
+  onNavigateToSpace?: (creatorAddress: string) => void;
+  onSpaceClick?: (spaceId: string) => void;
 }
 
 type VerificationStatus = 'idle' | 'verifying' | 'verified' | 'failed' | 'cooldown';
@@ -36,13 +40,13 @@ interface StepVerificationState {
   cooldownEnd?: number;
 }
 
-export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilder = false, onEdit }: QuestDetailProps) {
+export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilder = false, onEdit, onNavigateToSpace, onSpaceClick }: QuestDetailProps) {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { quests, completeQuest, isCompleting } = useQuests();
+  const { quests, completeQuest, isCompleting, isLoading: areQuestsLoading } = useQuests();
   const queryClient = useQueryClient();
   const { isPro } = useSubscription();
   const { hasConnectedProvider } = useSocialConnections();
@@ -75,16 +79,24 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   // Task Enforcement State: Track which steps have been clicked/opened
   const [clickedSteps, setClickedSteps] = useState<Record<string, boolean>>({});
 
+  // Quest-Opened Tracking: Disable all verifiers until quest is opened
+  const [questOpened, setQuestOpened] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-
-  // Save verification states to localStorage whenever they change
+  // Mark quest as opened when component mounts (enables verifiers)
   useEffect(() => {
-    if (questId && address && Object.keys(verificationStates).length > 0) {
-      const storageKey = `quest_verification_${questId}_${address.toLowerCase()}`;
-      localStorage.setItem(storageKey, JSON.stringify(verificationStates));
+    setQuestOpened(true); // Enable all verifiers when quest detail opens
+
+    // Optional: Persist to localStorage for analytics/debugging
+    if (questId && address) {
+      const key = `quest_opened_${address}_${questId}`;
+      localStorage.setItem(key, new Date().toISOString());
     }
-  }, [verificationStates, questId, address]);
+  }, [questId, address]);
+
+
+
 
   // Update cooldown timers in real-time
   useEffect(() => {
@@ -112,7 +124,43 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }, 1000); // Update every second
 
     return () => clearInterval(interval);
+
   }, []);
+
+  // Load verification states when address or questId changes
+  useEffect(() => {
+    if (!questId) return;
+
+    if (!address) {
+      setVerificationStates({});
+      return;
+    }
+
+    const loadVerificationStates = async () => {
+      // 1. Reset state first to avoid stale data showing up
+      setVerificationStates({});
+
+      let initialStates: Record<string, StepVerificationState> = {};
+
+      // 2. Fetch from Supabase for cross-device sync
+      try {
+        const completedSteps = await questServiceSupabase.getStepCompletions(questId, address);
+
+        // Merge server state into local state
+        completedSteps.forEach(stepId => {
+          if (!initialStates[stepId] || initialStates[stepId].status !== 'verified') {
+            initialStates[stepId] = { status: 'verified' };
+          }
+        });
+      } catch (error) {
+        console.warn('Error fetching step completions from Supabase:', error);
+      }
+
+      setVerificationStates(initialStates);
+    };
+
+    loadVerificationStates();
+  }, [questId, address]);
 
   // Check if quest is already claimed (both on-chain and database)
   useEffect(() => {
@@ -237,11 +285,16 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     if (!foundQuest && questId && questId.includes('-') && !questId.startsWith('quest_')) {
       // This looks like a slug, try to find quest by title
       const normalizedSlug = questId.toLowerCase().replace(/[^a-z0-9-]/g, '');
-      foundQuest = quests.find(q => {
+      foundQuest = quests.filter(q => {
         if (!q.title) return false;
         const questSlug = q.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         return questSlug === normalizedSlug;
-      });
+      }).sort((a, b) => {
+        // Prioritize IDs that look like UUIDs (not starting with quest_)
+        const aIsUUID = !a.id.startsWith('quest_') && a.id.length > 20;
+        const bIsUUID = !b.id.startsWith('quest_') && b.id.length > 20;
+        return aIsUUID && !bIsUUID ? -1 : !aIsUUID && bIsUUID ? 1 : 0;
+      })[0];
       if (foundQuest) {
         console.log('Found quest by slug match:', foundQuest.title);
       }
@@ -254,8 +307,8 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       // If not found in cached data, try to fetch directly from API
       console.log('Quest not found in cached data, trying direct API fetch:', questId);
 
-      // Check if questId looks like a valid quest ID (starts with 'quest_')
-      if (questId.startsWith('quest_')) {
+      // Check if questId looks like a valid quest ID (starts with 'quest_' but not 'quest_draft_')
+      if (questId.startsWith('quest_') && !questId.startsWith('quest_draft_')) {
         // Fetch by ID
         questServiceSupabase.getQuestById(questId).then(apiQuest => {
           if (apiQuest) {
@@ -270,24 +323,17 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           setIsLoading(false);
         });
       } else {
-        // Try to find by title/slug - fetch all quests and find match
-        questServiceSupabase.getAllQuests().then(allQuests => {
-          const normalizedSlug = questId.toLowerCase().replace(/[^a-z0-9-]/g, '');
-          const matchingQuest = allQuests.find(q => {
-            if (!q.title) return false;
-            const questSlug = q.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-            return questSlug === normalizedSlug;
-          });
-
-          if (matchingQuest) {
-            console.log('Found quest via API search by slug:', matchingQuest.title);
-            processQuest(matchingQuest);
+        // Try to find by title/slug using optimized search
+        questServiceSupabase.getQuestBySlug(questId).then(apiQuest => {
+          if (apiQuest) {
+            console.log('Found quest via API search by slug:', apiQuest.title);
+            processQuest(apiQuest);
           } else {
             console.log('Quest not found in API by slug either, showing not found');
             setIsLoading(false);
           }
         }).catch(error => {
-          console.error('Error fetching quests from API for slug search:', error);
+          console.error('Error fetching quest by slug:', error);
           setIsLoading(false);
         });
       }
@@ -306,6 +352,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           // Parse the requirement to get task details
           let taskTitle = req.description || req.title || `Task ${index + 1}`;
           let taskLink: string | undefined;
+          let formattedLink: string | undefined; // DECLARE AT FUNCTION SCOPE
 
           // Try to parse verification data if it's a string
           try {
@@ -346,8 +393,33 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                   verificationData.inviteUrl;
               }
 
+              // Debug logging for link extraction
+              if (taskTitle?.toLowerCase().includes('link') || taskTitle?.toLowerCase().includes('visit') || taskTitle?.toLowerCase().includes('open')) {
+                console.log('🔗 Task Link Extraction Debug:', {
+                  taskTitle,
+                  taskLink,
+                  formattedLink,
+                  verificationData,
+                  hasNestedConfig: !!verificationData.config,
+                  reqType: req.type
+                });
+              }
+
+              // Format link if it exists (ensure it has protocol)
+              formattedLink = taskLink;
+              if (taskLink && !taskLink.startsWith('http://') && !taskLink.startsWith('https://')) {
+                // Add https:// if missing
+                formattedLink = `https://${taskLink}`;
+              }
+
               // Check if this is a Read docs action
-              if (verificationData.readDocsConfig?.documents || req.type === 'Read docs') {
+              // Robust check: matches type 'Read docs', or generic action with 'read doc' in title
+              // Also ensures readDocsConfig is populated if available in verificationData
+              const isReadDocsType = req.type?.toLowerCase() === 'read docs' || req.type?.toLowerCase() === 'read document';
+              const isReadDocsTitle = taskTitle?.toLowerCase().includes('read doc');
+              const hasReadDocsConfig = !!verificationData.readDocsConfig;
+
+              if (hasReadDocsConfig || isReadDocsType || (req.type === 'action' && isReadDocsTitle)) {
                 return {
                   id: `step-${index + 1}`,
                   title: taskTitle || `Read docs`,
@@ -362,13 +434,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           } catch (e) {
             console.warn('Error parsing requirement verification data:', e);
             // If parsing fails, use description as-is
-          }
-
-          // Format link if it exists (ensure it has protocol)
-          let formattedLink = taskLink;
-          if (taskLink && !taskLink.startsWith('http://') && !taskLink.startsWith('https://')) {
-            // Add https:// if missing
-            formattedLink = `https://${taskLink}`;
           }
 
           return {
@@ -415,6 +480,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
             const taskSteps: QuestStep[] = (localQuest.requirements || []).map((req: any, index: number) => {
               let taskTitle = req.description || req.title || `Task ${index + 1}`;
               let taskLink: string | undefined;
+              let formattedLink: string | undefined; // DECLARE AT FUNCTION SCOPE
 
               // Parse verification/config data
               try {
@@ -451,14 +517,19 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                       verificationData.inviteUrl;
                   }
 
-                  // Check if this is a Read docs action
-                  if (verificationData.readDocsConfig?.documents || req.type === 'Read docs') {
-                    // Format link if it exists (ensure it has protocol)
-                    let formattedLink = taskLink;
-                    if (taskLink && !taskLink.startsWith('http://') && !taskLink.startsWith('https://')) {
-                      formattedLink = `https://${taskLink}`;
-                    }
+                  // Format link if it exists (ensure it has protocol)
+                  formattedLink = taskLink;
+                  if (taskLink && !taskLink.startsWith('http://') && !taskLink.startsWith('https://')) {
+                    formattedLink = `https://${taskLink}`;
+                  }
 
+                  // Check if this is a Read docs action
+                  // Robust check: matches type 'Read docs', or generic action with 'read doc' in title
+                  const isReadDocsType = req.type?.toLowerCase() === 'read docs' || req.type?.toLowerCase() === 'read document';
+                  const isReadDocsTitle = taskTitle?.toLowerCase().includes('read doc');
+                  const hasReadDocsConfig = !!verificationData.readDocsConfig;
+
+                  if (hasReadDocsConfig || isReadDocsType || (req.type === 'action' && isReadDocsTitle)) {
                     return {
                       id: `step-${index + 1}`,
                       title: taskTitle || `Read docs`,
@@ -473,12 +544,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
               } catch (e) {
                 console.warn('Error parsing requirement verification data:', e);
                 // Use description as-is
-              }
-
-              // Format link if it exists (ensure it has protocol)
-              let formattedLink = taskLink;
-              if (taskLink && !taskLink.startsWith('http://') && !taskLink.startsWith('https://')) {
-                formattedLink = `https://${taskLink}`;
               }
 
               return {
@@ -505,85 +570,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         console.warn('Error loading quest from localStorage:', error);
       }
 
-      // Load verification states from localStorage and apply to quest steps
-      if (address) {
-        const storageKey = `quest_verification_${questId}_${address.toLowerCase()}`;
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            const mergedStates = { ...parsed };
 
-            // Also fetch from Supabase if connected
-            questServiceSupabase.getStepCompletions(questId, address).then(completedSteps => {
-              let hasNewCompletions = false;
-              completedSteps.forEach(stepId => {
-                if (!mergedStates[stepId] || mergedStates[stepId].status !== 'verified') {
-                  mergedStates[stepId] = { status: 'verified' };
-                  hasNewCompletions = true;
-                }
-              });
-
-              if (hasNewCompletions) {
-                setVerificationStates(mergedStates);
-
-                // Update quest steps
-                setQuest(prev => {
-                  if (!prev) return null;
-                  const updatedSteps = prev.steps?.map(step => {
-                    const verificationState = mergedStates[step.id];
-                    if (verificationState?.status === 'verified') {
-                      return { ...step, completed: true };
-                    }
-                    return step;
-                  });
-                  return { ...prev, steps: updatedSteps };
-                });
-              }
-            });
-
-            setVerificationStates(parsed);
-
-            // Update quest steps to mark verified steps as completed
-            questWithDescription.steps = questWithDescription.steps.map(step => {
-              const verificationState = parsed[step.id];
-              if (verificationState?.status === 'verified') {
-                return { ...step, completed: true };
-              }
-              return step;
-            });
-          } catch (error) {
-            console.error('Error loading verification states:', error);
-          }
-        } else {
-          // If no local storage, try fetching from Supabase directly
-          questServiceSupabase.getStepCompletions(questId, address).then(completedSteps => {
-            if (completedSteps.length > 0) {
-              const newStates: Record<string, StepVerificationState> = {};
-              completedSteps.forEach(stepId => {
-                newStates[stepId] = { status: 'verified' };
-              });
-              setVerificationStates(newStates);
-
-              // Update quest steps
-              setQuest(prev => {
-                if (!prev) return null;
-                const updatedSteps = prev.steps?.map(step => {
-                  if (completedSteps.includes(step.id)) {
-                    return { ...step, completed: true };
-                  }
-                  return step;
-                });
-                return { ...prev, steps: updatedSteps };
-              });
-            } else {
-              setVerificationStates({});
-            }
-          });
-        }
-      } else {
-        setVerificationStates({});
-      }
 
 
       // Restore clicked steps from localStorage if available (optional persistence)
@@ -779,7 +766,9 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
   }, [readDocuments, questId, address]);
 
-  if (isLoading) {
+  // Combine local loading state with global quests loading state
+  // This prevents "Not Found" flicker while cache is still warning up
+  if (isLoading || (areQuestsLoading && !quest)) {
     return (
       <div className="quest-detail-container">
         <div className="quest-detail-loading">
@@ -838,6 +827,27 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
           setCurrentStep(stepIndex + 1);
         }
       }
+      return;
+    }
+
+    // Handle Read Docs click - Redirect if URL, otherwise open modal
+    if ((step as any).isReadDocs && (step as any).readDocsConfig) {
+      const documents = (step as any).readDocsConfig.documents || [];
+      // Check if we have a single document that looks like a URL
+      if (documents.length > 0) {
+        const firstDoc = documents[0];
+        // simple check for URL-like string
+        if (typeof firstDoc === 'string' && (firstDoc.trim().startsWith('http') || firstDoc.trim().startsWith('www'))) {
+          let url = firstDoc.trim();
+          if (!url.startsWith('http')) url = 'https://' + url;
+          window.open(url, '_blank', 'noopener,noreferrer');
+          return;
+        }
+      }
+
+      // Fallback: open modal for text content or multiple docs
+      setCurrentReadDocsStep(step);
+      setShowReadDocsModal(true);
       return;
     }
 
@@ -1172,6 +1182,12 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     const step = taskSteps.find(s => s.id === stepId);
     if (!step) return;
 
+    // Prevent verification before quest is opened
+    if (!questOpened) {
+      showToast('Open the quest first to verify tasks', 'warning');
+      return;
+    }
+
     // Check if this is a Read docs action
     if ((step as any).isReadDocs && (step as any).readDocsConfig) {
       setCurrentReadDocsStep(step);
@@ -1406,13 +1422,40 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       showToast('Completing quest...', 'info');
 
       // Get atom IDs (for now using placeholder values - these should come from quest creation)
+
+
+
       const questAtomId = quest.atomId || '1'; // Default atom ID
       const userAtomId = '1'; // User atom ID (should be fetched from user's space)
 
-      // Step 1: Check if already claimed on-chain (use atom ID for contract compatibility)
-      const hasClaimedOnChain = await checkClaimStatus(address, questAtomId, publicClient);
+      // Step 1: Check if already claimed on-chain
+      // NOTE: We must use the same key generation as claimIQContractService: keccak256(toHex(questId))
+      const questIdBytes32 = keccak256(toHex(quest.id));
+      const hasClaimedOnChain = await checkClaimStatus(address, questIdBytes32, publicClient);
       if (hasClaimedOnChain) {
-        showToast('Quest already claimed on-chain', 'warning');
+        console.log('Quest claimed on-chain, verifying backend state...');
+
+        // Try to complete on backend to ensure data consistency
+        // If already completed in DB, backend returns success anyway
+        await completeQuest(quest.id);
+
+        showToast('Quest synced with blockchain!', 'success');
+
+        // Force refetch user XP
+        await queryClient.refetchQueries({ queryKey: ['user-xp', address] });
+
+        setIsClaimed(true);
+        setQuest(prevQuest => {
+          if (!prevQuest) return null;
+          const completedBy = prevQuest.completedBy || [];
+          if (!completedBy.includes(address.toLowerCase())) {
+            return {
+              ...prevQuest,
+              completedBy: [...completedBy, address.toLowerCase()],
+            };
+          }
+          return prevQuest;
+        });
         return;
       }
 
@@ -1487,7 +1530,10 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       });
     } catch (error: any) {
       console.error('Error claiming IQ:', error);
-      showToast(error.message || 'Failed to claim IQ. Please try again.', 'error');
+      if (error.response?.data) {
+        console.error('Backend Error Details:', error.response.data);
+      }
+      showToast(error.response?.data?.error || error.message || 'Failed to claim IQ. Please try again.', 'error');
     }
   };
 
@@ -1650,7 +1696,17 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
             </div>
             <div className="quest-detail-creator-info">
               <div className="quest-detail-creator-name-row">
-                <span className="quest-detail-creator-name">
+                <span
+                  className="quest-detail-creator-name"
+                  onClick={() => {
+                    if (onSpaceClick && quest.spaceId) {
+                      onSpaceClick(quest.spaceId);
+                    } else if (onNavigateToSpace && quest.creatorAddress) {
+                      onNavigateToSpace(quest.creatorAddress);
+                    }
+                  }}
+                  style={{ cursor: (onSpaceClick && quest.spaceId) || (onNavigateToSpace && quest.creatorAddress) ? 'pointer' : 'default' }}
+                >
                   {quest.creatorType === 'community' && quest.creatorAddress
                     ? quest.creatorAddress.slice(0, 7)
                     : quest.projectName}
@@ -1782,6 +1838,44 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
             const isCompleted = step.completed || isVerified;
             const isDisabled = isVerifying || isCooldown || isExpired || (needsClick && !isCompleted);
 
+            // If isVerified, we probably don't need to re-render the card as interactive if it's collapsible. 
+            // But we can let QuizCard handle the 'completed' state.
+
+            if (step.title?.toLowerCase().includes('read docs')) {
+              console.log('🔍 Debug Read Docs Step:', {
+                id: step.id,
+                title: step.title,
+                isReadDocs: (step as any).isReadDocs,
+                readDocsConfig: (step as any).readDocsConfig,
+                documents: (step as any).readDocsConfig?.documents,
+                doc0: (step as any).readDocsConfig?.documents?.[0],
+                typeOfDoc0: typeof (step as any).readDocsConfig?.documents?.[0]
+              });
+            }
+
+            if (step.title?.toLowerCase().includes('quiz')) {
+              // Extract quiz config using same logic as handleTaskClick
+              const quizConfig = (quest as any).requirements?.find((r: any) =>
+                (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
+              )?.verification?.quizConfig || (quest as any).requirements?.find((r: any) =>
+                (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
+              )?.config?.quizConfig ||
+                // Fallback by index
+                ((quest as any).requirements?.[index]?.verification?.quizConfig || (quest as any).requirements?.[index]?.config?.quizConfig);
+
+              if (quizConfig) {
+                return (
+                  <QuizCard
+                    key={step.id}
+                    step={step}
+                    quizConfig={quizConfig}
+                    onVerify={handleQuizCompletion}
+                    isVerified={isVerified || step.completed}
+                  />
+                );
+              }
+            }
+
             return (
               <div
                 key={step.id}
@@ -1806,6 +1900,26 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                       className="quest-detail-task-text-exact quest-detail-task-link"
                       onClick={(e) => {
                         e.stopPropagation();
+                        setClickedSteps(prev => ({
+                          ...prev,
+                          [step.id]: true
+                        }));
+                      }}
+                    >
+                      {step.title}
+                    </a>
+                  ) : ((step as any).isReadDocs && (step as any).readDocsConfig?.documents?.length === 1 && typeof (step as any).readDocsConfig.documents[0] === 'string' && ((step as any).readDocsConfig.documents[0].trim().startsWith('http') || (step as any).readDocsConfig.documents[0].trim().startsWith('www'))) ? (
+                    <a
+                      href={(step as any).readDocsConfig.documents[0].trim().startsWith('http') ? (step as any).readDocsConfig.documents[0].trim() : `https://${(step as any).readDocsConfig.documents[0].trim()}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="quest-detail-task-text-exact quest-detail-task-link"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setClickedSteps(prev => ({
+                          ...prev,
+                          [step.id]: true
+                        }));
                       }}
                     >
                       {step.title}
@@ -1814,7 +1928,6 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                     <span className="quest-detail-task-text-exact">{step.title}</span>
                   )}
                 </div>
-
                 {/* Right: Refresh Icon */}
                 <button
                   className={`quest-detail-task-refresh-exact ${isVerifying ? 'verifying' : ''} ${isVerified ? 'verified' : ''} ${isDisabled ? 'disabled' : ''}`}

@@ -9,6 +9,7 @@ interface MobileProfileDropdownProps {
     onDisconnect: () => void;
     onProfileClick: () => void;
     onBuilderProfileClick?: () => void;
+    spaceName?: string;
 }
 
 export const MobileProfileDropdown: React.FC<MobileProfileDropdownProps> = ({
@@ -17,7 +18,8 @@ export const MobileProfileDropdown: React.FC<MobileProfileDropdownProps> = ({
     onClose,
     onDisconnect,
     onProfileClick,
-    onBuilderProfileClick
+    onBuilderProfileClick,
+    spaceName
 }) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { data: balance } = useBalance({
@@ -53,6 +55,12 @@ export const MobileProfileDropdown: React.FC<MobileProfileDropdownProps> = ({
         return num >= 1 ? num.toFixed(2) : num.toFixed(4);
     };
 
+    // Abbreviate space name if too long
+    const abbreviateSpaceName = (name: string, maxLength: number = 20): string => {
+        if (name.length <= maxLength) return name;
+        return name.substring(0, maxLength - 3) + '...';
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -85,7 +93,7 @@ export const MobileProfileDropdown: React.FC<MobileProfileDropdownProps> = ({
                             <path d="M12 2L2 7l10 5 10-5-10-5z" />
                             <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
                         </svg>
-                        Builder Dashboard
+                        {spaceName ? abbreviateSpaceName(spaceName) : 'Space Dashboard'}
                     </button>
                 )}
 

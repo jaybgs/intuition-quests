@@ -187,15 +187,10 @@ export class XPService {
    * Get leaderboard
    */
   async getLeaderboard(limit = 100, offset = 0) {
+    // Query leaderboard table directly - we backfilled username and iq_balance
     const { data: entries, error } = await supabase
       .from('leaderboard')
-      .select(`
-        *,
-        users!leaderboard_user_id_fkey (
-          username,
-          address
-        )
-      `)
+      .select('*')
       .order('rank', { ascending: true })
       .range(offset, offset + limit - 1);
 
@@ -207,10 +202,11 @@ export class XPService {
     return (entries || []).map((entry: any) => ({
       rank: entry.rank,
       address: entry.address,
-      username: entry.users?.username,
+      username: entry.username, // Use local column
       totalXP: entry.total_xp,
       level: entry.level,
       questsCompleted: entry.quests_completed || 0,
+      iqBalance: entry.iq_balance || 0 // Added field
     }));
   }
 

@@ -136,6 +136,53 @@ export class QuestServiceSupabase {
   }
 
   /**
+   * Get a quest by slug (normalized title)
+   * Optimization to avoid fetching all quests
+   */
+  async getQuestBySlug(slug: string): Promise<Quest | null> {
+    if (!supabase) return null;
+
+    try {
+      // First try valid UUID if applicable
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+      if (isUUID) {
+        return this.getQuestById(slug);
+      }
+
+      // If not UUID, we need to find the quest by its title (slug)
+      // Since we don't have a 'slug' column, we fetch all quest titles first (lightweight)
+      // then fetch the full quest data once we find the ID.
+      // This is much better than fetching all full quest objects.
+
+      const { data, error } = await supabase
+        .from('published_quests')
+        .select('id, title, status'); // Fetch only what we need for matching
+
+      if (error) {
+        console.error('Error fetching quests for slug search:', error);
+        return null;
+      }
+
+      const normalizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+      const match = (data || []).find(q => {
+        if (!q.title) return false;
+        const questSlug = q.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        return questSlug === normalizedSlug;
+      });
+
+      if (match && match.id) {
+        // Found the ID, now fetch the full quest
+        return this.getQuestById(match.id);
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error in getQuestBySlug:', error);
+      return null;
+    }
+  }
+
+  /**
    * Publish a quest to Supabase
    */
   async publishQuest(quest: Quest): Promise<Quest> {

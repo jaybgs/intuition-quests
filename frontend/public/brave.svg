@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="braveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FB542B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF7139;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="40" fill="url(#braveGradient)"/>
+  <polygon points="100,50 70,90 85,120 100,110 115,120 130,90" fill="white"/>
+  <circle cx="100" cy="140" r="15" fill="white"/>
+</svg>

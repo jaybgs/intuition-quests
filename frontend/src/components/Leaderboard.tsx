@@ -24,15 +24,15 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
   const leaderboard: LeaderboardEntry[] = leaderboardData || [];
 
   useEffect(() => {
-      // Find user's rank
+    // Find user's rank
     if (address && leaderboard.length > 0) {
-      const rank = leaderboard.findIndex(entry => 
+      const rank = leaderboard.findIndex(entry =>
         entry.address.toLowerCase() === address.toLowerCase()
-        );
-        setUserRank(rank >= 0 ? rank + 1 : null);
+      );
+      setUserRank(rank >= 0 ? rank + 1 : null);
     } else {
       setUserRank(null);
-      }
+    }
   }, [address, leaderboard]);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
     // Check if element is already in view on mount
     const rect = element.getBoundingClientRect();
     const isInView = rect.top < window.innerHeight && rect.bottom > 0;
-    
+
     if (isInView) {
       // If already in view, make it visible immediately
       element.classList.add('animate-in');
@@ -212,24 +212,24 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
           <div className="leaderboard-user-rank">
             <div className="user-rank-badge">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
-          Your Rank: #{userRank}
+              Your Rank: #{userRank}
             </div>
-        </div>
-      )}
+          </div>
+        )}
 
         <div className="leaderboard-table-wrapper">
-      <table className="leaderboard-table">
-        <thead>
-          <tr>
-            <th>Rank</th>
+          <table className="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
                 <th>User</th>
                 <th>IQ</th>
                 <th>Quests</th>
-          </tr>
-        </thead>
-        <tbody>
+              </tr>
+            </thead>
+            <tbody>
               {isLoading ? (
                 [...Array(10)].map((_, i) => (
                   <LeaderboardRowSkeleton key={i} />
@@ -244,8 +244,8 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
                 leaderboard.map((entry, index) => {
                   const isUser = address && entry.address.toLowerCase().includes(address.toLowerCase());
                   return (
-            <tr
-              key={entry.address}
+                    <tr
+                      key={entry.address}
                       className={`leaderboard-row ${isUser ? 'leaderboard-row-user' : ''} ${entry.rank <= 3 ? 'leaderboard-row-top' : ''}`}
                       style={{
                         animationDelay: `${index * 0.05}s`,
@@ -275,7 +275,7 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
                       </td>
                       <td>
                         <div className="leaderboard-xp">
-                          {entry.totalXP.toLocaleString()} IQ
+                          {(entry.iqBalance ?? entry.totalXP).toLocaleString()} IQ
                         </div>
                       </td>
                       <td>
@@ -283,12 +283,12 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
                           {entry.questsCompleted} completed
                         </div>
                       </td>
-            </tr>
+                    </tr>
                   );
                 })
               )}
-        </tbody>
-      </table>
+            </tbody>
+          </table>
         </div>
 
         {onSeeMore && (
@@ -296,7 +296,7 @@ export function Leaderboard({ onSeeMore }: LeaderboardProps) {
             <button className="leaderboard-see-more" onClick={onSeeMore}>
               See More
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+                <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </button>
           </div>

@@ -90,8 +90,8 @@
 
 .slideshow-glass {
   width: 100%;
-  max-width: 900px;
-  /* Reduced width for desktop */
+  max-width: 1200px;
+  /* Restored wider width for desktop */
   height: 500px;
   /* Fixed height */
   min-height: 500px;

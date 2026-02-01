@@ -6,7 +6,6 @@ interface RevealProps {
     className?: string;
     delay?: number;
     threshold?: number;
-    threshold?: number;
     width?: 'auto' | '100%' | 'fit-content';
     disabled?: boolean;
 }

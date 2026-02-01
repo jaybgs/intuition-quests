@@ -275,9 +275,11 @@ export function Spaces({ onSpaceClick, onCreateSpace }: SpacesProps) {
                         </div>
                       )}
                     </div>
-                    <div className="space-verified-badge">
-                      <img src="/verified.svg" alt="Verified" width="16" height="16" />
-                    </div>
+                    {space.isPro && (
+                      <div className="space-verified-badge">
+                        <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                      </div>
+                    )}
                   </div>
                   <div className="space-card-content">
                     <h3 className="space-name">{space.name}</h3>

@@ -12,3 +12,4 @@ END $$;
 
 -- Add comment
 COMMENT ON COLUMN user_quests.trust_earned IS 'TRUST tokens earned from completing this quest';
+

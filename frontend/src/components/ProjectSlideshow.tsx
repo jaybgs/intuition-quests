@@ -98,29 +98,29 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     let isMounted = true;
     let intervalId: NodeJS.Timeout | null = null;
     let hasLoadedOnce = false;
-    
+
     const loadSpaces = async (showLoading = false) => {
       // Only update state if component is still mounted and not during render
       if (!isMounted) return;
-      
+
       try {
         if (showLoading && !hasLoadedOnce) {
-        setIsSpacesLoading(true);
+          setIsSpacesLoading(true);
         }
         // spaceService.getAllSpaces() uses Supabase only
         const allSpaces = await spaceService.getAllSpaces();
         // Use startTransition to mark this as a non-urgent update
         // This prevents the "setState during render" warning
         if (isMounted) {
-        startTransition(() => {
-          if (isMounted) {
-            setSpaces(allSpaces);
+          startTransition(() => {
+            if (isMounted) {
+              setSpaces(allSpaces);
               if (showLoading && !hasLoadedOnce) {
-            setIsSpacesLoading(false);
+                setIsSpacesLoading(false);
                 hasLoadedOnce = true;
               }
-          }
-        });
+            }
+          });
         }
       } catch (error) {
         console.error('Error loading spaces from Supabase:', error);
@@ -128,9 +128,9 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
         if (isMounted) {
           startTransition(() => {
             if (isMounted) {
-            setSpaces([]);
+              setSpaces([]);
               if (showLoading && !hasLoadedOnce) {
-            setIsSpacesLoading(false);
+                setIsSpacesLoading(false);
                 hasLoadedOnce = true;
               }
             }
@@ -138,14 +138,14 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
         }
       }
     };
-    
+
     // Delay initial load to ensure we're not in render phase
     const initialLoadTimer = setTimeout(() => {
       if (isMounted) {
         loadSpaces(true);
       }
     }, 100);
-    
+
     // Listen for space creation events to refresh immediately (without showing loading)
     const handleSpaceCreated = () => {
       // Use setTimeout to ensure we're not in render phase
@@ -155,29 +155,29 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
         }
       }, 0);
     };
-    
+
     // Listen for quest published events to refresh quest counts
     const handleQuestPublished = () => {
       // Use setTimeout to ensure we're not in render phase
       setTimeout(() => {
         if (isMounted) {
-      startTransition(() => {
-        if (isMounted) {
-          setSpaces(prev => [...prev]);
-        }
-      });
+          startTransition(() => {
+            if (isMounted) {
+              setSpaces(prev => [...prev]);
+            }
+          });
         }
       }, 0);
     };
-    
+
     // Add event listeners after a small delay to avoid render phase issues
     setTimeout(() => {
       if (isMounted) {
-    window.addEventListener('spaceCreated', handleSpaceCreated);
-    window.addEventListener('questPublished', handleQuestPublished);
+        window.addEventListener('spaceCreated', handleSpaceCreated);
+        window.addEventListener('questPublished', handleQuestPublished);
       }
     }, 0);
-    
+
     // Reload spaces periodically in case they change (without showing loading)
     // Start interval after initial load
     setTimeout(() => {
@@ -189,7 +189,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
         }, 30000);
       }
     }, 1000);
-    
+
     return () => {
       isMounted = false;
       clearTimeout(initialLoadTimer);
@@ -241,19 +241,19 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     const bFollowers = parseInt(localStorage.getItem(`space_followers_${b.id}`) || '0');
     const aFollowing = isFollowingSpace(a.id);
     const bFollowing = isFollowingSpace(b.id);
-    
+
     // Priority 1: If sorting by verified, verified spaces come first
     if (sortByVerified) {
       if (aVerified && !bVerified) return -1;
       if (!aVerified && bVerified) return 1;
     }
-    
+
     // Priority 2: If sorting by following, followed spaces come first
     if (sortByFollowing) {
       if (aFollowing && !bFollowing) return -1;
       if (!aFollowing && bFollowing) return 1;
     }
-    
+
     // Default: maintain original order
     return 0;
   });
@@ -262,7 +262,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
   const maxSpacesDesktop = 8;
   const maxSpacesMobile = 5;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -279,10 +279,10 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
   useEffect(() => {
     const fetchQuestCounts = async () => {
       if (spaces.length === 0) return;
-      
+
       try {
         const counts: Record<string, number> = {};
-        
+
         // Fetch active quests for each space from Supabase
         await Promise.all(
           spaces.map(async (space) => {
@@ -298,16 +298,16 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
             }
           })
         );
-        
+
         setQuestCounts(counts);
       } catch (error) {
         console.error('Error fetching quest counts:', error);
       }
     };
-    
+
     fetchQuestCounts();
   }, [spaces]);
-  
+
   // Get quest count for a space (from state)
   const getQuestCount = (spaceId: string): number => {
     return questCounts[spaceId] || 0;
@@ -327,7 +327,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     return { status: displayStatus, symbol: undefined };
   };
 
-  const slideshowRef = useScrollAnimation();
+  const slideshowRef = useScrollAnimation(); // Note: slideshowRef was previously unused in my removal, but was declared.
   const spacesRef = useScrollAnimation();
 
   if (isLoading) {
@@ -338,102 +338,102 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
     <div className="discover-earn-container">
       <h1 className="welcome-text">Welcome to TrustQuests</h1>
       <div className="slideshow-glass">
-          <button 
-            className="slideshow-nav slideshow-prev" 
-            onClick={goToPrevious} 
-            aria-label="Previous slide"
+        <button
+          className="slideshow-nav slideshow-prev"
+          onClick={goToPrevious}
+          aria-label="Previous slide"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <div className="slideshow-content">
+          <div
+            className="slideshow-image"
+            style={{
+              background: `linear-gradient(135deg, ${currentProject.gradientColors[0]} 0%, ${currentProject.gradientColors[1]} 100%)`
+            }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6"/>
-            </svg>
-          </button>
-          <div className="slideshow-content">
-            <div 
-              className="slideshow-image"
-              style={{
-                background: `linear-gradient(135deg, ${currentProject.gradientColors[0]} 0%, ${currentProject.gradientColors[1]} 100%)`
-              }}
-            >
-              <div className="slideshow-image-placeholder">
-                {currentProject.title.charAt(0)}
-              </div>
-              {currentProject.isHot && (
-                <div className="slideshow-badge slideshow-badge-hot">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.6 1.5-3.5 3.5-5.5z"/>
-                  </svg>
-                  Hot
-                </div>
-              )}
-              {currentProject.isTrending && (
-                <div className="slideshow-badge slideshow-badge-trending">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                    <polyline points="17 6 23 6 23 12"/>
-                  </svg>
-                  Trending
-                </div>
-              )}
+            <div className="slideshow-image-placeholder">
+              {currentProject.title.charAt(0)}
             </div>
-            <div className="slideshow-info">
-              <div className="slideshow-header">
-                <h2 className="slideshow-title">{currentProject.title}</h2>
-                {currentProject.questCount && (
-                  <div className="slideshow-quest-count">
-                    <img src="/verified.svg" alt="Verified" width="16" height="16" />
-                    {currentProject.questCount} Quests
-                  </div>
-                )}
-              </div>
-              <p className="slideshow-description">{currentProject.description}</p>
-              <button 
-                className="slideshow-start-button"
-                onClick={handleStartQuest}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="5 12 10 17 20 7"/>
+            {currentProject.isHot && (
+              <div className="slideshow-badge slideshow-badge-hot">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.6 1.5-3.5 3.5-5.5z" />
                 </svg>
-                Start Quest
-              </button>
+                Hot
+              </div>
+            )}
+            {currentProject.isTrending && (
+              <div className="slideshow-badge slideshow-badge-trending">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                  <polyline points="17 6 23 6 23 12" />
+                </svg>
+                Trending
+              </div>
+            )}
+          </div>
+          <div className="slideshow-info">
+            <div className="slideshow-header">
+              <h2 className="slideshow-title">{currentProject.title}</h2>
+              {currentProject.questCount && (
+                <div className="slideshow-quest-count">
+                  <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                  {currentProject.questCount} Quests
+                </div>
+              )}
             </div>
-          </div>
-          <div className="slideshow-indicators">
-            {projects.map((_, index) => (
-              <button
-                key={index}
-                className={`slideshow-dot ${index === currentIndex ? 'active' : ''}`}
-                onClick={() => goToSlide(index)}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
-          <button 
-            className="slideshow-nav slideshow-next" 
-            onClick={goToNext} 
-            aria-label="Next slide"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Admin Edit Button */}
-        {isAdmin && onEditSlideshow && (
-          <div className="slideshow-admin-controls">
+            <p className="slideshow-description">{currentProject.description}</p>
             <button
-              className="slideshow-edit-button"
-              onClick={onEditSlideshow}
-              title="Edit Slideshow"
+              className="slideshow-start-button"
+              onClick={handleStartQuest}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="5 12 10 17 20 7" />
               </svg>
-              Edit Slideshow
+              Start Quest
             </button>
           </div>
-        )}
+        </div>
+        <div className="slideshow-indicators">
+          {projects.map((_, index) => (
+            <button
+              key={index}
+              className={`slideshow-dot ${index === currentIndex ? 'active' : ''}`}
+              onClick={() => goToSlide(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+        <button
+          className="slideshow-nav slideshow-next"
+          onClick={goToNext}
+          aria-label="Next slide"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Admin Edit Button */}
+      {isAdmin && onEditSlideshow && (
+        <div className="slideshow-admin-controls">
+          <button
+            className="slideshow-edit-button"
+            onClick={onEditSlideshow}
+            title="Edit Slideshow"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Edit Slideshow
+          </button>
+        </div>
+      )}
 
       {/* Spaces Grid Section */}
       <div ref={spacesRef} className="spaces-section">
@@ -452,9 +452,9 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
               onClick={() => setSortByFollowing(!sortByFollowing)}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="8.5" cy="7" r="4"/>
-                <path d="M20 8v6M23 11h-6"/>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <path d="M20 8v6M23 11h-6" />
               </svg>
               Following
             </button>
@@ -486,7 +486,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
               const questCount = getQuestCount(space.id);
               const followerCount = getFollowerCount(space.id);
               const tokenInfo = getTokenStatus(space.id);
-              
+
               return (
                 <div
                   key={space.id}
@@ -513,9 +513,11 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
                         </div>
                       )}
                     </div>
-                    <div className="space-verified-badge">
-                      <img src="/verified.svg" alt="Verified" width="16" height="16" />
-                    </div>
+                    {space.isPro && (
+                      <div className="space-verified-badge">
+                        <img src="/verified.svg" alt="Verified" width="16" height="16" />
+                      </div>
+                    )}
                   </div>
                   <div className="space-card-content">
                     <h3 className="space-name">{space.name}</h3>
@@ -550,7 +552,7 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
             >
               See More
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6"/>
+                <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
           </div>
@@ -572,107 +574,107 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
             </>
           ) : (
             <>
-          <a
-            href="https://portal.intuition.systems/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
-              <p className="ecosystem-dapp-description">
-                Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
-              </p>
-            </div>
-          </a>
+              <a
+                href="https://portal.intuition.systems/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ecosystem-dapp-card"
+              >
+                <div className="ecosystem-dapp-icon">
+                  <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
+                </div>
+                <div className="ecosystem-dapp-content">
+                  <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
+                  <p className="ecosystem-dapp-description">
+                    Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
+                  </p>
+                </div>
+              </a>
 
-          <a
-            href="https://tns.intuition.box/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/tns logo.svg" alt="Trust Name Services" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
-              <p className="ecosystem-dapp-description">
-                Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
-              </p>
-            </div>
-          </a>
+              <a
+                href="https://tns.intuition.box/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ecosystem-dapp-card"
+              >
+                <div className="ecosystem-dapp-icon">
+                  <img src="/tns logo.svg" alt="Trust Name Services" />
+                </div>
+                <div className="ecosystem-dapp-content">
+                  <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
+                  <p className="ecosystem-dapp-description">
+                    Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
+                  </p>
+                </div>
+              </a>
 
-          <a
-            href="https://inturank.intuition.box/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/inturank-logo.svg" alt="IntuRank" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">IntuRank</h3>
-              <p className="ecosystem-dapp-description">
-                Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
-              </p>
-            </div>
-          </a>
+              <a
+                href="https://inturank.intuition.box/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ecosystem-dapp-card"
+              >
+                <div className="ecosystem-dapp-icon">
+                  <img src="/inturank-logo.svg" alt="IntuRank" />
+                </div>
+                <div className="ecosystem-dapp-content">
+                  <h3 className="ecosystem-dapp-name">IntuRank</h3>
+                  <p className="ecosystem-dapp-description">
+                    Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
+                  </p>
+                </div>
+              </a>
 
-          <a
-            href="https://tribememe.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/tribememe-logo.svg" alt="Tribememe" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Tribememe</h3>
-              <p className="ecosystem-dapp-description">
-                A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
-              </p>
-            </div>
-          </a>
+              <a
+                href="https://tribememe.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ecosystem-dapp-card"
+              >
+                <div className="ecosystem-dapp-icon">
+                  <img src="/tribememe-logo.svg" alt="Tribememe" />
+                </div>
+                <div className="ecosystem-dapp-content">
+                  <h3 className="ecosystem-dapp-name">Tribememe</h3>
+                  <p className="ecosystem-dapp-description">
+                    A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
+                  </p>
+                </div>
+              </a>
 
-          <a
-            href="https://intuitionbets.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/intuition-bets.svg" alt="IntuitionBets" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
-              <p className="ecosystem-dapp-description">
-                Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
-              </p>
-            </div>
-          </a>
+              <a
+                href="https://intuitionbets.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ecosystem-dapp-card"
+              >
+                <div className="ecosystem-dapp-icon">
+                  <img src="/intuition-bets.svg" alt="IntuitionBets" />
+                </div>
+                <div className="ecosystem-dapp-content">
+                  <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
+                  <p className="ecosystem-dapp-description">
+                    Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
+                  </p>
+                </div>
+              </a>
 
-          <a
-            href="https://oraclelend.intuition.box/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ecosystem-dapp-card"
-          >
-            <div className="ecosystem-dapp-icon">
-              <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
-            </div>
-            <div className="ecosystem-dapp-content">
-              <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
-              <p className="ecosystem-dapp-description">
-                Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
-              </p>
-            </div>
-          </a>
+              <a
+                href="https://oraclelend.intuition.box/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ecosystem-dapp-card"
+              >
+                <div className="ecosystem-dapp-icon">
+                  <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
+                </div>
+                <div className="ecosystem-dapp-content">
+                  <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
+                  <p className="ecosystem-dapp-description">
+                    Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
+                  </p>
+                </div>
+              </a>
             </>
           )}
         </div>

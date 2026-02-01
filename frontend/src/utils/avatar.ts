@@ -6,7 +6,7 @@
 // Available DiceBear styles
 const DICEBEAR_STYLES = [
   'adventurer',
-  'adventurer-neutral', 
+  'adventurer-neutral',
   'avataaars',
   'avataaars-neutral',
   'big-ears',
@@ -62,7 +62,7 @@ export function getDiceBearAvatar(
 ): string {
   const avatarStyle = style || getStyleFromSeed(seed);
   const encodedSeed = encodeURIComponent(seed.toLowerCase());
-  return `https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${encodedSeed}&size=${size}`;
+  return `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${encodedSeed}&size=${size}`;
 }
 
 /**
@@ -74,11 +74,11 @@ export function getAvatarUrl(address: string | undefined, storedPic?: string | n
   if (storedPic) {
     return storedPic;
   }
-  
+
   if (!address) {
     return getDiceBearAvatar('anonymous');
   }
-  
+
   return getDiceBearAvatar(address);
 }
 
@@ -94,11 +94,11 @@ export function getAvatarOptions(seed: string, count: number = 6): string[] {
     const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return 0.5 - Math.sin(hash + options.length);
   });
-  
+
   for (let i = 0; i < Math.min(count, shuffledStyles.length); i++) {
     options.push(getDiceBearAvatar(seed, 128, shuffledStyles[i]));
   }
-  
+
   return options;
 }
 

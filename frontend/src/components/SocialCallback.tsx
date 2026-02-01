@@ -21,14 +21,9 @@ export function SocialCallback() {
     const handleCallback = async () => {
       try {
         // Prevent duplicate processing
+        // Just return, do not redirect, to avoid interfering with the main thread
         if (global.oauthProcessing) {
           console.log('❌ OAuth callback already processed (global), skipping');
-          setStatus('OAuth already processed. Redirecting...');
-          // Reset flag after redirect to allow future OAuth attempts
-          setTimeout(() => {
-            global.oauthProcessing = false;
-            navigate('/dashboard');
-          }, 2000);
           return;
         }
 
@@ -47,7 +42,10 @@ export function SocialCallback() {
           console.error('OAuth error:', error);
           setStatus(`OAuth failed: ${error}`);
           showToast(`OAuth failed: ${error}`, 'error');
-          setTimeout(() => navigate('/dashboard'), 3000);
+          setTimeout(() => {
+            global.oauthProcessing = false;
+            navigate('/dashboard');
+          }, 3000);
           return;
         }
 
@@ -55,7 +53,10 @@ export function SocialCallback() {
           console.error('Missing OAuth parameters');
           setStatus('OAuth failed: Missing parameters');
           showToast('OAuth failed: Missing parameters', 'error');
-          setTimeout(() => navigate('/dashboard'), 3000);
+          setTimeout(() => {
+            global.oauthProcessing = false;
+            navigate('/dashboard');
+          }, 3000);
           return;
         }
 
@@ -122,7 +123,7 @@ export function SocialCallback() {
     return () => {
       global.oauthProcessing = false;
     };
-  }, [searchParams, navigate]);
+  }, []); // Empty dependency array to run only once
 
   return (
     <div style={{

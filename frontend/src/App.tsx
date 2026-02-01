@@ -425,6 +425,16 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
         setActiveTab('space-detail');
         return;
       }
+      // Don't override edit-profile (manual navigation, no dedicated route)
+      if (activeTab === 'edit-profile') {
+        console.log('🔄 Keeping edit-profile tab (manual navigation), ignoring initialTab:', initialTab);
+        return;
+      }
+      // Don't override edit-slideshow (manual navigation, no dedicated route)
+      if (activeTab === 'edit-slideshow') {
+        console.log('🔄 Keeping edit-slideshow tab (manual navigation), ignoring initialTab:', initialTab);
+        return;
+      }
       // Don't override quest-detail if we have a selectedQuestId (manual navigation)
       // This prevents React Router from resetting the tab when route doesn't match
       // Also don't override if we're navigating from space-detail to quest-detail

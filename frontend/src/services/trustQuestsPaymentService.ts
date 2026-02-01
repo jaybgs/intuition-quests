@@ -48,9 +48,9 @@ export async function payForProSubscription(
       address: userAddress
     });
 
-    const requiredAmount = parseEther('10');
+    const requiredAmount = parseEther('200');
 
-    console.log('Required amount:', requiredAmount.toString(), 'wei (10 TRUST)');
+    console.log('Required amount:', requiredAmount.toString(), 'wei (200 TRUST)');
     console.log('User balance:', userBalance.toString(), 'wei');
 
     if (userBalance < requiredAmount) {

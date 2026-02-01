@@ -472,8 +472,10 @@
   }
 
   .slideshow-glass {
-    width: 279px;
-    /* Fixed width as requested */
+    width: calc(100% - 24px);
+    /* Full width with 12px margin on each side */
+    max-width: 400px;
+    /* Cap max width on larger mobile screens */
     height: 450px;
     /* Fixed height as requested */
     padding: 20px;

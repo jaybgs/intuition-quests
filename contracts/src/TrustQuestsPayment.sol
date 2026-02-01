@@ -8,8 +8,8 @@ contract TrustQuestsPayment is ReentrancyGuard {
     // Authorized withdrawal address
     address public constant AUTHORIZED_WITHDRAWER = 0xec48e65C2AD6d242F173467EC3edc7AAD78CFA07;
 
-    // Pro plan price: 10 TRUST (with 18 decimals)
-    uint256 public constant PRO_PLAN_PRICE = 10 * 10**18;
+    // Pro plan price: 200 TRUST (with 18 decimals)
+    uint256 public constant PRO_PLAN_PRICE = 200 * 10**18;
 
     // User pro status
     mapping(address => bool) public hasPaidPro;

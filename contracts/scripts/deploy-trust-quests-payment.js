@@ -10,11 +10,11 @@ async function main() {
 
   console.log("TRUST Token Address:", TRUST_TOKEN_ADDRESS);
   console.log("Authorized Withdrawer:", AUTHORIZED_WITHDRAWER);
-  console.log("Pro Plan Price: 10 TRUST tokens");
+  console.log("Pro Plan Price: 200 TRUST tokens");
 
   console.log("\n📦 Deploying TrustQuestsPayment...");
   const TrustQuestsPayment = await hre.ethers.getContractFactory("TrustQuestsPayment");
-  const contract = await TrustQuestsPayment.deploy(TRUST_TOKEN_ADDRESS);
+  const contract = await TrustQuestsPayment.deploy(); // No constructor arguments needed
 
   console.log("⏳ Waiting for deployment confirmation...");
   await contract.waitForDeployment();
@@ -22,7 +22,7 @@ async function main() {
   const contractAddress = await contract.getAddress();
   console.log("\n✅ TrustQuestsPayment deployed successfully!");
   console.log("📍 Contract Address:", contractAddress);
-  console.log("💰 Pro Plan Price: 10 TRUST tokens");
+  console.log("💰 Pro Plan Price: 200 TRUST tokens");
   console.log("🔐 Authorized Withdrawer: 0xec48e65C2AD6d242F173467EC3edc7AAD78CFA07");
 
   // Save deployment info
@@ -31,7 +31,7 @@ async function main() {
     address: contractAddress,
     network: "Intuition Chain",
     trustTokenAddress: TRUST_TOKEN_ADDRESS,
-    proPlanPrice: "10 TRUST",
+    proPlanPrice: "200 TRUST",
     deployedAt: new Date().toISOString()
   };
 
@@ -41,7 +41,7 @@ async function main() {
   console.log(`TRUST_QUESTS_PAYMENT: "${contractAddress}" as \`0x\${string}\`,`);
 
   console.log("\n🎉 TrustQuestsPayment deployment completed!");
-  console.log("Users can now pay 10 TRUST tokens for pro subscriptions!");
+  console.log("Users can now pay 200 TRUST tokens for pro subscriptions!");
 }
 
 main()

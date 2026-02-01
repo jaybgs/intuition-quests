@@ -45,13 +45,13 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
   // Handle ESC key to close modal
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
     };
-    
+
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
@@ -67,7 +67,7 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
     try {
       const result = await upgradeToPro();
       if (result.success) {
-    onProceed('pro');
+        onProceed('pro');
         showToast(`Upgraded to Pro plan! TX: ${result.txHash?.slice(0, 10)}...`, 'success');
       }
     } catch (error: any) {
@@ -79,23 +79,23 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
   const modalContent = (
     <div className="subscription-modal-overlay" onClick={onClose}>
       <div className="subscription-modal" onClick={(e) => e.stopPropagation()}>
-        <button 
-          className="subscription-modal-close" 
+        <button
+          className="subscription-modal-close"
           onClick={onClose}
           aria-label="Close modal"
           type="button"
         >
-          <svg 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
             strokeWidth="2"
             style={{ width: '100%', height: '100%' }}
           >
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
 
@@ -130,7 +130,7 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
             <div className="subscription-plan-badge">Recommended</div>
             <div className="subscription-plan-header">
               <h3 className="subscription-plan-name">Pro</h3>
-              <div className="subscription-plan-price">10 TRUST<span>/month</span></div>
+              <div className="subscription-plan-price">200 TRUST<span>/month</span></div>
             </div>
             <ul className="subscription-plan-features">
               <li>✓ Unlimited active quests</li>
@@ -150,7 +150,7 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
                 disabled={isPaying}
               >
                 {isPaying ? 'Processing Payment...' : 'Upgrade to Pro'}
-            </button>
+              </button>
             ) : (
               <div className="subscription-plan-coming-soon">
                 <p>🚧 Payment system coming soon!</p>
@@ -168,7 +168,7 @@ export function SubscriptionModal({ isOpen, onClose, onProceed }: SubscriptionMo
   if (typeof document !== 'undefined' && document.body) {
     return createPortal(modalContent, document.body);
   }
-  
+
   // Fallback for SSR or when document.body is not available
   return modalContent;
 }

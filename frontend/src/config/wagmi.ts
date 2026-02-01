@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { createWeb3Modal } from '@web3modal/wagmi';
-import { walletConnect, injected } from 'wagmi/connectors';
+import { walletConnect, injected, metaMask, coinbaseWallet } from 'wagmi/connectors';
 import { defineChain } from 'viem';
 import { getMultiVaultAddressFromChainId } from '@0xintuition/protocol';
 
@@ -40,8 +40,14 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
 
 // Create connectors with better wallet compatibility
 const connectors: any[] = [
+  // Default Injected (EIP-6963 compatible wallets will show up here too)
   injected({
-    shimDisconnect: true, // Properly handle disconnect state
+    shimDisconnect: true,
+  }),
+  // Explicit connectors for better feature support
+  metaMask(),
+  coinbaseWallet({
+    appName: 'Intuition Quests',
   }),
 ];
 
@@ -71,11 +77,11 @@ export const wagmiConfig = createConfig({
 
 // Create and export Web3Modal instance
 export const web3Modal = projectId ? createWeb3Modal({
-    wagmiConfig,
-    projectId,
-    chains: [intuitionChain],
-    themeMode: 'dark',
-    themeVariables: {
-      '--w3m-accent': '#3b82f6',
-    },
+  wagmiConfig,
+  projectId,
+  chains: [intuitionChain],
+  themeMode: 'dark',
+  themeVariables: {
+    '--w3m-accent': '#3b82f6',
+  },
 }) : null;

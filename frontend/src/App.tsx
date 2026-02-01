@@ -27,7 +27,6 @@ const Raids = lazy(() => import('./components/Raids').then(m => ({ default: m.Ra
 const SpaceBuilder = lazy(() => import('./components/SpaceBuilder').then(m => ({ default: m.SpaceBuilder })));
 const SpaceDetailView = lazy(() => import('./components/SpaceDetailView').then(m => ({ default: m.SpaceDetailView })));
 const BuilderDashboard = lazy(() => import('./components/BuilderDashboard').then(m => ({ default: m.BuilderDashboard })));
-const CreatorDashboard = lazy(() => import('./components/CreatorDashboard').then(m => ({ default: m.CreatorDashboard })));
 const SubscriptionModal = lazy(() => import('./components/SubscriptionModal').then(m => ({ default: m.SubscriptionModal })));
 const Spaces = lazy(() => import('./components/Spaces').then(m => ({ default: m.Spaces })));
 const AdminLogin = lazy(() => import('./components/AdminLogin').then(m => ({ default: m.AdminLogin })));
@@ -1884,9 +1883,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                     />
                   );
                 })()}
-                {activeTab === 'creator-dashboard' && (
-                  <CreatorDashboard />
-                )}
+
                 {activeTab === 'spaces' && (
                   <Spaces
                     onSpaceClick={(space) => {

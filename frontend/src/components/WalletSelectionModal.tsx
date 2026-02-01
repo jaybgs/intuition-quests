@@ -52,56 +52,56 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({ isOp
 
     if (!isOpen) return null;
 
-    // Filter valid connectors and deduplicate
+    // Filter valid connectors and deduplicate by name to avoid "Injected" + "MetaMask" duplicates
     const uniqueConnectors = connectors.filter((connector, index, self) =>
-        index === self.findIndex((t) => t.id === connector.id)
+        index === self.findIndex((t) => t.name === connector.name || t.id === connector.id)
     );
 
     const getWalletIcon = (id: string, name: string) => {
         const lowerId = id.toLowerCase();
         const lowerName = name.toLowerCase();
 
-        // Exact matches preferred
-        if (lowerId === 'injected' || lowerName === 'injected') {
-            // Generic wallet icon for injected provider
-            return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgMTJWMhhjMCAxLjEtLjkgMi0yIDJINmMtMS4xIDAtMi0uOS0yLTJ2LTZINGEyIDIgMCAwIDEgMi0yaDE2bC0zLTZINlY1YzAtMS4xLjktMiAyLTJ6Ii8+PHBhdGggZD0iTTEyIDEyVjZoNCIvPjwvc3ZnPg==';
-        }
-
+        // 1. Check for specific known wallets first (by ID or Name)
         if (lowerId.includes('metamask') || lowerName.includes('metamask')) {
-            return '/metamask.png';
+            return '/metamask-logo.png';
         }
         if (lowerId.includes('rabby') || lowerName.includes('rabby')) {
-            return '/rabby wallet.png';
+            return '/rabby-logo.png';
         }
         if (lowerId.includes('zeal') || lowerName.includes('zeal')) {
-            return '/zeal.png';
+            return '/zeal-logo.png';
         }
         if (lowerId.includes('zerion') || lowerName.includes('zerion')) {
-            return '/zerion.png';
+            return '/zerion-logo.png';
         }
         if (lowerId.includes('phantom') || lowerName.includes('phantom')) {
-            return '/phantom.png';
+            return '/phantom-logo.png';
         }
         if (lowerId.includes('solflare') || lowerName.includes('solflare')) {
-            return '/solflare.png';
+            return '/solflare-logo.png';
         }
         if (lowerId.includes('okx') || lowerName.includes('okx')) {
-            return '/okx.png';
+            return '/okx-logo.png';
         }
         if (lowerId.includes('brave') || lowerName.includes('brave')) {
-            return '/brave.png';
+            return '/brave-logo.png';
         }
         if (lowerId.includes('trust') || lowerName.includes('trust')) {
-            return '/trust wallet.webp';
+            return '/trust-logo.jpg';
         }
         if (lowerId.includes('coinbase') || lowerName.includes('coinbase')) {
-            return '/coinbase.svg';
+            return '/coinbase-logo.png';
         }
         if (lowerId.includes('walletconnect') || lowerName.includes('walletconnect')) {
             return '/walletconnect.svg';
         }
 
-        // Default generic wallet icon (Blue filled wallet)
+        // 2. Only if no match, check for generic "injected" to return fallback
+        if (lowerId === 'injected' || lowerName === 'injected') {
+            return '/injected-wallet-logo.png';
+        }
+
+        // 3. Default generic wallet icon for completely unknown connectors
         return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNiODJmNiI+PHBhdGggZD0iTTQgNEMyLjg5NTQzIDQgMiA0Ljg5NTQzIDIgNlYxOEMyIDE5LjEwNDYgMi44OTU0MyAyMCA0IDIwSDIwQzIxLjEwNDYgMjAgMjIgMTkuMTA0NiAyMiAxOFYxMy41QzIyIDEzLjUgMjIgMTIuNSAyMiAxMi41QzIyIDEyLjUgMjIgMTEuNSAyMiAxMS41VjZDMjIgNC44OTU0MyAyMS4xMDQ2IDQgMjAgNEg0Wk0yMCA2SDRWMThIMjBWMTQuMDUzQzE5LjcyNzcgMTQuMjg2MiAxOS4zODA3IDE0LjUgMTkgMTQuNUgxNkMxNS40NDc3IDE0LjUgMTUgMTQuMDUyMyAxNSAxMy41VjEwLjVDMTUgOS45NDc3MiAxNS40NDc3IDkuNSAxNiA5LjVIMTlDMTkuMzgwNyA5LjUgMTkuNzI3NyA5LjcxMzg1IDIwIDkuOTQ3MDFWNloiLz48L3N2Zz4=';
     };
 

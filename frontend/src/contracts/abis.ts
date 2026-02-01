@@ -305,6 +305,13 @@ export const QUEST_ESCROW_ABI = [
     ],
   },
   {
+    name: 'refundDeposit',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'questId', type: 'bytes32' }],
+    outputs: [],
+  },
+  {
     name: 'getQuestStatus',
     type: 'function',
     stateMutability: 'view',

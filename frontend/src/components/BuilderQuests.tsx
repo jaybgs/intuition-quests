@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
+import { useAccount, useWalletClient, usePublicClient, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { CONTRACT_ADDRESSES } from '../contracts/addresses';
+import { QUEST_ESCROW_ABI } from '../contracts/abis';
 import { CreateQuestBuilder } from './CreateQuestBuilder';
 import { QuestDetail } from './QuestDetail';
 import { questServiceSupabase } from '../services/questServiceSupabase';
@@ -10,6 +12,7 @@ import { getQuestWinners, calculateAndSaveWinners, getQuestCompletions } from '.
 // import { setWinners, distributeRewards, getQuestDeposit } from '../services/questEscrowService';
 import { showToast } from './Toast';
 import { DraftCardSkeleton } from './Skeleton';
+import { useAdmin } from '../hooks/useAdmin';
 import './BuilderQuests.css';
 
 interface BuilderQuestsProps {
@@ -28,7 +31,7 @@ interface QuestDraft {
 
 export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsProps) {
   const { address } = useAccount();
-  const [activeTab, setActiveTab] = useState<'drafts' | 'published' | 'winners'>('drafts');
+  const [activeTab, setActiveTab] = useState<'drafts' | 'published' | 'winners' | 'expired'>('drafts');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
   const [openDraftMenuId, setOpenDraftMenuId] = useState<string | null>(null);
@@ -36,9 +39,70 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
   const [drafts, setDrafts] = useState<QuestDraft[]>([]);
   const [publishedQuests, setPublishedQuests] = useState<Quest[]>([]);
   const [winnersQuests, setWinnersQuests] = useState<Quest[]>([]);
+  const [expiredQuests, setExpiredQuests] = useState<Quest[]>([]);
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(true);
   const [isLoadingPublished, setIsLoadingPublished] = useState(false);
   const [isLoadingWinners, setIsLoadingWinners] = useState(false);
+  const [isLoadingExpired, setIsLoadingExpired] = useState(false);
+
+  const { writeContract, data: hash, isPending: isWritePending, error: writeError } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  // Legacy contract for quests created before Jan 22, 2026
+  const LEGACY_QUEST_ESCROW = '0xDaeb8F72678a723b273F7273c628Ad6d31cE3A4e';
+  const MIGRATION_TIMESTAMP = 1769040000000; // Approx Jan 22, 2026
+
+  useEffect(() => {
+    if (isConfirmed) {
+      showToast('Refund processed successfully! Funds returned to your wallet.', 'success');
+    }
+    if (writeError) {
+      console.error('Refund error:', writeError);
+      showToast(`Refund failed: ${writeError.message.includes('Grace period') ? 'Grace period (3 days) not yet passed' : writeError.message}`, 'error');
+    }
+  }, [isConfirmed, writeError]);
+
+  const handleRefund = async (quest: Quest) => {
+    if (!quest.id || !quest.rewardDeposit) return;
+
+    const expiresAtSeconds = quest.expiresAt ? Math.floor(quest.expiresAt / 1000) : 0;
+    const gracePeriodEnd = expiresAtSeconds + (3 * 24 * 60 * 60); // 3 days in seconds
+    const nowSeconds = Math.floor(Date.now() / 1000);
+
+    // This check is now also handled in the UI button disabled state
+    if (nowSeconds < gracePeriodEnd) {
+      const daysRemaining = Math.ceil((gracePeriodEnd - nowSeconds) / 86400);
+      alert(`⏳ Cannot refund yet. You must wait for the 3-day grace period to end.\n\nTime remaining: ~${daysRemaining} day(s)`);
+      return;
+    }
+
+    if (!confirm(`Refund deposit for "${quest.title}"?\n\nThis will return the remaining ${quest.rewardDeposit} ${quest.rewardToken} to your wallet.`)) {
+      return;
+    }
+
+    // Determine correct contract address based on creation time
+    // If quest.createdAt is missing, fallback to current contract, but it should be there for published quests
+    const isLegacy = (quest.createdAt || 0) < MIGRATION_TIMESTAMP;
+    const targetContract = isLegacy ? LEGACY_QUEST_ESCROW : CONTRACT_ADDRESSES.QUEST_ESCROW;
+
+    if (isLegacy) {
+      console.log('Using legacy escrow contract for old quest:', quest.id);
+    }
+
+    try {
+      writeContract({
+        address: targetContract as `0x${string}`,
+        abi: QUEST_ESCROW_ABI,
+        functionName: 'refundDeposit',
+        args: [quest.id as `0x${string}`],
+      });
+    } catch (err: any) {
+      console.error('Refund initiation error:', err);
+      showToast(`Error initiating refund: ${err.message}`, 'error');
+    }
+  };
 
   // Scroll to top when internal tab changes
   useEffect(() => {
@@ -271,6 +335,44 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     };
 
     loadWinnersQuests();
+    loadWinnersQuests();
+  }, [address, activeTab, showCreateQuest]);
+
+  // Load expired quests from Supabase only
+  useEffect(() => {
+    const loadExpiredQuests = async () => {
+      if (!address || activeTab !== 'expired') return;
+
+      setIsLoadingExpired(true);
+      try {
+        const allQuests = await questServiceSupabase.getAllQuests();
+        const userQuests = allQuests.filter(
+          (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
+        );
+
+        const now = Date.now();
+        const expired = userQuests.filter((quest: Quest) => {
+          // Expired quests are ones that have passed expiration AND have NO completions/winners
+          // If they have completions, they are in 'Winners' tab (or should be handled there)
+          const isExpired = quest.expiresAt && quest.expiresAt < now;
+          const hasNoCompletions = !quest.completedBy || quest.completedBy.length === 0;
+          const hasDeposit = quest.rewardDeposit && parseFloat(quest.rewardDeposit) > 0;
+          return isExpired && hasNoCompletions && hasDeposit;
+        });
+
+        // Sort by expiration date (most recent first)
+        expired.sort((a, b) => (b.expiresAt || 0) - (a.expiresAt || 0));
+
+        setExpiredQuests(expired);
+      } catch (error) {
+        console.error('Error loading expired quests:', error);
+        setExpiredQuests([]);
+      } finally {
+        setIsLoadingExpired(false);
+      }
+    };
+
+    loadExpiredQuests();
   }, [address, activeTab, showCreateQuest]);
 
   // Handle editing a published quest - convert it to a draft
@@ -443,6 +545,12 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
           onClick={() => setActiveTab('winners')}
         >
           Winners
+        </button>
+        <button
+          className={`builder-quests-tab ${activeTab === 'expired' ? 'active' : ''}`}
+          onClick={() => setActiveTab('expired')}
+        >
+          Expired
         </button>
       </div>
 
@@ -671,9 +779,112 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
               Concluded quests will appear here once they end.
             </p>
           </div>
+
         )
-      ) : null}
-    </div>
+      ) : activeTab === 'expired' ? (
+        /* Expired Quests List */
+        isLoadingExpired ? (
+          <div className="builder-quests-empty-state">
+            <div className="builder-quests-empty-icon">
+              <div className="spinner"></div>
+            </div>
+            <h2 className="builder-quests-empty-title">Loading expired quests...</h2>
+          </div>
+        ) : expiredQuests.length > 0 ? (
+          <div className="builder-quests-drafts-grid">
+            {expiredQuests.map((quest) => (
+              <div
+                key={quest.id}
+                className="builder-quests-draft-card"
+                style={{ cursor: 'default' }}
+              >
+                <div className="builder-quests-draft-header">
+                  <div className="builder-quests-draft-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <div className="builder-quests-draft-status">
+                    <span className="builder-quests-draft-status-badge" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.5)' }}>
+                      Expired
+                    </span>
+                  </div>
+                </div>
+                <h3 className="builder-quests-draft-title">{quest.title}</h3>
+                <p className="builder-quests-draft-meta">
+                  Ended: {quest.expiresAt ? new Date(quest.expiresAt).toLocaleDateString() : 'Unknown'}
+                  {quest.completedBy && quest.completedBy.length > 0 ? ` • ${quest.completedBy.length} completions` : ' • No participants'}
+                </p>
+                <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
+                  {(!quest.completedBy || quest.completedBy.length === 0) && quest.rewardDeposit && parseFloat(quest.rewardDeposit) > 0 && (() => {
+                    const expiresAtSeconds = quest.expiresAt ? Math.floor(quest.expiresAt / 1000) : 0;
+                    const gracePeriodEnd = expiresAtSeconds + (3 * 24 * 60 * 60);
+                    const nowSeconds = Math.floor(Date.now() / 1000);
+                    const gracePeriodRemaining = gracePeriodEnd - nowSeconds;
+                    const isGracePeriodActive = gracePeriodRemaining > 0;
+                    const daysRemaining = Math.ceil(gracePeriodRemaining / 86400);
+
+                    return (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isGracePeriodActive) {
+                            handleRefund(quest);
+                          }
+                        }}
+                        disabled={isWritePending || isConfirming || isGracePeriodActive}
+                        className="builder-quests-create-button"
+                        title={isGracePeriodActive ? `Refund available in ~${daysRemaining} day(s) (3-day grace period)` : 'Refund deposit to your wallet'}
+                        style={{
+                          width: '100%',
+                          background: isGracePeriodActive
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(239, 68, 68, 0.1)',
+                          border: isGracePeriodActive
+                            ? '1px solid rgba(255, 255, 255, 0.1)'
+                            : '1px solid rgba(239, 68, 68, 0.5)',
+                          color: isGracePeriodActive
+                            ? 'rgba(255, 255, 255, 0.4)'
+                            : '#ef4444',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '14px',
+                          padding: '8px 16px',
+                          cursor: (isWritePending || isConfirming || isGracePeriodActive) ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {isWritePending || isConfirming
+                          ? 'Processing...'
+                          : isGracePeriodActive
+                            ? `Wait ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`
+                            : 'Refund Deposit'}
+                      </button>
+                    );
+                  })()}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="builder-quests-empty-state">
+            <div className="builder-quests-empty-icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <h2 className="builder-quests-empty-title">No expired quests</h2>
+            <p className="builder-quests-empty-description">
+              Quests that expire without any participants will appear here.
+            </p>
+          </div>
+        )
+      ) : null
+      }
+    </div >
   );
 }
 

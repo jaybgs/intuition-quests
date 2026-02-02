@@ -88,8 +88,18 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// Serve static files from the React frontend app
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
+
+// The "catch-all" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  // Don't capture API calls that fell through (return 404 for them)
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Route not found' });
+  }
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // Start server

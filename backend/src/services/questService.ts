@@ -59,7 +59,7 @@ export class QuestService {
 
   async createQuest(creatorAddress: string, input: any) {
     const questId = `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const { data: quest, error } = await supabase
       .from('published_quests')
       .insert({
@@ -182,7 +182,10 @@ export class QuestService {
       throw new Error(fetchError.message);
     }
 
-    const completedBy = quest?.completed_by || [];
+    let completedBy = quest?.completed_by || [];
+    if (!Array.isArray(completedBy)) {
+      completedBy = [];
+    }
     if (!completedBy.includes(userAddress.toLowerCase())) {
       completedBy.push(userAddress.toLowerCase());
 

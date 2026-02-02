@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase.js';
+import axios from 'axios';
 
 // Type for fetch Response
 type FetchResponse = globalThis.Response;
@@ -250,7 +251,32 @@ router.post('/callback', async (req: Request, res: Response) => {
 
     let tokenResponse: FetchResponse;
 
+    // Helper to get proxy config
+    const getProxyConfig = () => {
+      const proxyUrl = process.env.QUOTAGUARD_STATIC_URL || process.env.FIXIE_URL;
+      if (!proxyUrl) return undefined;
+
+      try {
+        const url = new URL(proxyUrl);
+        return {
+          protocol: url.protocol.replace(':', ''),
+          host: url.hostname,
+          port: parseInt(url.port),
+          auth: {
+            username: url.username,
+            password: url.password
+          }
+        };
+      } catch (e) {
+        console.error('Invalid proxy URL:', e);
+        return undefined;
+      }
+    };
+
     if (provider === 'twitter') {
+      // ... (Rest of Twitter logic remains similar but using axios if preferred, or keep fetch if it works)
+      // Keeping fetch for Twitter since it works and Twitter might not block Render IP as aggressively as Discord
+      // ...
       // Twitter OAuth 2.0 v2 with PKCE and Basic Auth
       console.log('🐦 Twitter OAuth: Using PKCE token exchange with Basic Auth');
       const authString = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
@@ -272,24 +298,59 @@ router.post('/callback', async (req: Request, res: Response) => {
       });
 
     } else if (provider === 'discord') {
-      // Discord OAuth 2.0
-      console.log('🎮 Discord OAuth: Using standard token exchange');
+      // Discord OAuth 2.0 - Use Axios with Proxy
+      console.log('🎮 Discord OAuth: Using standard token exchange with Axios (Proxy enabled if available)');
 
-      tokenResponse = await fetch(config.tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-          'User-Agent': 'DiscordBot (https://trustquests.com, 1.0.0)'
-        },
-        body: new URLSearchParams({
-          client_id: config.clientId,
-          client_secret: config.clientSecret,
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: config.redirectUri
-        })
+      const proxyConfig = getProxyConfig();
+      if (proxyConfig) {
+        console.log('🛡️ Using Proxy for Discord request:', proxyConfig.host);
+      }
+
+      const params = new URLSearchParams({
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: config.redirectUri
       });
+
+      try {
+        const axiosResponse = await axios.post(config.tokenUrl, params.toString(), {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'User-Agent': 'DiscordBot (https://trustquests.com, 1.0.0)'
+          },
+          proxy: proxyConfig || false // Use proxy if available, otherwise false (direct)
+        });
+
+        // Create a compatible response object for the downstream code
+        tokenResponse = {
+          ok: axiosResponse.status >= 200 && axiosResponse.status < 300,
+          status: axiosResponse.status,
+          statusText: axiosResponse.statusText,
+          json: async () => axiosResponse.data,
+          text: async () => JSON.stringify(axiosResponse.data),
+          url: config.tokenUrl
+        } as any;
+
+      } catch (error: any) {
+        console.error('❌ Axios request failed:', error.message);
+        if (error.response) {
+          console.error('   Status:', error.response.status);
+          console.error('   Data:', error.response.data);
+          tokenResponse = {
+            ok: false,
+            status: error.response.status,
+            statusText: error.response.statusText,
+            json: async () => error.response.data,
+            text: async () => JSON.stringify(error.response.data),
+            url: config.tokenUrl
+          } as any;
+        } else {
+          throw error;
+        }
+      }
     } else {
       return res.status(400).json({ error: 'Unsupported provider for token exchange' });
     }

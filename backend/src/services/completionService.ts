@@ -29,7 +29,7 @@ export class CompletionService {
 
     // Get or create user
     const user = await this.userService.getOrCreateUser(userAddress);
-    
+
     // Add completion to quest
     await this.questService.addQuestCompletion(questId, userAddress);
 
@@ -46,6 +46,12 @@ export class CompletionService {
   }
 
   async getUserCompletions(userAddress: string, limit = 50) {
+    // Sanitize input to prevent JSON errors
+    if (!userAddress || typeof userAddress !== 'string' || userAddress.length < 10) {
+      console.warn('Invalid user address provided to getUserCompletions:', userAddress);
+      return [];
+    }
+
     // Get all quests and filter by those completed by user
     const { data: quests, error } = await supabase
       .from('published_quests')

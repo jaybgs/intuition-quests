@@ -180,6 +180,11 @@ class ApiClient {
     return response.data.balance;
   }
 
+  async getIqBalance(address: string) {
+    const response = await this.client.get(`/quests/iq-balance/${address}`);
+    return response.data;
+  }
+
   async getUserRank(address: string) {
     const response = await this.client.get(`/users/${address}/rank`);
     return response.data.rank;

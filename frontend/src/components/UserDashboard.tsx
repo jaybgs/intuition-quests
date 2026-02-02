@@ -205,8 +205,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
     const fetchIqBalance = async () => {
       if (address) {
         try {
-          const response = await fetch(`/api/quests/iq-balance/${address}`);
-          const data = await response.json();
+          const data = await apiClient.getIqBalance(address);
           if (data.success) {
             setIqBalance(data.iqBalance || 0);
           }

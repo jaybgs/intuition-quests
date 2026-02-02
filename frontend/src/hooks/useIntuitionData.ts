@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
-import { 
-  fetcher, 
+import {
+  fetcher,
   configureClient,
 } from '@0xintuition/graphql';
 
@@ -14,6 +14,37 @@ if (typeof window !== 'undefined') {
     console.log('✓ Intuition GraphQL client configured for mainnet');
   } catch (error) {
     console.error('Failed to configure Intuition GraphQL client:', error);
+  }
+}
+
+// Request cache to prevent excessive API calls and rate limiting
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  expiresAt: number;
+}
+
+// Global cache shared across all hook instances
+const requestCache = new Map<string, CacheEntry<any>>();
+const pendingRequests = new Map<string, Promise<any>>();
+
+// Cache TTL in milliseconds (60 seconds)
+const CACHE_TTL = 60 * 1000;
+
+// Rate limiting: minimum time between identical requests
+const MIN_REQUEST_INTERVAL = 1000; // 1 second
+const lastRequestTime = new Map<string, number>();
+
+function getCacheKey(document: string, variables?: any): string {
+  return `${document}:${JSON.stringify(variables || {})}`;
+}
+
+function clearExpiredCache(): void {
+  const now = Date.now();
+  for (const [key, entry] of requestCache.entries()) {
+    if (now > entry.expiresAt) {
+      requestCache.delete(key);
+    }
   }
 }
 
@@ -363,37 +394,91 @@ export function useIntuitionData() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper to execute GraphQL queries
+  // Helper to execute GraphQL queries with caching and rate limiting
   const executeQuery = async <T>(document: string, variables?: any): Promise<T> => {
-    try {
-      const response = await fetch('https://mainnet.intuition.sh/v1/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: document,
-          variables,
-        }),
-      });
+    const cacheKey = getCacheKey(document, variables);
 
-      if (!response.ok) {
-        console.error('❌ GraphQL HTTP Error:', response.status, response.statusText);
-        throw new Error(`HTTP Error: ${response.status}`);
-      }
+    // Clear expired cache entries periodically
+    clearExpiredCache();
 
-      const result = await response.json();
-      
-      if (result.errors) {
-        console.error('❌ GraphQL Errors:', result.errors);
-        throw new Error(result.errors[0]?.message || 'GraphQL Error');
-      }
-      
-      return result.data;
-    } catch (error) {
-      console.error('❌ GraphQL Fetch Error:', error);
-      throw error;
+    // Check if we have a valid cached result
+    const cached = requestCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data as T;
     }
+
+    // Check if there's already a pending request for this exact query
+    const pendingRequest = pendingRequests.get(cacheKey);
+    if (pendingRequest) {
+      return pendingRequest as Promise<T>;
+    }
+
+    // Rate limiting: check if we've made this request too recently
+    const lastTime = lastRequestTime.get(cacheKey);
+    if (lastTime && Date.now() - lastTime < MIN_REQUEST_INTERVAL) {
+      // If we have stale cached data, return it rather than waiting
+      if (cached) {
+        return cached.data as T;
+      }
+      // Otherwise wait for the rate limit
+      await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - (Date.now() - lastTime)));
+    }
+
+    // Create the request promise
+    const requestPromise = (async () => {
+      try {
+        lastRequestTime.set(cacheKey, Date.now());
+
+        const response = await fetch('https://mainnet.intuition.sh/v1/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: document,
+            variables,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('❌ GraphQL HTTP Error:', response.status, response.statusText);
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.errors) {
+          console.error('❌ GraphQL Errors:', result.errors);
+          throw new Error(result.errors[0]?.message || 'GraphQL Error');
+        }
+
+        // Cache the successful result
+        const data = result.data;
+        requestCache.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + CACHE_TTL,
+        });
+
+        return data;
+      } catch (error) {
+        console.error('❌ GraphQL Fetch Error:', error);
+        // On error, return stale cached data if available
+        if (cached) {
+          console.log('📦 Returning stale cached data due to error');
+          return cached.data;
+        }
+        throw error;
+      } finally {
+        // Remove from pending requests
+        pendingRequests.delete(cacheKey);
+      }
+    })();
+
+    // Store as pending request
+    pendingRequests.set(cacheKey, requestPromise);
+
+    return requestPromise as Promise<T>;
   };
 
   /**
@@ -407,7 +492,7 @@ export function useIntuitionData() {
   }): Promise<{ atoms: IntuitionAtom[]; total: number }> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await executeQuery<any>(GetAtomsDocument, {
         limit: options?.limit || 20,
@@ -450,7 +535,7 @@ export function useIntuitionData() {
   const getAtomById = useCallback(async (termId: string): Promise<IntuitionAtom | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await executeQuery<any>(GetAtomDocument, { id: termId });
 
@@ -486,7 +571,7 @@ export function useIntuitionData() {
   const getAtomByData = useCallback(async (data: string): Promise<IntuitionAtom | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await executeQuery<any>(GetAtomByDataDocument, { data });
 
@@ -520,7 +605,7 @@ export function useIntuitionData() {
    */
   const getIdentityByAddress = useCallback(async (walletAddress: string): Promise<IntuitionAtom | null> => {
     const addressLower = walletAddress.toLowerCase();
-    
+
     try {
       // 1) Try searching by data field with multiple formats (how many identities are stored)
       const addressPadded = `0x${addressLower.slice(2).padStart(64, '0')}`;
@@ -537,31 +622,31 @@ export function useIntuitionData() {
       // 2) Try searching by wallet_id (if set on the atom)
       const walletIdResult = await getAtoms({
         limit: 1,
-        where: { 
+        where: {
           wallet_id: { _ilike: addressLower },
         },
         orderBy: [{ created_at: 'desc' }],
       });
-      
+
       if (walletIdResult?.atoms && walletIdResult.atoms.length > 0) {
         console.log('✅ Found identity by wallet_id:', walletIdResult.atoms[0].termId);
         return walletIdResult.atoms[0];
       }
-      
+
       // 3) Finally, try searching for any atom created by this address
       const creatorResult = await getAtoms({
         limit: 1,
-        where: { 
+        where: {
           creator_id: { _ilike: addressLower },
         },
         orderBy: [{ created_at: 'desc' }],
       });
-      
+
       if (creatorResult?.atoms && creatorResult.atoms.length > 0) {
         console.log('✅ Found identity by creator_id:', creatorResult.atoms[0].termId);
         return creatorResult.atoms[0];
       }
-      
+
       console.log('ℹ️ No identity found for address:', addressLower);
       return null;
     } catch (err: any) {
@@ -581,7 +666,7 @@ export function useIntuitionData() {
   }): Promise<{ triples: IntuitionTriple[]; total: number }> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await executeQuery<any>(GetTriplesDocument, {
         limit: options?.limit || 20,
@@ -647,7 +732,7 @@ export function useIntuitionData() {
   const getTripleById = useCallback(async (termId: string): Promise<IntuitionTriple | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await executeQuery<any>(GetTripleDocument, { tripleId: termId });
 
@@ -712,9 +797,9 @@ export function useIntuitionData() {
   }): Promise<{ triples: any[]; total: number }> => {
     setIsLoading(true);
     setError(null);
-    
+
     const userAddr = options?.userAddress || address;
-    
+
     try {
       const result = await executeQuery<any>(GetTriplesWithPositionsDocument, {
         limit: options?.limit || 20,
@@ -835,11 +920,11 @@ export function useIntuitionData() {
   const getStakedClaimsCount = useCallback(async (walletAddress?: string): Promise<number> => {
     const userAddr = walletAddress || address;
     if (!userAddr) return 0;
-    
+
     try {
       setIsLoading(true);
       const uniqueTriples = new Set<string>();
-      
+
       // 1. Get triples created by this wallet
       try {
         const createdTriples = await getClaimsByCreator(userAddr, { limit: 1000 });
@@ -853,7 +938,7 @@ export function useIntuitionData() {
       } catch (error) {
         console.error('Error fetching created triples:', error);
       }
-      
+
       // 2. Get identity atom for this wallet
       let identityAtom: IntuitionAtom | null = null;
       try {
@@ -861,7 +946,7 @@ export function useIntuitionData() {
       } catch (error) {
         console.error('Error fetching identity atom:', error);
       }
-      
+
       // 3. Get triples where identity is the subject
       if (identityAtom?.termId) {
         try {
@@ -880,7 +965,7 @@ export function useIntuitionData() {
           console.error('Error fetching subject triples:', error);
         }
       }
-      
+
       const count = uniqueTriples.size;
       console.log(`[getStakedClaimsCount] Found ${count} unique claims for ${userAddr}`);
       return count;
@@ -897,7 +982,7 @@ export function useIntuitionData() {
     // Loading and error state
     isLoading,
     error,
-    
+
     // Atom (identity) methods
     getAtoms,
     getAtomById,
@@ -905,7 +990,7 @@ export function useIntuitionData() {
     getIdentityByAddress,
     searchAtoms,
     getAtomsCount,
-    
+
     // Triple (claim) methods
     getTriples,
     getTripleById,

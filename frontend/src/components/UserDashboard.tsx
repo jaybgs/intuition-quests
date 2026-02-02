@@ -161,6 +161,7 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   const shards = Math.floor(userXP / 10); // 10 IQ points = 1 shard
 
   // Fetch staked claims count when address changes
+  // Note: getStakedClaimsCount is intentionally excluded from deps to prevent re-render loops
   useEffect(() => {
     const fetchStakedClaims = async () => {
       if (address) {
@@ -177,7 +178,8 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
       }
     };
     fetchStakedClaims();
-  }, [address, getStakedClaimsCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
 
   // Fetch quest completions count from database when address changes
   useEffect(() => {
@@ -312,11 +314,13 @@ export function UserDashboard({ onEditProfile }: UserDashboardProps) {
   }, [address]);
 
   // Load social connections when address changes
+  // Note: loadConnections is intentionally excluded from deps to prevent re-render loops
   useEffect(() => {
     if (address) {
       loadConnections();
     }
-  }, [address, loadConnections]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
 
   // Fetch Intuition data for all connected wallets
   useEffect(() => {

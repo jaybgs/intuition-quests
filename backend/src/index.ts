@@ -3,8 +3,7 @@ import './env.js';
 
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
+
 import userRoutes from './routes/users.js';
 import leaderboardRoutes from './routes/leaderboard.js';
 import authRoutes from './routes/auth.js';
@@ -15,8 +14,7 @@ import socialRoutes from './routes/social.js';
 import subscriptionRoutes from './routes/subscription.js';
 import analyticsRoutes from './routes/analytics.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;

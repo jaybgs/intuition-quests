@@ -642,8 +642,12 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
                           // User requested "one time only", so confirming it works via UI feedback is helpful.
                           showToast(`You have already claimed this discovery reward.`, 'info');
                         }
-                      } catch (err) {
+                      } catch (err: any) {
                         console.log('Reward claim silent fail:', err);
+                        // Check if error is 401 (Unauthorized)
+                        if (err.response?.status === 401 || err.message?.includes('401')) {
+                          showToast('Please sign in to claim your 10 IQ reward!', 'warning');
+                        }
                       }
                     }
                   }}

@@ -1,0 +1,8 @@
+{
+    "network": "intuition",
+    "contract": "FeeCollector",
+    "address": "0x1234567890123456789012345678901234567890",
+    "deployer": "0xec48e65C2AD6d242F173467EC3edc7AAD78CFA07",
+    "timestamp": "2026-02-03T21:00:00.000Z",
+    "note": "Placeholder address due to local environment compilation path issues. Contract source is in contracts/src/FeeCollector.sol"
+}

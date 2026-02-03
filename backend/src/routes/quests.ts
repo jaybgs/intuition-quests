@@ -839,4 +839,71 @@ router.delete('/reset-all', async (req, res) => {
   }
 });
 
-export default router;
+// ... existing routes ...
+
+const ecosystemRewardSchema = z.object({
+  walletAddress: z.string(),
+  dappId: z.string(),
+});
+
+router.post('/ecosystem-reward', authenticateWallet, async (req: Request, res: Response) => {
+  try {
+    const validated = ecosystemRewardSchema.parse(req.body);
+    const { walletAddress, dappId } = validated;
+    const REWARD_AMOUNT = 10;
+    const uniqueRewardId = `eco_${dappId}`; // Use as quest_id for uniqueness
+
+    // Check if already rewarded (prevent abuse)
+    const { data: existing } = await supabase
+      .from('iq_earnings_history')
+      .select('id')
+      .eq('wallet_address', walletAddress)
+      .eq('quest_id', uniqueRewardId)
+      .single();
+
+    if (existing) {
+      return res.json({ success: false, message: 'Reward already claimed' });
+    }
+
+    // Award IQ points
+    // 1. Update user balance
+    const { data: userBalance } = await supabase
+      .from('user_iq_balance')
+      .select('iq_balance, total_iq_earned')
+      .eq('wallet_address', walletAddress)
+      .single();
+
+    const currentBalance = userBalance?.iq_balance || 0;
+    const currentTotal = userBalance?.total_iq_earned || 0;
+    const newBalance = currentBalance + REWARD_AMOUNT;
+    const newTotal = currentTotal + REWARD_AMOUNT;
+
+    await supabase
+      .from('user_iq_balance')
+      .upsert({
+        wallet_address: walletAddress,
+        iq_balance: newBalance,
+        total_iq_earned: newTotal,
+        updated_at: new Date().toISOString()
+      });
+
+    // 2. Log history
+    await supabase
+      .from('iq_earnings_history')
+      .insert({
+        wallet_address: walletAddress,
+        iq_amount: REWARD_AMOUNT,
+        quest_id: uniqueRewardId,
+        quest_title: `Ecosystem Reward: ${dappId}`,
+        transaction_type: 'bonus', // Must match check constraint ('quest_completion', 'bonus', 'penalty', 'spend')
+        description: `Ecosystem dApp Discovery Reward for ${dappId}`,
+        created_at: new Date().toISOString()
+      });
+
+    res.json({ success: true, message: '10 IQ Awarded!', newBalance });
+
+  } catch (error: any) {
+    console.error('Ecosystem reward error:', error);
+    res.status(500).json({ success: false, error: 'Reward failed' });
+  }
+});

@@ -16,6 +16,9 @@ import {
 } from '../services/questEscrowService';
 import { questDraftService } from '../services/questDraftService';
 import { createQuestAtom } from '../services/questAtomService';
+import {
+  payQuestCreationFee
+} from '../services/trustQuestsPaymentService';
 import { apiClient } from '../services/apiClient';
 import { parseEther } from 'viem';
 import { parseUnits, formatUnits, createPublicClient, http } from 'viem';
@@ -1506,7 +1509,28 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
         }
       }
 
-      // Step 2: Create quest atom on-chain
+      // Step 2: Pay creation fee if user is free plan (now uses FeeCollector contract)
+      if (isFree) {
+        showToast('Initiating quest creation fee (1 TRUST)...', 'info');
+        try {
+          const feeResult = await payQuestCreationFee(walletClient, publicClient);
+          if (!feeResult.success) {
+            showToast(`Creation fee failed: ${feeResult.error}`, 'error');
+            setIsPublishing(false);
+            return;
+          }
+          if (feeResult.txHash !== 'dev-mode-skip') {
+            showToast('Creation fee paid successfully!', 'success');
+          }
+        } catch (feeError: any) {
+          console.error('Fee payment error:', feeError);
+          showToast(`Fee payment error: ${feeError.message || 'Unknown error'}`, 'error');
+          setIsPublishing(false);
+          return;
+        }
+      }
+
+      // Step 3: Create quest atom on-chain
       showToast('Creating quest on-chain...', 'info');
       const client = publicClient || createPublicClient({
         chain: intuitionChain,

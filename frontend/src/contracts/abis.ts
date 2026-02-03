@@ -518,3 +518,35 @@ export const INTUITION_MULTI_VAULT_ABI = [
     outputs: [{ name: '', type: 'bytes32[]' }],
   },
 ] as const;
+
+// Fee Collector ABI
+export const FEE_COLLECTOR_ABI = [
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "payer", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "FeePaid",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "payFee",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "feeAmount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+] as const;

@@ -574,107 +574,89 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
             </>
           ) : (
             <>
-              <a
-                href="https://portal.intuition.systems/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ecosystem-dapp-card"
-              >
-                <div className="ecosystem-dapp-icon">
-                  <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
-                </div>
-                <div className="ecosystem-dapp-content">
-                  <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
-                  <p className="ecosystem-dapp-description">
-                    Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.
-                  </p>
-                </div>
-              </a>
+              {[
+                {
+                  name: "Intuition Portal",
+                  id: "intuition-portal",
+                  description: "Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.",
+                  link: "https://portal.intuition.systems/",
+                  icon: "/intuition-portal-logo.svg"
+                },
+                {
+                  name: "Trust Name Services",
+                  id: "trust-name-services",
+                  description: "Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.",
+                  link: "https://tns.intuition.box/",
+                  icon: "/tns logo.svg"
+                },
+                {
+                  name: "IntuRank",
+                  id: "inturank",
+                  description: "Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.",
+                  link: "https://inturank.intuition.box/",
+                  icon: "/inturank-logo.svg"
+                },
+                {
+                  name: "Tribememe",
+                  id: "tribememe",
+                  description: "A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.",
+                  link: "https://tribememe.app/",
+                  icon: "/tribememe-logo.svg"
+                },
+                {
+                  name: "IntuitionBets",
+                  id: "intuitionbets",
+                  description: "Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.",
+                  link: "https://intuitionbets.com/",
+                  icon: "/intuition-bets.svg"
+                },
+                {
+                  name: "Oracle Lend",
+                  id: "oracle-lend",
+                  description: "Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.",
+                  link: "https://oraclelend.intuition.box/",
+                  icon: "/oracle-lend-logo.svg"
+                }
+              ].map((dapp) => (
+                <div
+                  key={dapp.id}
+                  className="ecosystem-dapp-card"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    window.open(dapp.link, '_blank');
 
-              <a
-                href="https://tns.intuition.box/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ecosystem-dapp-card"
-              >
-                <div className="ecosystem-dapp-icon">
-                  <img src="/tns logo.svg" alt="Trust Name Services" />
-                </div>
-                <div className="ecosystem-dapp-content">
-                  <h3 className="ecosystem-dapp-name">Trust Name Services</h3>
-                  <p className="ecosystem-dapp-description">
-                    Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.
-                  </p>
-                </div>
-              </a>
+                    if (address) {
+                      try {
+                        const { apiClient } = await import('../services/apiClient');
+                        const { showToast } = await import('./Toast');
 
-              <a
-                href="https://inturank.intuition.box/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ecosystem-dapp-card"
-              >
-                <div className="ecosystem-dapp-icon">
-                  <img src="/inturank-logo.svg" alt="IntuRank" />
-                </div>
-                <div className="ecosystem-dapp-content">
-                  <h3 className="ecosystem-dapp-name">IntuRank</h3>
-                  <p className="ecosystem-dapp-description">
-                    Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.
-                  </p>
-                </div>
-              </a>
+                        const result = await apiClient.post('/quests/ecosystem-reward', {
+                          walletAddress: address,
+                          dappId: dapp.id
+                        });
 
-              <a
-                href="https://tribememe.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ecosystem-dapp-card"
-              >
-                <div className="ecosystem-dapp-icon">
-                  <img src="/tribememe-logo.svg" alt="Tribememe" />
+                        if (result.success) {
+                          showToast(`+10 IQ Awarded for discovering ${dapp.name}!`, 'success');
+                        } else if (result.message === 'Reward already claimed') {
+                          // Optional: Silent or informative toast. 
+                          // User requested "one time only", so confirming it works via UI feedback is helpful.
+                          showToast(`You have already claimed this discovery reward.`, 'info');
+                        }
+                      } catch (err) {
+                        console.log('Reward claim silent fail:', err);
+                      }
+                    }
+                  }}
+                >
+                  <div className="ecosystem-dapp-icon">
+                    <img src={dapp.icon} alt={dapp.name} />
+                  </div>
+                  <div className="ecosystem-dapp-content">
+                    <h3 className="ecosystem-dapp-name">{dapp.name}</h3>
+                    <p className="ecosystem-dapp-description">{dapp.description}</p>
+                  </div>
                 </div>
-                <div className="ecosystem-dapp-content">
-                  <h3 className="ecosystem-dapp-name">Tribememe</h3>
-                  <p className="ecosystem-dapp-description">
-                    A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.
-                  </p>
-                </div>
-              </a>
-
-              <a
-                href="https://intuitionbets.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ecosystem-dapp-card"
-              >
-                <div className="ecosystem-dapp-icon">
-                  <img src="/intuition-bets.svg" alt="IntuitionBets" />
-                </div>
-                <div className="ecosystem-dapp-content">
-                  <h3 className="ecosystem-dapp-name">IntuitionBets</h3>
-                  <p className="ecosystem-dapp-description">
-                    Decentralized betting platform on the Intuition network. Place bets on events, predictions, and outcomes with transparent, on-chain resolution.
-                  </p>
-                </div>
-              </a>
-
-              <a
-                href="https://oraclelend.intuition.box/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ecosystem-dapp-card"
-              >
-                <div className="ecosystem-dapp-icon">
-                  <img src="/oracle-lend-logo.svg" alt="Oracle Lend" />
-                </div>
-                <div className="ecosystem-dapp-content">
-                  <h3 className="ecosystem-dapp-name">Oracle Lend</h3>
-                  <p className="ecosystem-dapp-description">
-                    Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.
-                  </p>
-                </div>
-              </a>
+              ))}
             </>
           )}
         </div>

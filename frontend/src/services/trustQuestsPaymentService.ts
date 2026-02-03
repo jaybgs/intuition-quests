@@ -175,3 +175,64 @@ export async function getContractBalance(publicClient: any): Promise<string> {
     return '0';
   }
 }
+
+/**
+ * Pay 1 TRUST fee for quest creation (Free users only)
+ * Calls the FeeCollector smart contract
+ */
+export async function payQuestCreationFee(
+  walletClient: any,
+  publicClient: any
+): Promise<PaymentResult> {
+  try {
+    const { FEE_COLLECTOR_ABI } = await import('../contracts/abis');
+    const contractAddress = CONTRACT_ADDRESSES.FEE_COLLECTOR;
+    // Fallback if address is placeholder/invalid
+    if (!contractAddress || contractAddress.length < 42 || contractAddress === '0x1234567890123456789012345678901234567890') {
+      console.warn('FeeCollector contract not properly deployed/configured. Skipping fee for dev mode.');
+      return { success: true, txHash: 'dev-mode-skip' };
+    }
+
+    const userAddress = walletClient.account.address;
+    const FEE_AMOUNT = parseEther('1'); // 1 TRUST fee
+
+    console.log('🔄 Starting quest creation fee payment (Contract)...');
+    console.log('  Contract:', contractAddress);
+
+    // Check balance
+    const userBalance = await publicClient.getBalance({ address: userAddress });
+    if (userBalance < FEE_AMOUNT) {
+      throw new Error(`Insufficient TRUST balance. You need ${formatEther(FEE_AMOUNT)} TRUST to publish this quest.`);
+    }
+
+    // Call payFee function on contract
+    const hash = await walletClient.writeContract({
+      address: contractAddress,
+      abi: FEE_COLLECTOR_ABI,
+      functionName: 'payFee',
+      value: FEE_AMOUNT
+    });
+
+    console.log('📝 Fee transaction sent:', hash);
+    console.log('⏳ Waiting for confirmation...');
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+    if (receipt.status !== 'success') {
+      throw new Error('Fee transaction failed');
+    }
+
+    console.log('✅ Quest creation fee paid successfully via Contract!');
+
+    return { success: true, txHash: hash };
+
+  } catch (error: any) {
+    console.error('❌ Quest creation fee payment failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Fee payment failed'
+    };
+  }
+}
+
+

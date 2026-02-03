@@ -286,8 +286,10 @@
   justify-content: center;
   gap: 8px;
   /* Fixed gap */
-  padding: 10px 20px;
-  /* Fixed padding */
+  padding: 12px 20px;
+  /* Increased padding for height */
+  margin-top: 20px;
+  /* Reduced margin from auto to 20px */
   background: linear-gradient(135deg, var(--accent-blue), #2563eb);
   border: none;
   border-radius: 10px;

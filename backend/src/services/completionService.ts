@@ -53,9 +53,10 @@ export class CompletionService {
     }
 
     // Get all quests and filter by those completed by user
+    // Select specific columns to avoid issues with other potential bad data columns
     const { data: quests, error } = await supabase
       .from('published_quests')
-      .select('*')
+      .select('id, title, xp_reward, updated_at, completed_by')
       .contains('completed_by', [userAddress.toLowerCase()])
       .order('updated_at', { ascending: false })
       .limit(limit);

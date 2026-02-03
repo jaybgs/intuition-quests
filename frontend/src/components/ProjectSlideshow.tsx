@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, startTransition } from 'react';
 import { useAccount } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from './Toast';
+import { apiClient } from '../services/apiClient';
 import { spaceService } from '../services/spaceService';
 import { questServiceSupabase } from '../services/questServiceSupabase';
 import { DiscoverPageSkeleton, SpaceCardSkeleton, DAppCardSkeleton } from './Skeleton';
@@ -622,32 +623,37 @@ export function ProjectSlideshow({ onQuestClick, onCreateSpace, onSpaceClick, on
                   key={dapp.id}
                   className="ecosystem-dapp-card"
                   onClick={async (e) => {
+                    // Prevent default to ensure we control the flow, but we MUST open the window
                     e.preventDefault();
+                    console.log('🟢 [Debug] Card clicked:', dapp.id);
+                    console.log('🟢 [Debug] Current Address:', address);
+
+                    // Open link immediately
                     window.open(dapp.link, '_blank');
 
-                    if (address) {
-                      try {
-                        const { apiClient } = await import('../services/apiClient');
-                        const { showToast } = await import('./Toast');
+                    if (!address) {
+                      console.log('🟡 [Debug] No address found, skipping reward');
+                      return;
+                    }
 
-                        const result = await apiClient.post('/quests/ecosystem-reward', {
-                          walletAddress: address,
-                          dappId: dapp.id
-                        });
+                    try {
+                      console.log('🔵 [Debug] Attempting to claim reward for:', dapp.id);
+                      const result = await apiClient.post('/quests/ecosystem-reward', {
+                        walletAddress: address,
+                        dappId: dapp.id
+                      });
+                      console.log('🟢 [Debug] API Result:', result);
 
-                        if (result.success) {
-                          showToast(`+10 IQ Awarded for discovering ${dapp.name}!`, 'success');
-                        } else if (result.message === 'Reward already claimed') {
-                          // Optional: Silent or informative toast. 
-                          // User requested "one time only", so confirming it works via UI feedback is helpful.
-                          showToast(`You have already claimed this discovery reward.`, 'info');
-                        }
-                      } catch (err: any) {
-                        console.log('Reward claim silent fail:', err);
-                        // Check if error is 401 (Unauthorized)
-                        if (err.response?.status === 401 || err.message?.includes('401')) {
-                          showToast('Please sign in to claim your 10 IQ reward!', 'warning');
-                        }
+                      if (result.success) {
+                        showToast(`+10 IQ Awarded for discovering ${dapp.name}!`, 'success');
+                      } else if (result.message === 'Reward already claimed') {
+                        console.log('🟡 [Debug] Already claimed');
+                        showToast(`You have already claimed this discovery reward.`, 'info');
+                      }
+                    } catch (err: any) {
+                      console.error('🔴 [Debug] Reward claim failed:', err);
+                      if (err.response?.status === 401 || err.message?.includes('401')) {
+                        showToast('Please sign in to claim your 10 IQ reward!', 'warning');
                       }
                     }
                   }}

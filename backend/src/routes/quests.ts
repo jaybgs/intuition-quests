@@ -907,3 +907,5 @@ router.post('/ecosystem-reward', authenticateWallet, async (req: Request, res: R
     res.status(500).json({ success: false, error: 'Reward failed' });
   }
 });
+
+export default router;

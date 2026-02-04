@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, startTransition } from 'react';
 import { useAccount } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from './Toast';
+import { apiClient } from '../services/apiClient';
 import { spaceService } from '../services/spaceService';
 import { questServiceSupabase } from '../services/questServiceSupabase';
 import { DiscoverPageSkeleton, SpaceCardSkeleton, DAppCardSkeleton } from './Skeleton';
@@ -811,40 +812,105 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
                         </>
                     ) : (
                         <>
-                            <Reveal delay={0} width="100%">
-                                <GlareHover
-                                    width="100%"
-                                    height="100%"
-                                    background="transparent"
-                                    borderColor="transparent"
-                                    borderRadius="20px"
-                                    glareColor="#ffffff"
-                                    glareOpacity={1}
-                                    glareAngle={-30}
-                                    glareSize={325}
-                                    transitionDuration={1500}
-                                    playOnce={false}
-                                    style={{ display: 'grid', placeItems: 'stretch' }}
-                                >
-                                    <a
-                                        href="https://portal.intuition.systems/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="ecosystem-dapp-card"
-                                        style={{ height: '100%' }}
+                            {[
+                                {
+                                    name: "Intuition Portal",
+                                    id: "intuition-portal",
+                                    description: "Access the Intuition network portal to explore identities, atoms, and the decentralized knowledge graph.",
+                                    link: "https://portal.intuition.systems/",
+                                    icon: "/intuition-portal-logo.svg"
+                                },
+                                {
+                                    name: "Trust Name Services",
+                                    id: "trust-name-services",
+                                    description: "Decentralized naming service for the Intuition network. Register and manage human-readable names for your identities and addresses.",
+                                    link: "https://tns.intuition.box/",
+                                    icon: "/tns logo.svg"
+                                },
+                                {
+                                    name: "IntuRank",
+                                    id: "inturank",
+                                    description: "Rank and evaluate projects within the Intuition ecosystem. Get insights and metrics to make informed decisions about network projects.",
+                                    link: "https://inturank.intuition.box/",
+                                    icon: "/inturank-logo.svg"
+                                },
+                                {
+                                    name: "Tribememe",
+                                    id: "tribememe",
+                                    description: "A decentralized social platform for creating, sharing, and engaging with memes. Build your community and connect with like-minded creators.",
+                                    link: "https://tribememe.app/",
+                                    icon: "/tribememe-logo.svg"
+                                },
+                                {
+                                    name: "Oracle Lend",
+                                    id: "oracle-lend",
+                                    description: "Decentralized lending protocol on the Intuition network. Borrow and lend assets with transparent rates and oracle-powered price feeds.",
+                                    link: "https://oraclelend.intuition.box/",
+                                    icon: "/oracle-lend-logo.svg"
+                                }
+                            ].map((dapp, index) => (
+                                <Reveal key={dapp.id} delay={index * 50} width="100%">
+                                    <GlareHover
+                                        width="100%"
+                                        height="100%"
+                                        background="transparent"
+                                        borderColor="transparent"
+                                        borderRadius="20px"
+                                        glareColor="#ffffff"
+                                        glareOpacity={1}
+                                        glareAngle={-30}
+                                        glareSize={325}
+                                        transitionDuration={1500}
+                                        playOnce={false}
+                                        style={{ display: 'grid', placeItems: 'stretch' }}
                                     >
-                                        <div className="ecosystem-dapp-icon">
-                                            <img src="/intuition-portal-logo.svg" alt="Intuition Portal" />
+                                        <div
+                                            className="ecosystem-dapp-card"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                console.log('🟢 [Debug] Card clicked:', dapp.id);
+
+                                                // Open link immediately
+                                                window.open(dapp.link, '_blank');
+
+                                                if (!address) {
+                                                    return;
+                                                }
+
+                                                try {
+                                                    const response = await apiClient.post('/quests/ecosystem-reward', {
+                                                        walletAddress: address,
+                                                        dappId: dapp.id
+                                                    });
+                                                    const result = response.data;
+
+                                                    if (result.success) {
+                                                        showToast(`+10 IQ Awarded for discovering ${dapp.name}!`, 'success');
+                                                    } else if (result.message === 'Reward already claimed') {
+                                                        showToast(`You have already claimed this discovery reward.`, 'info');
+                                                    }
+                                                } catch (err: any) {
+                                                    console.error('Reward claim failed:', err);
+                                                    const status = err?.response?.status;
+                                                    const msg = err?.message || '';
+                                                    if (status === 401 || msg.includes('401')) {
+                                                        showToast('Please sign in to claim your 10 IQ reward!', 'warning');
+                                                    }
+                                                }
+                                            }}
+                                            style={{ height: '100%', cursor: 'pointer' }}
+                                        >
+                                            <div className="ecosystem-dapp-icon">
+                                                <img src={dapp.icon} alt={dapp.name} />
+                                            </div>
+                                            <div className="ecosystem-dapp-content">
+                                                <h3 className="ecosystem-dapp-name">{dapp.name}</h3>
+                                                <p className="ecosystem-dapp-description">{dapp.description}</p>
+                                            </div>
                                         </div>
-                                        <div className="ecosystem-dapp-content">
-                                            <h3 className="ecosystem-dapp-name">Intuition Portal</h3>
-                                            <p className="ecosystem-dapp-description">
-                                                Manage your identity, claims, and reputation in the Intuition ecosystem.
-                                            </p>
-                                        </div>
-                                    </a>
-                                </GlareHover>
-                            </Reveal>
+                                    </GlareHover>
+                                </Reveal>
+                            ))}
                         </>
                     )}
                 </div>

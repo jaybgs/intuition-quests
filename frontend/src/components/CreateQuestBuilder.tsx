@@ -3540,33 +3540,22 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                         </>
                       )}
                       {selectedActions[editingActionIndex]?.title === 'Open Link' && (
-                        <>
-                          <div className="create-quest-builder-field">
-                            <label className="create-quest-builder-label">
-                              Custom Title
-                            </label>
-                            <input
-                              type="text"
-                              className="create-quest-builder-input"
-                              placeholder="Enter custom title (optional)"
-                              value={editingActionConfig.customTitle || ''}
-                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, customTitle: e.target.value })}
-                            />
-                          </div>
-                          <div className="create-quest-builder-field">
-                            <label className="create-quest-builder-label">
-                              Link URL <span className="required-asterisk">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              className="create-quest-builder-input"
-                              placeholder="https://example.com"
-                              value={editingActionConfig.url || ''}
-                              onChange={(e) => setEditingActionConfig({ ...editingActionConfig, url: e.target.value })}
-                            />
-                            <p className="create-quest-builder-hint">Enter the URL to open</p>
-                          </div>
-                        </>
+                        <OpenLinkEditor
+                          config={{
+                            ...(editingActionConfig.openLinkConfig || {}),
+                            customTitle: editingActionConfig.customTitle
+                          }}
+                          onChange={(linkConfig) => {
+                            setEditingActionConfig({
+                              ...editingActionConfig,
+                              openLinkConfig: {
+                                link: linkConfig.link,
+                                ctaText: linkConfig.ctaText
+                              },
+                              customTitle: linkConfig.customTitle
+                            });
+                          }}
+                        />
                       )}
                       {selectedActions[editingActionIndex]?.title === 'Staked on a claim' && (
                         <StakedOnClaimEditor
@@ -3645,7 +3634,7 @@ export function CreateQuestBuilder({ onBack, onSave, onNext, spaceId, draftId, i
                               selectedActions[editingActionIndex]?.title === 'Wait'
                               ? false
                               : selectedActions[editingActionIndex]?.title === 'Open Link'
-                                ? !editingActionConfig.url
+                                ? !(editingActionConfig.openLinkConfig?.link && editingActionConfig.openLinkConfig?.ctaText)
                                 : selectedActions[editingActionIndex]?.title === 'Read docs'
                                   ? !(editingActionConfig.readDocsConfig?.documents && editingActionConfig.readDocsConfig.documents.length > 0 && editingActionConfig.readDocsConfig.documents.every((doc: string) => doc.trim()))
                                   : selectedActions[editingActionIndex]?.title === 'Visit website'

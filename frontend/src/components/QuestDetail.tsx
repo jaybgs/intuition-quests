@@ -910,6 +910,15 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       }
     }
 
+    // If task is Discord, triggering the link should start a cooldown for verification
+    if (step.link && (title.includes('discord') || description.includes('discord'))) {
+      const cooldownEnd = Date.now() + 30000; // 30 seconds
+      setVerificationStates(prev => ({
+        ...prev,
+        [step.id]: { status: 'cooldown', cooldownEnd }
+      }));
+    }
+
     // If task has a link (e.g., Twitter profile), open it
     if (step.link) {
       window.open(step.link, '_blank', 'noopener,noreferrer');
@@ -1087,11 +1096,16 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         return { success: false, completed: false, error: null }; // Return early to show popup
       }
     } else if (title.includes('discord')) {
-      provider = 'discord';
-      if (title.includes('join') || description.includes('join server')) {
-        action = 'join_server';
-        params.serverId = step.discordServerId || step.serverId || '123456789';
-      }
+      // Discord actions are now click-to-verify with cooldown
+      // We explicitly skip the auth check and API verification for Discord
+
+      // Just return success immediately (the cooldown enforcement happens in handleTaskClick/handleRefresh)
+      console.log('✅ Discord verification: Skipping auth check as per configuration');
+      return {
+        success: true,
+        completed: true,
+        error: null
+      };
     } else if (title.includes('github')) {
       provider = 'github';
       if (title.includes('star') || description.includes('star')) {
@@ -1167,7 +1181,8 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       }
 
       if (title.includes('discord')) {
-        return hasConnectedProvider('discord');
+        // Discord tasks no longer require connection verification
+        return true;
       }
 
       // Other social tasks don't require connection verification

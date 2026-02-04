@@ -19,6 +19,7 @@ interface BuilderQuestsProps {
   onCreateQuest?: () => void;
   onBack?: () => void;
   spaceId?: string;
+  ownerAddress?: string;
 }
 
 interface QuestDraft {
@@ -29,8 +30,11 @@ interface QuestDraft {
   spaceId?: string;
 }
 
-export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsProps) {
+export function BuilderQuests({ onCreateQuest, onBack, spaceId, ownerAddress }: BuilderQuestsProps) {
   const { address } = useAccount();
+  // Use ownerAddress if provided (for admins viewing other profiles), otherwise use connected wallet
+  const targetAddress = ownerAddress || address;
+
   const [activeTab, setActiveTab] = useState<'drafts' | 'published' | 'winners' | 'expired'>('drafts');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
@@ -112,10 +116,10 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
   // Load drafts from backend (Supabase only)
   useEffect(() => {
     const loadDrafts = async () => {
-      if (address) {
+      if (targetAddress) {
         setIsLoadingDrafts(true);
         try {
-          const draftsList = await questDraftService.getAllDrafts(address, spaceId);
+          const draftsList = await questDraftService.getAllDrafts(targetAddress, spaceId);
           setDrafts(draftsList);
         } catch (error) {
           console.error('❌ BuilderQuests: Error loading drafts:', error);
@@ -130,7 +134,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     };
 
     loadDrafts();
-  }, [address, spaceId, showCreateQuest]);
+  }, [targetAddress, spaceId, showCreateQuest]);
 
   const handleDeleteDraft = async (draftId: string) => {
     if (!address) {
@@ -156,15 +160,14 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
   // Load published quests from Supabase only
   useEffect(() => {
     const loadPublishedQuests = async () => {
-      if (!address || activeTab !== 'published') return;
+      if (!targetAddress || activeTab !== 'published') return;
 
       setIsLoadingPublished(true);
       try {
-        // Fetch from Supabase only (no localStorage fallback)
-        const allQuests = await questServiceSupabase.getAllQuests();
-        const userQuests = allQuests.filter(
-          (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
-        );
+        // Fetch specific user's quests directly from Supabase
+        const userQuests = await questServiceSupabase.getAllQuests({
+          creatorAddress: targetAddress
+        });
 
         // Sort by creation date (newest first)
         userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -179,21 +182,20 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     };
 
     loadPublishedQuests();
-  }, [address, activeTab, showCreateQuest]);
+  }, [targetAddress, activeTab, showCreateQuest]);
 
   // Listen for quest deletion events
   useEffect(() => {
     const handleQuestDeleted = () => {
       // Reload published quests when a quest is deleted (from Supabase only)
-      if (activeTab === 'published' && address) {
+      if (activeTab === 'published' && targetAddress) {
         const loadPublishedQuests = async () => {
           setIsLoadingPublished(true);
           try {
-            // Fetch from Supabase only
-            const allQuests = await questServiceSupabase.getAllQuests();
-            const userQuests = allQuests.filter(
-              (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
-            );
+            // Fetch specific user's quests directly from Supabase
+            const userQuests = await questServiceSupabase.getAllQuests({
+              creatorAddress: targetAddress
+            });
 
             // Sort by creation date (newest first)
             userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -216,14 +218,14 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     return () => {
       window.removeEventListener('questDeleted', handleQuestDeleted);
     };
-  }, [address, activeTab]);
+  }, [targetAddress, activeTab]);
 
   // Listen for quest publication events
   useEffect(() => {
     const handleQuestPublished = () => {
       // Reload drafts to remove published one
-      if (address) {
-        const draftsListKey = `quest_drafts_${address.toLowerCase()}`;
+      if (targetAddress) {
+        const draftsListKey = `quest_drafts_${targetAddress.toLowerCase()}`;
         const savedDrafts = localStorage.getItem(draftsListKey);
         if (savedDrafts) {
           try {
@@ -244,13 +246,12 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
       if (activeTab === 'published') {
         // Reload published quests from Supabase only
         const loadPublishedQuests = async () => {
-          if (!address) return;
+          if (!targetAddress) return;
           setIsLoadingPublished(true);
           try {
-            const allQuests = await questServiceSupabase.getAllQuests();
-            const userQuests = allQuests.filter(
-              (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
-            );
+            const userQuests = await questServiceSupabase.getAllQuests({
+              creatorAddress: targetAddress
+            });
 
             userQuests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             setPublishedQuests(userQuests);
@@ -269,20 +270,19 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     return () => {
       window.removeEventListener('questPublished', handleQuestPublished);
     };
-  }, [address, activeTab, spaceId]);
+  }, [targetAddress, activeTab, spaceId]);
 
   // Load winners quests (concluded quests) from Supabase only
   useEffect(() => {
     const loadWinnersQuests = async () => {
-      if (!address || activeTab !== 'winners') return;
+      if (!targetAddress || activeTab !== 'winners') return;
 
       setIsLoadingWinners(true);
       try {
-        // Fetch from Supabase only
-        const allQuests = await questServiceSupabase.getAllQuests();
-        const userQuests = allQuests.filter(
-          (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
-        );
+        // Fetch specific user's quests directly from Supabase
+        const userQuests = await questServiceSupabase.getAllQuests({
+          creatorAddress: targetAddress
+        });
 
         // Filter for concluded quests (expired or completed)
         const now = Date.now();
@@ -336,19 +336,19 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
 
     loadWinnersQuests();
     loadWinnersQuests();
-  }, [address, activeTab, showCreateQuest]);
+  }, [targetAddress, activeTab, showCreateQuest]);
 
   // Load expired quests from Supabase only
   useEffect(() => {
     const loadExpiredQuests = async () => {
-      if (!address || activeTab !== 'expired') return;
+      if (!targetAddress || activeTab !== 'expired') return;
 
       setIsLoadingExpired(true);
       try {
-        const allQuests = await questServiceSupabase.getAllQuests();
-        const userQuests = allQuests.filter(
-          (q: Quest) => q.creatorAddress?.toLowerCase() === address.toLowerCase()
-        );
+        // Fetch specific user's quests directly from Supabase
+        const userQuests = await questServiceSupabase.getAllQuests({
+          creatorAddress: targetAddress
+        });
 
         const now = Date.now();
         const expired = userQuests.filter((quest: Quest) => {
@@ -373,7 +373,7 @@ export function BuilderQuests({ onCreateQuest, onBack, spaceId }: BuilderQuestsP
     };
 
     loadExpiredQuests();
-  }, [address, activeTab, showCreateQuest]);
+  }, [targetAddress, activeTab, showCreateQuest]);
 
   // Handle editing a published quest - convert it to a draft
   const handleEditQuest = async (questId: string) => {

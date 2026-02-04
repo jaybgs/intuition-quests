@@ -24,8 +24,8 @@
     position: relative;
     overflow: hidden;
     background: rgba(26, 31, 53, 0.2);
-    backdrop-filter: blur(36px);
-    -webkit-backdrop-filter: blur(36px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0;
     border-top-left-radius: 20px;
@@ -230,8 +230,8 @@
     padding: 80px 20px 40px;
     margin-top: 0;
     background: rgba(26, 31, 53, 0.2);
-    backdrop-filter: blur(36px);
-    -webkit-backdrop-filter: blur(36px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-top: none;
     border-radius: 0;

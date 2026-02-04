@@ -4,6 +4,7 @@ import { useAccount } from 'wagmi';
 import { useQuests } from '../hooks/useQuests';
 import { showToast } from './Toast';
 import GlareHover from './GlareHover';
+import ElectricBorder from './ElectricBorder';
 import './QuestCard.css';
 
 interface QuestCardProps {
@@ -21,7 +22,6 @@ export function QuestCard({ quest, onClick }: QuestCardProps) {
   const participantCount = quest.completedBy?.length || 0;
 
   // Calculate progress (mock for now - would come from quest data)
-  const progress = quest.progress || 0;
   const hasProgress = quest.steps && quest.steps.length > 0;
   const completedSteps = quest.completedSteps || 0;
   const totalSteps = quest.steps?.length || 1;
@@ -82,6 +82,186 @@ export function QuestCard({ quest, onClick }: QuestCardProps) {
     }
   };
 
+  const isElectric = quest.id === 'quest_1770214501234_gfl818v7a';
+
+  const cardContent = (
+    <div
+      className={`quest-card ${isHovered ? 'quest-card-hovered' : ''} ${isCompleted ? 'quest-card-completed' : ''} ${isElectric ? 'electric' : ''}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : 'default', height: '100%' }}
+    >
+      <div className="quest-image">
+        {(quest.cover || quest.image) ? (
+          <img
+            src={quest.cover || quest.image}
+            alt={quest.title}
+            className="quest-card-bg-image"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              position: 'absolute',
+              top: 0,
+              left: 0
+            }}
+          />
+        ) : (
+          <div className="quest-image-placeholder">
+            {quest.projectName.charAt(0).toUpperCase()}
+          </div>
+        )}
+        {isCompleted && (
+          <div className="quest-completed-overlay">
+            <img src="/verified.svg" alt="Verified" width="48" height="48" />
+          </div>
+        )}
+        {quest.difficulty && (
+          <div
+            className="quest-difficulty-badge"
+            style={{ backgroundColor: getDifficultyColor(quest.difficulty) }}
+          >
+            {quest.difficulty}
+          </div>
+        )}
+        {isHovered && (
+          <div className="quest-quick-actions">
+            <button
+              className="quest-action-button"
+              onClick={handleShare}
+              title="Share quest"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="quest-content">
+        <div className="quest-header">
+          <h3 className="quest-title">{quest.title}</h3>
+          <span className="xp-badge">{quest.iqPoints ?? quest.xpReward ?? 100} IQ</span>
+        </div>
+        <p className="quest-description">{quest.description}</p>
+
+        {hasProgress && !isCompleted && (
+          <div className="quest-progress-container">
+            <div className="quest-progress-header">
+              <span className="quest-progress-label">Progress</span>
+              <span className="quest-progress-text">{completedSteps}/{totalSteps} steps</span>
+            </div>
+            <div className="quest-progress-bar">
+              <div
+                className="quest-progress-fill"
+                style={{ width: `${(completedSteps / totalSteps) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="quest-meta">
+          <div className="quest-participants">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span>{formatNumber(participantCount)}</span>
+          </div>
+          <div className="quest-project">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            </svg>
+            <span>{quest.projectName}</span>
+          </div>
+          {quest.estimatedTime && (
+            <div className="quest-time">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>{quest.estimatedTime}</span>
+            </div>
+          )}
+        </div>
+        {isCompleted ? (
+          <div className="quest-completed-state">
+            <span className="completed-badge">
+              <img src="/verified.svg" alt="Verified" width="16" height="16" />
+              Completed
+            </span>
+          </div>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleComplete();
+            }}
+            disabled={!address || isCompleting || !!(address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase())}
+            className="complete-button"
+          >
+            {isCompleting ? (
+              <>
+                <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                Completing...
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="5 12 10 17 20 7" />
+                </svg>
+                Start Quest
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  if (isElectric) {
+    return (
+      <ElectricBorder
+        color="#7df9ff"
+        speed={1}
+        chaos={0.12}
+        thickness={3}
+        displacement={12}
+        borderOffset={6}
+        canvasZIndex={1000}
+        style={{
+          borderRadius: 20,
+          width: '100%',
+          height: '100%',
+          display: 'block'
+        }}
+      >
+        <GlareHover
+          width="100%"
+          height="100%"
+          background="transparent"
+          borderColor="transparent"
+          borderRadius="20px"
+          glareColor="#ffffff"
+          glareOpacity={1}
+          glareAngle={-30}
+          glareSize={325}
+          transitionDuration={1500}
+          playOnce={false}
+        >
+          {cardContent}
+        </GlareHover>
+      </ElectricBorder>
+    );
+  }
+
   return (
     <GlareHover
       width="100%"
@@ -96,129 +276,7 @@ export function QuestCard({ quest, onClick }: QuestCardProps) {
       transitionDuration={1500}
       playOnce={false}
     >
-      <div
-        className={`quest-card ${isHovered ? 'quest-card-hovered' : ''} ${isCompleted ? 'quest-card-completed' : ''}`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onClick={onClick}
-        style={{ cursor: onClick ? 'pointer' : 'default', height: '100%' }}
-      >
-        <div className="quest-image">
-          <div className="quest-image-placeholder">
-            {quest.projectName.charAt(0).toUpperCase()}
-          </div>
-          {isCompleted && (
-            <div className="quest-completed-overlay">
-              <img src="/verified.svg" alt="Verified" width="48" height="48" />
-            </div>
-          )}
-          {quest.difficulty && (
-            <div
-              className="quest-difficulty-badge"
-              style={{ backgroundColor: getDifficultyColor(quest.difficulty) }}
-            >
-              {quest.difficulty}
-            </div>
-          )}
-          {isHovered && (
-            <div className="quest-quick-actions">
-              <button
-                className="quest-action-button"
-                onClick={handleShare}
-                title="Share quest"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" y1="2" x2="12" y2="15" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="quest-content">
-          <div className="quest-header">
-            <h3 className="quest-title">{quest.title}</h3>
-            <span className="xp-badge">{quest.iqPoints ?? quest.xpReward ?? 100} IQ</span>
-          </div>
-          <p className="quest-description">{quest.description}</p>
-
-          {hasProgress && !isCompleted && (
-            <div className="quest-progress-container">
-              <div className="quest-progress-header">
-                <span className="quest-progress-label">Progress</span>
-                <span className="quest-progress-text">{completedSteps}/{totalSteps} steps</span>
-              </div>
-              <div className="quest-progress-bar">
-                <div
-                  className="quest-progress-fill"
-                  style={{ width: `${(completedSteps / totalSteps) * 100}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="quest-meta">
-            <div className="quest-participants">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-              <span>{formatNumber(participantCount)}</span>
-            </div>
-            <div className="quest-project">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              </svg>
-              <span>{quest.projectName}</span>
-            </div>
-            {quest.estimatedTime && (
-              <div className="quest-time">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span>{quest.estimatedTime}</span>
-              </div>
-            )}
-          </div>
-          {isCompleted ? (
-            <div className="quest-completed-state">
-              <span className="completed-badge">
-                <img src="/verified.svg" alt="Verified" width="16" height="16" />
-                Completed
-              </span>
-            </div>
-          ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleComplete();
-              }}
-              disabled={!address || isCompleting || !!(address && quest.creatorAddress && address.toLowerCase() === quest.creatorAddress.toLowerCase())}
-              className="complete-button"
-            >
-              {isCompleting ? (
-                <>
-                  <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                  </svg>
-                  Completing...
-                </>
-              ) : (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="5 12 10 17 20 7" />
-                  </svg>
-                  Start Quest
-                </>
-              )}
-            </button>
-          )}
-        </div>
-      </div>
+      {cardContent}
     </GlareHover>
   );
 }

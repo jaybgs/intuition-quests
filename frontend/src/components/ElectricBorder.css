@@ -8,15 +8,17 @@
 
 .eb-canvas-container {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
   pointer-events: none;
   z-index: 2;
+  overflow: visible;
 }
 
 .eb-canvas {
   display: block;
+  overflow: visible;
+  filter: drop-shadow(0 0 8px var(--electric-light-color));
 }
 
 .eb-content {
@@ -44,19 +46,19 @@
 }
 
 .eb-glow-1 {
-  border: 2px solid oklch(from var(--electric-border-color) l c h / 0.6);
-  filter: blur(1px);
+  border: 2px solid oklch(from var(--electric-border-color) l c h / 0.8);
+  filter: blur(2px);
 }
 
 .eb-glow-2 {
-  border: 2px solid var(--electric-light-color);
-  filter: blur(4px);
+  border: 3px solid var(--electric-light-color);
+  filter: blur(6px);
 }
 
 .eb-background-glow {
   z-index: -1;
-  transform: scale(1.1);
-  filter: blur(32px);
-  opacity: 0.3;
+  transform: scale(1.15);
+  filter: blur(40px);
+  opacity: 0.5;
   background: linear-gradient(-30deg, var(--electric-light-color), transparent, var(--electric-border-color));
 }

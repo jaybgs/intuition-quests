@@ -29,7 +29,11 @@ export interface Quest {
   winnerPrizes?: string[]; // Prize amounts for each winner
   rewardDeposit?: string; // Total deposit amount
   rewardToken?: string; // Token type for rewards
-  image?: string; // Quest image (base64 or URL)
+  image?: string; // Quest image (base64 or URL) - DEPRECATED: use logo or cover
+  logo?: string; // Quest logo URL
+  cover?: string; // Quest cover image URL
+  startAt?: string; // Legacy field
+  rewardType?: string; // Legacy field
 }
 
 export interface QuestStep {

@@ -318,6 +318,10 @@ export class SpaceServiceSupabase {
         updateData.logo = updates.logo;
       }
 
+      if (updates.coverPhoto !== undefined) {
+        updateData.cover_photo = updates.coverPhoto;
+      }
+
       if (updates.twitterUrl !== undefined) {
         updateData.twitter_url = updates.twitterUrl.trim();
       }

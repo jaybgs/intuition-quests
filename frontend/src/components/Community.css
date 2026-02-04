@@ -414,7 +414,7 @@
 
 @media (max-width: 768px) {
   .community-container {
-    padding: clamp(1.25rem, 3vw, 1.75rem) 0;
+    padding: clamp(1.25rem, 3vw, 1.75rem) 8px;
     gap: clamp(1.5rem, 4vw, 2rem);
   }
 

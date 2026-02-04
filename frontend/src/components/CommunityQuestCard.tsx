@@ -4,6 +4,7 @@ import { useAccount } from 'wagmi';
 import { truncateUsername } from '../utils/usernameUtils';
 import { getDiceBearAvatar } from '../utils/avatar';
 import GlareHover from './GlareHover';
+import ElectricBorder from './ElectricBorder';
 import './CommunityQuestCard.css';
 
 // Helper function to get profile picture from localStorage
@@ -55,6 +56,131 @@ export function CommunityQuestCard({ quest, onClick }: CommunityQuestCardProps) 
     onClick();
   };
 
+  const isElectric = quest.id === 'quest_1770214501234_gfl818v7a';
+
+  const cardContent = (
+    <div
+      className={`community-quest-card ${isHovered ? 'hovered' : ''} ${isCompleted ? 'completed' : ''} ${isElectric ? 'electric' : ''}`}
+      onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick(e as any);
+        }
+      }}
+      aria-label={`Quest: ${quest.title}. ${quest.iqPoints ?? quest.xpReward ?? 100} IQ points`}
+    >
+      <div className="quest-content">
+        <div className="quest-header">
+          {quest.difficulty && (
+            <span className={`quest-difficulty difficulty-${quest.difficulty}`}>
+              {quest.difficulty.toUpperCase()}
+            </span>
+          )}
+          {/* Quest status badge */}
+          <span className={`quest-status status-${isActive ? 'active' : 'ended'}`}>
+            {isActive ? 'ACTIVE' : 'ENDED'}
+          </span>
+          {quest.estimatedTime && (
+            <span className="quest-time">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              {quest.estimatedTime}
+            </span>
+          )}
+        </div>
+
+        <h3 className="quest-title">{quest.title}</h3>
+
+        <div className="quest-footer">
+          <div className="quest-creator">
+            <div className="creator-avatar">
+              <img
+                src={creatorProfilePic || getDiceBearAvatar(creatorAddress, 32)}
+                alt={displayAddress}
+                className="creator-avatar-img"
+              />
+            </div>
+            <div className="creator-info">
+              <span className="creator-label">Created by</span>
+              <span className="creator-address">{displayAddress}</span>
+            </div>
+          </div>
+
+          <div className="quest-rewards">
+            <div className={`xp-badge ${isCompleted ? 'completed' : ''}`}>
+              {isCompleted ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              )}
+              <span>{quest.iqPoints ?? quest.xpReward ?? 100} IQ</span>
+            </div>
+            {participantCount > 0 && (
+              <div className="participant-count">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>{participantCount}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isElectric) {
+    return (
+      <ElectricBorder
+        color="#7df9ff"
+        speed={1}
+        chaos={0.12}
+        thickness={3}
+        displacement={12}
+        borderOffset={6}
+        canvasZIndex={1000}
+        style={{
+          borderRadius: 20,
+          width: '100%',
+          height: '100%',
+          display: 'block'
+        }}
+      >
+        <GlareHover
+          width="100%"
+          height="100%"
+          background="transparent"
+          borderColor="transparent"
+          borderRadius="20px"
+          glareColor="#ffffff"
+          glareOpacity={1}
+          glareAngle={-30}
+          glareSize={325}
+          transitionDuration={1500}
+          playOnce={false}
+        >
+          {cardContent}
+        </GlareHover>
+      </ElectricBorder>
+    );
+  }
+
   return (
     <GlareHover
       width="100%"
@@ -69,90 +195,7 @@ export function CommunityQuestCard({ quest, onClick }: CommunityQuestCardProps) 
       transitionDuration={1500}
       playOnce={false}
     >
-      <div
-        className={`community-quest-card ${isHovered ? 'hovered' : ''} ${isCompleted ? 'completed' : ''}`}
-        onClick={handleClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleClick(e as any);
-          }
-        }}
-        aria-label={`Quest: ${quest.title}. ${quest.iqPoints ?? quest.xpReward ?? 100} IQ points`}
-      >
-        <div className="quest-content">
-          <div className="quest-header">
-            {quest.difficulty && (
-              <span className={`quest-difficulty difficulty-${quest.difficulty}`}>
-                {quest.difficulty.toUpperCase()}
-              </span>
-            )}
-            {/* Quest status badge */}
-            <span className={`quest-status status-${isActive ? 'active' : 'ended'}`}>
-              {isActive ? 'ACTIVE' : 'ENDED'}
-            </span>
-            {quest.estimatedTime && (
-              <span className="quest-time">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
-                {quest.estimatedTime}
-              </span>
-            )}
-          </div>
-
-          <h3 className="quest-title">{quest.title}</h3>
-
-          <div className="quest-footer">
-            <div className="quest-creator">
-              <div className="creator-avatar">
-                <img
-                  src={creatorProfilePic || getDiceBearAvatar(creatorAddress, 32)}
-                  alt={displayAddress}
-                  className="creator-avatar-img"
-                />
-              </div>
-              <div className="creator-info">
-                <span className="creator-label">Created by</span>
-                <span className="creator-address">{displayAddress}</span>
-              </div>
-            </div>
-
-            <div className="quest-rewards">
-              <div className={`xp-badge ${isCompleted ? 'completed' : ''}`}>
-                {isCompleted ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                    <path d="M2 17l10 5 10-5" />
-                    <path d="M2 12l10 5 10-5" />
-                  </svg>
-                )}
-                <span>{quest.iqPoints ?? quest.xpReward ?? 100} IQ</span>
-              </div>
-              {participantCount > 0 && (
-                <div className="participant-count">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                  <span>{participantCount}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {cardContent}
     </GlareHover>
   );
 }

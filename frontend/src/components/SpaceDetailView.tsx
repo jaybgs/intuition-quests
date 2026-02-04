@@ -18,9 +18,13 @@ interface SpaceDetailViewProps {
     onBuilderAccess?: (spaceId: string) => void;
 }
 
-export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }: SpaceDetailViewProps) {
+import { EditSpaceVisualsModal } from './EditSpaceVisualsModal';
+
+export function SpaceDetailView({ space: initialSpace, onBack, onQuestClick, onBuilderAccess }: SpaceDetailViewProps) {
     const { address } = useAccount();
     const { isAuthenticated: isAdminLoggedIn } = useAdmin();
+    // Use local state for space to support updates
+    const [space, setSpace] = useState<Space>(initialSpace);
     const [spaceQuests, setSpaceQuests] = useState<Quest[]>([]);
     const [questsLoading, setQuestsLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
@@ -29,6 +33,12 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
     const [isPro, setIsPro] = useState(false);
     const [filterType, setFilterType] = useState<'all' | 'active' | 'ended' | 'trust' | 'iq'>('all');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [showEditVisuals, setShowEditVisuals] = useState(false);
+
+    // Update local space when prop changes
+    useEffect(() => {
+        setSpace(initialSpace);
+    }, [initialSpace]);
 
     // Fetch ALL quests for this space (no time filter)
     useEffect(() => {
@@ -446,8 +456,58 @@ export function SpaceDetailView({ space, onBack, onQuestClick, onBuilderAccess }
                     </div>
                 </div>
             </div>
-            {/* End Combined Banner and Main Container */}
 
+            {/* Edit Visuals Button (Admin Only) */}
+            {isAdminLoggedIn && (
+                <button
+                    className="quest-detail-edit-button"
+                    onClick={() => setShowEditVisuals(true)}
+                    style={{
+                        position: 'fixed',
+                        bottom: '20px',
+                        left: '20px',
+                        padding: '12px 24px',
+                        backgroundColor: '#8b5cf6', // Purple
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        zIndex: 1000,
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#7c3aed';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#8b5cf6';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    Edit Visuals
+                </button>
+            )}
+
+            {/* Edit Visuals Modal */}
+            {showEditVisuals && (
+                <EditSpaceVisualsModal
+                    space={space}
+                    onClose={() => setShowEditVisuals(false)}
+                    onUpdate={(updatedSpace) => {
+                        setSpace(updatedSpace);
+                    }}
+                />
+            )}
         </>
     );
 }

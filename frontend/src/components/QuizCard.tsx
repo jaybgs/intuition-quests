@@ -135,7 +135,10 @@ export const QuizCard: React.FC<QuizCardProps> = ({ step, quizConfig, onVerify, 
                         </svg>
                     </div>
                     <div className="quiz-card-title">
-                        <span className="quiz-prefix">Quiz :</span> {step.description || step.title}
+                        <span className="quiz-card-header-text">{step.title}</span>
+                        {step.description && step.description !== step.title && (
+                            <span className="quiz-card-header-subtext"> - {step.description}</span>
+                        )}
                     </div>
                 </div>
 

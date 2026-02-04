@@ -13,6 +13,7 @@ export class QuestServiceSupabase {
     status?: 'active' | 'completed' | 'pending';
     projectId?: string;
     spaceId?: string;
+    creatorAddress?: string;
     limit?: number;
     offset?: number;
   }): Promise<Quest[]> {
@@ -37,6 +38,10 @@ export class QuestServiceSupabase {
 
       if (filters?.spaceId) {
         query = query.eq('space_id', filters.spaceId);
+      }
+
+      if (filters?.creatorAddress) {
+        query = query.eq('creator_address', filters.creatorAddress.toLowerCase());
       }
 
       if (filters?.limit) {
@@ -250,6 +255,8 @@ export class QuestServiceSupabase {
         completed_by: completedByArray,
         winner_prizes: winnerPrizesArray,
         image: quest.image || null,
+        logo: quest.logo || null,
+        cover: quest.cover || null,
       };
 
       console.log('📤 Publishing quest to Supabase:', {
@@ -306,6 +313,9 @@ export class QuestServiceSupabase {
       if (updates.iqPoints !== undefined) updateData.iq_points = updates.iqPoints;
       if (updates.completedBy !== undefined) updateData.completed_by = JSON.stringify(updates.completedBy);
       if (updates.requirements !== undefined) updateData.requirements = JSON.stringify(updates.requirements);
+      if (updates.image !== undefined) updateData.image = updates.image;
+      if (updates.logo !== undefined) updateData.logo = updates.logo;
+      if (updates.cover !== undefined) updateData.cover = updates.cover;
 
       const { data, error } = await supabase
         .from('published_quests')
@@ -499,6 +509,8 @@ export class QuestServiceSupabase {
       tripleId: row.triple_id,
       tripleTransactionHash: row.triple_transaction_hash,
       image: row.image,
+      logo: row.logo,
+      cover: row.cover,
       numberOfWinners: row.number_of_winners,
       winnerPrizes,
       rewardDeposit: row.reward_deposit,
@@ -689,6 +701,8 @@ export class QuestServiceSupabase {
       difficulty: quest.difficulty,
       estimatedTime: quest.estimatedTime,
       image: quest.image,
+      logo: quest.logo,
+      cover: quest.cover,
       distributionType: quest.distributionType,
       numberOfWinners: quest.numberOfWinners,
       winnerPrizes: quest.winnerPrizes,

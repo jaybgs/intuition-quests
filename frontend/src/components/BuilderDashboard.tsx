@@ -443,6 +443,7 @@ export function BuilderDashboard({ spaceId, onBack }: BuilderDashboardProps) {
           {activeNav === 'quests' ? (
             <BuilderQuests
               spaceId={space?.id}
+              ownerAddress={space?.ownerAddress}
               onCreateQuest={() => {
                 // Navigate to create quest page - you can implement this later
                 console.log('Create quest clicked');

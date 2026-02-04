@@ -10,6 +10,8 @@ import { Quest } from '../types';
 import { claimQuestViaContract, checkClaimStatus } from '../services/claimIQContractService';
 import { intuitionChain } from '../config/wagmi';
 import { showToast } from './Toast';
+import { EditQuestVisualsModal } from './EditQuestVisualsModal';
+import { useAdmin } from '../hooks/useAdmin';
 import { saveQuestCompletion } from '../utils/raffle';
 // Removed questClaimSurchargeService - claiming is now free
 // Removed CONTRACT_ADDRESSES and formatUnits - no longer needed for free claiming
@@ -42,6 +44,8 @@ interface StepVerificationState {
 
 export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilder = false, onEdit, onNavigateToSpace, onSpaceClick }: QuestDetailProps) {
   const { address } = useAccount();
+  const { isAdmin } = useAdmin();
+  const [showEditVisuals, setShowEditVisuals] = useState(false);
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
   const chainId = useChainId();
@@ -857,57 +861,60 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       [step.id]: true
     }));
 
-    // Handle Quiz & Poll tasks
-    if (title === 'quiz' || title.includes('quiz')) {
-      const quizConfig = (quest as any).requirements?.find((r: any) =>
-        (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
-      )?.verification?.quizConfig || (quest as any).requirements?.find((r: any) =>
-        (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
-      )?.config?.quizConfig;
+    // Check for Quiz & Poll config regardless of title
+    const quizConfig = (quest as any).requirements?.find((r: any) =>
+      (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
+    )?.verification?.quizConfig || (quest as any).requirements?.find((r: any) =>
+      (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
+    )?.config?.quizConfig;
 
-      // Fallback: try to find by index if constructed from requirements
-      if (!quizConfig) {
-        // This logic depends on how steps map to requirements. 
-        // Assuming steps[i] corresponds to requirements[i-1] (since step 0 is description)
-        const stepIndex = parseInt(step.id.replace('step-', '')) - 1;
-        const req = (quest as any).requirements?.[stepIndex];
-        if (req && (req.verification?.quizConfig || req.config?.quizConfig)) {
-          setActiveModalStep({ ...step, quizConfig: req.verification?.quizConfig || req.config?.quizConfig });
-          setShowQuizModal(true);
-          return;
-        }
-      }
-
-      if (quizConfig) {
-        setActiveModalStep({ ...step, quizConfig });
-        setShowQuizModal(true);
-        return;
+    // Fallback: search by index
+    let resolvedQuizConfig = quizConfig;
+    if (!resolvedQuizConfig) {
+      const stepIndex = parseInt(step.id.replace('step-', '')) - 1;
+      const req = (quest as any).requirements?.[stepIndex];
+      if (req && (req.verification?.quizConfig || req.config?.quizConfig)) {
+        resolvedQuizConfig = req.verification?.quizConfig || req.config?.quizConfig;
       }
     }
 
+    if (resolvedQuizConfig) {
+      setActiveModalStep({ ...step, quizConfig: resolvedQuizConfig });
+      setShowQuizModal(true);
+      return;
+    }
+
+    const pollConfig = (quest as any).requirements?.find((r: any) =>
+      (r.title === step.title || r.description === step.description) && (r.verification?.pollConfig || r.config?.pollConfig)
+    )?.verification?.pollConfig || (quest as any).requirements?.find((r: any) =>
+      (r.title === step.title || r.description === step.description) && (r.verification?.pollConfig || r.config?.pollConfig)
+    )?.config?.pollConfig;
+
+    // Fallback: search by index
+    let resolvedPollConfig = pollConfig;
+    if (!resolvedPollConfig) {
+      const stepIndex = parseInt(step.id.replace('step-', '')) - 1;
+      const req = (quest as any).requirements?.[stepIndex];
+      if (req && (req.verification?.pollConfig || req.config?.pollConfig)) {
+        resolvedPollConfig = req.verification?.pollConfig || req.config?.pollConfig;
+      }
+    }
+
+    if (resolvedPollConfig) {
+      setActiveModalStep({ ...step, pollConfig: resolvedPollConfig });
+      setShowPollModal(true);
+      return;
+    }
+
+    // Handle Quiz & Poll tasks via title (Legacy fallback)
+    if (title === 'quiz' || title.includes('quiz')) {
+      // Already handled above, but if config missing, maybe just proceed?
+      // If no config found but title is quiz, it might be broken, but we let it fall through or do nothing?
+      // The previous logic would do nothing if no config found, so this is fine.
+    }
+
     if (title === 'poll' || title.includes('poll')) {
-      const pollConfig = (quest as any).requirements?.find((r: any) =>
-        (r.title === step.title || r.description === step.description) && (r.verification?.pollConfig || r.config?.pollConfig)
-      )?.verification?.pollConfig || (quest as any).requirements?.find((r: any) =>
-        (r.title === step.title || r.description === step.description) && (r.verification?.pollConfig || r.config?.pollConfig)
-      )?.config?.pollConfig;
-
-      // Fallback by index
-      if (!pollConfig) {
-        const stepIndex = parseInt(step.id.replace('step-', '')) - 1;
-        const req = (quest as any).requirements?.[stepIndex];
-        if (req && (req.verification?.pollConfig || req.config?.pollConfig)) {
-          setActiveModalStep({ ...step, pollConfig: req.verification?.pollConfig || req.config?.pollConfig });
-          setShowPollModal(true);
-          return;
-        }
-      }
-
-      if (pollConfig) {
-        setActiveModalStep({ ...step, pollConfig });
-        setShowPollModal(true);
-        return;
-      }
+      // logic handled above
     }
 
     // If task is Discord, triggering the link should start a cooldown for verification
@@ -1023,7 +1030,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
   const verifyTaskCompletion = async (step: any) => {
     if (!address) return { success: false, completed: false, error: 'No wallet connected' };
 
-    const title = step.title.toLowerCase();
+    const title = (step.title || '').toLowerCase();
     const description = step.description?.toLowerCase() || '';
 
     // Determine provider and action from step
@@ -1095,7 +1102,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         setShowQuoteTweetModal(true);
         return { success: false, completed: false, error: null }; // Return early to show popup
       }
-    } else if (title.includes('discord')) {
+    } else if (title.includes('discord') || description.includes('discord') || (step.link && step.link.includes('discord'))) {
       // Discord actions are now click-to-verify with cooldown
       // We explicitly skip the auth check and API verification for Discord
 
@@ -1180,7 +1187,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         return hasConnectedProvider('twitter');
       }
 
-      if (title.includes('discord')) {
+      if (title.includes('discord') || description.includes('discord') || (step.link && step.link.includes('discord'))) {
         // Discord tasks no longer require connection verification
         return true;
       }
@@ -1219,6 +1226,11 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         showToast(`Please wait ${remainingSeconds}s before verifying again`, 'warning');
         return;
       }
+    }
+
+    if (!address) {
+      showToast('Please connect your wallet first', 'warning');
+      return;
     }
 
     // Check if social task is completed
@@ -1597,8 +1609,22 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
 
     const titleLower = (step.title || '').toLowerCase();
 
+    // Check for Quiz/Poll config in requirements
+    const requirement = (quest as any).requirements?.find((r: any) =>
+      r.title === step.title || r.description === step.description
+    );
+
+    // Or check by index if steps align with requirements (fallback)
+    const requirementByIndex = (quest as any).requirements?.[taskSteps.findIndex(s => s.id === step.id)];
+
+    // Check if we found a requirement and it has quiz/poll config
+    const hasQuizConfig = requirement?.verification?.quizConfig || requirement?.config?.quizConfig ||
+      requirementByIndex?.verification?.quizConfig || requirementByIndex?.config?.quizConfig;
+    const hasPollConfig = requirement?.verification?.pollConfig || requirement?.config?.pollConfig ||
+      requirementByIndex?.verification?.pollConfig || requirementByIndex?.config?.pollConfig;
+
     // Quiz Icon
-    if (titleLower === 'quiz' || titleLower.includes('quiz')) {
+    if (titleLower === 'quiz' || titleLower.includes('quiz') || hasQuizConfig) {
       return (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="10" />
@@ -1609,7 +1635,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
     }
 
     // Poll Icon
-    if (titleLower === 'poll' || titleLower.includes('poll')) {
+    if (titleLower === 'poll' || titleLower.includes('poll') || hasPollConfig) {
       return (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -1681,28 +1707,12 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
 
   return (
     <div className="quest-detail-container galxe-exact">
-      {/* Back Button */}
-      <div className="quest-detail-back-section">
-        <button
-          onClick={onBack}
-          className="quest-detail-back-button"
-          aria-label="Back to Community"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Back{isFromBuilder ? '' : ' to Community'}
-        </button>
-      </div>
-
-      {/* Content Wrapper with unified background */}
       <div className="quest-detail-content-wrapper">
-        {/* Top Header */}
         <div className="quest-detail-top-header">
           <div className="quest-detail-header-left">
             <div className="quest-detail-creator-logo">
-              {quest.image ? (
-                <img src={quest.image} alt={quest.projectName} />
+              {(quest.logo || quest.image) ? (
+                <img src={quest.logo || quest.image} alt={quest.projectName} />
               ) : (
                 <div className="quest-detail-creator-logo-placeholder">
                   {creatorInitials}
@@ -1842,7 +1852,20 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
             // Task Enforcement: Disable if not clicked (unless it's a quiz/poll which opens modal on click anyway)
             // Quizzes and Polls are handled by opening the modal, so we don't need to disable them.
             // External links (Twitter, etc.) and Read Docs need the disable logic.
-            const isInteractiveModal = (step.title?.toLowerCase().includes('quiz') || step.title?.toLowerCase().includes('poll'));
+
+            // Check if it's a quiz or poll using updated logic
+            const requirement = (quest as any).requirements?.find((r: any) =>
+              r.title === step.title || r.description === step.description
+            );
+
+            const requirementByIndex = (quest as any).requirements?.[index];
+
+            const hasQuizConfig = requirement?.verification?.quizConfig || requirement?.config?.quizConfig ||
+              requirementByIndex?.verification?.quizConfig || requirementByIndex?.config?.quizConfig;
+            const hasPollConfig = requirement?.verification?.pollConfig || requirement?.config?.pollConfig ||
+              requirementByIndex?.verification?.pollConfig || requirementByIndex?.config?.pollConfig;
+
+            const isInteractiveModal = (step.title?.toLowerCase().includes('quiz') || step.title?.toLowerCase().includes('poll') || hasQuizConfig || hasPollConfig);
             const hasBeenClicked = clickedSteps[step.id];
 
             // If it's a modal task (Quiz/Poll), verification happens INSIDE the modal, so the main refresh button is less relevant 
@@ -1868,15 +1891,9 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
               });
             }
 
-            if (step.title?.toLowerCase().includes('quiz')) {
+            if (isInteractiveModal && hasQuizConfig) {
               // Extract quiz config using same logic as handleTaskClick
-              const quizConfig = (quest as any).requirements?.find((r: any) =>
-                (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
-              )?.verification?.quizConfig || (quest as any).requirements?.find((r: any) =>
-                (r.title === step.title || r.description === step.description) && (r.verification?.quizConfig || r.config?.quizConfig)
-              )?.config?.quizConfig ||
-                // Fallback by index
-                ((quest as any).requirements?.[index]?.verification?.quizConfig || (quest as any).requirements?.[index]?.config?.quizConfig);
+              const quizConfig = hasQuizConfig; // Already found it above
 
               if (quizConfig) {
                 return (
@@ -1919,6 +1936,15 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
                           ...prev,
                           [step.id]: true
                         }));
+
+                        // Start cooldown for Discord links
+                        if (step.title?.toLowerCase().includes('discord') || step.description?.toLowerCase().includes('discord') || step.link?.includes('discord')) {
+                          const cooldownEnd = Date.now() + 30000; // 30 seconds
+                          setVerificationStates(prev => ({
+                            ...prev,
+                            [step.id]: { status: 'cooldown', cooldownEnd }
+                          }));
+                        }
                       }}
                     >
                       {step.title}
@@ -2019,481 +2045,537 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
         </div>
       </div>
 
-      {/* Edit and Delete Buttons - Only show when accessed from builder dashboard */}
-      {isFromBuilder && quest && (
-        <>
-          {/* Edit Button */}
-          <button
-            className="quest-detail-edit-button"
-            onClick={() => onEdit?.(quest.id)}
-            style={{
-              position: 'fixed',
-              bottom: '20px',
-              right: '20px',
-              padding: '12px 24px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              zIndex: 1000,
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#2563eb';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#3b82f6';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            Edit Quest
-          </button>
 
-          {/* Delete Button */}
-          <button
-            className="quest-detail-delete-button"
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={isDeleting}
-            style={{
-              position: 'fixed',
-              bottom: '20px',
-              left: '20px',
-              padding: '12px 24px',
-              backgroundColor: '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: isDeleting ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              zIndex: 1000,
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#dc2626';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#ef4444';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            {isDeleting ? (
-              <>
-                <div className="claim-spinner" style={{ width: '16px', height: '16px' }}></div>
-                Deleting...
-              </>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-                Delete Quest
-              </>
-            )}
-          </button>
-        </>
-      )}
+
+
+      {/* Edit and Delete Buttons - Show for Builder OR Admin */}
+      {
+        (isFromBuilder || isAdmin) && quest && (
+          <>
+            {/* Edit Visuals Button (Admin Only or Builder) */}
+            <button
+              className="quest-detail-edit-button"
+              onClick={() => setShowEditVisuals(true)}
+              style={{
+                position: 'fixed',
+                bottom: '80px', // Stacked above Edit Quest
+                right: '20px',
+                padding: '12px 24px',
+                backgroundColor: '#8b5cf6', // Different color (purple)
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                zIndex: 1000,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#7c3aed';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#8b5cf6';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+              Edit Visuals
+            </button>
+
+            {/* Edit Quest (Builder Navigation) */}
+            <button
+              className="quest-detail-edit-button"
+              onClick={() => onEdit?.(quest.id)}
+              style={{
+                position: 'fixed',
+                bottom: '20px',
+                right: '20px',
+                padding: '12px 24px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                zIndex: 1000,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#3b82f6';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Edit Quest
+            </button>
+
+            {/* Delete Button */}
+            <button
+              className="quest-detail-delete-button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isDeleting}
+              style={{
+                position: 'fixed',
+                bottom: '20px',
+                left: '20px',
+                padding: '12px 24px',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: isDeleting ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                zIndex: 1000,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#dc2626';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ef4444';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              {isDeleting ? (
+                <>
+                  <div className="claim-spinner" style={{ width: '16px', height: '16px' }}></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                  Delete Quest
+                </>
+              )}
+            </button>
+          </>
+        )
+      }
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="social-popup-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="social-popup-container" onClick={(e) => e.stopPropagation()}>
-            <div className="social-popup-header">
-              <h3>Delete Quest</h3>
-              <button
-                className="social-popup-close"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <div className="social-popup-content">
-              <p>Are you sure you want to delete "{quest?.title}"? This action cannot be undone.</p>
-            </div>
-            <div className="social-popup-actions">
-              <button
-                className="social-popup-button"
-                onClick={handleDeleteQuest}
-                disabled={isDeleting}
-                style={{ backgroundColor: '#ef4444' }}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-              <button
-                className="social-popup-button secondary"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeleting}
-              >
-                Cancel
-              </button>
+      {
+        showDeleteConfirm && (
+          <div className="social-popup-overlay" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="social-popup-container" onClick={(e) => e.stopPropagation()}>
+              <div className="social-popup-header">
+                <h3>Delete Quest</h3>
+                <button
+                  className="social-popup-close"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+              <div className="social-popup-content">
+                <p>Are you sure you want to delete "{quest?.title}"? This action cannot be undone.</p>
+              </div>
+              <div className="social-popup-actions">
+                <button
+                  className="social-popup-button"
+                  onClick={handleDeleteQuest}
+                  disabled={isDeleting}
+                  style={{ backgroundColor: '#ef4444' }}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+                <button
+                  className="social-popup-button secondary"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Social Account Not Connected Popup */}
-      {showSocialPopup && (
-        <div className="social-popup-overlay" onClick={() => setShowSocialPopup(false)}>
-          <div className="social-popup-container" onClick={(e) => e.stopPropagation()}>
-            <div className="social-popup-header">
-              <h3>Account Not Connected</h3>
-              <button
-                className="social-popup-close"
-                onClick={() => setShowSocialPopup(false)}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <div className="social-popup-content">
-              <p>Your {missingSocialAccount} account is not connected. Please connect it in your profile to verify this task.</p>
-            </div>
-            <div className="social-popup-actions">
-              <button
-                className="social-popup-button"
-                onClick={() => {
-                  setShowSocialPopup(false);
-                  if (onNavigateToProfile) {
-                    onNavigateToProfile();
-                  } else {
-                    showToast('Please connect your account in the profile section', 'info');
-                  }
-                }}
-              >
-                Go to Profile
-              </button>
-              <button
-                className="social-popup-button secondary"
-                onClick={() => setShowSocialPopup(false)}
-              >
-                Cancel
-              </button>
+      {
+        showSocialPopup && (
+          <div className="social-popup-overlay" onClick={() => setShowSocialPopup(false)}>
+            <div className="social-popup-container" onClick={(e) => e.stopPropagation()}>
+              <div className="social-popup-header">
+                <h3>Account Not Connected</h3>
+                <button
+                  className="social-popup-close"
+                  onClick={() => setShowSocialPopup(false)}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+              <div className="social-popup-content">
+                <p>Your {missingSocialAccount} account is not connected. Please connect it in your profile to verify this task.</p>
+              </div>
+              <div className="social-popup-actions">
+                <button
+                  className="social-popup-button"
+                  onClick={() => {
+                    setShowSocialPopup(false);
+                    if (onNavigateToProfile) {
+                      onNavigateToProfile();
+                    } else {
+                      showToast('Please connect your account in the profile section', 'info');
+                    }
+                  }}
+                >
+                  Go to Profile
+                </button>
+                <button
+                  className="social-popup-button secondary"
+                  onClick={() => setShowSocialPopup(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Read Docs Modal */}
-      {showReadDocsModal && currentReadDocsStep && (
-        <div
-          className="quest-detail-modal-overlay"
-          onClick={() => setShowReadDocsModal(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(8px)',
-            zIndex: 10000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-          }}
-        >
+      {
+        showReadDocsModal && currentReadDocsStep && (
           <div
-            className="quest-detail-read-docs-modal"
-            onClick={(e) => e.stopPropagation()}
+            className="quest-detail-modal-overlay"
+            onClick={() => setShowReadDocsModal(false)}
             style={{
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '600px',
-              width: '100%',
-              maxHeight: '80vh',
-              overflowY: 'auto',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#fff' }}>
-                {currentReadDocsStep.title || 'Read Documents'}
-              </h2>
-              <button
-                onClick={() => setShowReadDocsModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  cursor: 'pointer',
-                  fontSize: '24px',
-                  padding: '0',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                ×
-              </button>
-            </div>
+            <div
+              className="quest-detail-read-docs-modal"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+                padding: '24px',
+                maxWidth: '600px',
+                width: '100%',
+                maxHeight: '80vh',
+                overflowY: 'auto',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#fff' }}>
+                  {currentReadDocsStep.title || 'Read Documents'}
+                </h2>
+                <button
+                  onClick={() => setShowReadDocsModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    cursor: 'pointer',
+                    fontSize: '24px',
+                    padding: '0',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  ×
+                </button>
+              </div>
 
-            <p style={{ marginBottom: '20px', color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px' }}>
-              Please read all documents below. Mark each one as read when you're done.
-            </p>
+              <p style={{ marginBottom: '20px', color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px' }}>
+                Please read all documents below. Mark each one as read when you're done.
+              </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {(currentReadDocsStep.readDocsConfig?.documents || []).map((doc: string, index: number) => {
-                const isRead = readDocuments[currentReadDocsStep.id]?.has(index) || false;
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      padding: '16px',
-                      backgroundColor: isRead ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                      border: `1px solid ${isRead ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '12px',
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
-                          Read docs {index + 1}
-                        </span>
-                        {isRead && (
-                          <img src="/verified.svg" alt="Read" width="16" height="16" />
-                        )}
-                      </div>
-                      <div
-                        style={{
-                          padding: '12px',
-                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                          borderRadius: '8px',
-                          color: 'rgba(255, 255, 255, 0.9)',
-                          fontSize: '14px',
-                          lineHeight: '1.6',
-                          whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word',
-                          maxHeight: '200px',
-                          overflowY: 'auto',
-                        }}
-                      >
-                        {doc || `Document ${index + 1} content`}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleMarkDocumentRead(currentReadDocsStep.id, index)}
-                      disabled={isRead}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {(currentReadDocsStep.readDocsConfig?.documents || []).map((doc: string, index: number) => {
+                  const isRead = readDocuments[currentReadDocsStep.id]?.has(index) || false;
+                  return (
+                    <div
+                      key={index}
                       style={{
-                        padding: '8px 16px',
-                        backgroundColor: isRead ? 'rgba(16, 185, 129, 0.2)' : '#3b82f6',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: isRead ? 'not-allowed' : 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        opacity: isRead ? 0.6 : 1,
-                        flexShrink: 0,
+                        padding: '16px',
+                        backgroundColor: isRead ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                        border: `1px solid ${isRead ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '12px',
                       }}
                     >
-                      {isRead ? 'Read' : 'Mark as Read'}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
+                            Read docs {index + 1}
+                          </span>
+                          {isRead && (
+                            <img src="/verified.svg" alt="Read" width="16" height="16" />
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            padding: '12px',
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                            borderRadius: '8px',
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            fontSize: '14px',
+                            lineHeight: '1.6',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                          }}
+                        >
+                          {doc || `Document ${index + 1} content`}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleMarkDocumentRead(currentReadDocsStep.id, index)}
+                        disabled={isRead}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: isRead ? 'rgba(16, 185, 129, 0.2)' : '#3b82f6',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: isRead ? 'not-allowed' : 'pointer',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          opacity: isRead ? 0.6 : 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isRead ? 'Read' : 'Mark as Read'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
 
-            {currentReadDocsStep.readDocsConfig?.documents &&
-              readDocuments[currentReadDocsStep.id]?.size === currentReadDocsStep.readDocsConfig.documents.length && (
-                <div style={{
-                  marginTop: '20px',
-                  padding: '12px',
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  borderRadius: '8px',
-                  color: '#10b981',
-                  fontSize: '14px',
-                  textAlign: 'center',
-                }}>
-                  ✓ All documents read! Task verified.
-                </div>
-              )}
+              {currentReadDocsStep.readDocsConfig?.documents &&
+                readDocuments[currentReadDocsStep.id]?.size === currentReadDocsStep.readDocsConfig.documents.length && (
+                  <div style={{
+                    marginTop: '20px',
+                    padding: '12px',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '8px',
+                    color: '#10b981',
+                    fontSize: '14px',
+                    textAlign: 'center',
+                  }}>
+                    ✓ All documents read! Task verified.
+                  </div>
+                )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Quote Tweet Modal */}
-      {showQuoteTweetModal && currentQuoteStep && (
-        <div
-          className="quest-detail-modal-overlay"
-          onClick={() => setShowQuoteTweetModal(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(8px)',
-            zIndex: 10000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-          }}
-        >
+      {
+        showQuoteTweetModal && currentQuoteStep && (
           <div
-            className="quest-detail-quote-tweet-modal"
-            onClick={(e) => e.stopPropagation()}
+            className="quest-detail-modal-overlay"
+            onClick={() => setShowQuoteTweetModal(false)}
             style={{
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '500px',
-              width: '100%',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#fff' }}>
-                {currentQuoteStep.title || 'Quote Tweet Verification'}
-              </h2>
-              <button
-                onClick={() => setShowQuoteTweetModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  cursor: 'pointer',
-                  fontSize: '24px',
-                  padding: '0',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                ×
-              </button>
-            </div>
+            <div
+              className="quest-detail-quote-tweet-modal"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+                padding: '24px',
+                maxWidth: '500px',
+                width: '100%',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#fff' }}>
+                  {currentQuoteStep.title || 'Quote Tweet Verification'}
+                </h2>
+                <button
+                  onClick={() => setShowQuoteTweetModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    cursor: 'pointer',
+                    fontSize: '24px',
+                    padding: '0',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  ×
+                </button>
+              </div>
 
-            <p style={{ marginBottom: '20px', color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px' }}>
-              Please paste the link to your quote tweet below.
-            </p>
+              <p style={{ color: 'rgba(255, 255, 255, 0.8)', marginBottom: '20px' }}>
+                Please provide the URL of your quote tweet.
+              </p>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#fff', fontSize: '14px', fontWeight: 500 }}>
-                Quote Tweet URL
-                <span style={{ color: '#ef4444', marginLeft: '4px' }}>*</span>
-              </label>
               <input
-                type="url"
+                type="text"
                 value={quoteTweetUrl}
                 onChange={(e) => setQuoteTweetUrl(e.target.value)}
-                placeholder="https://twitter.com/username/status/1234567890"
+                placeholder="https://twitter.com/username/status/..."
                 style={{
                   width: '100%',
                   padding: '12px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '8px',
-                  color: '#fff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box',
+                  color: 'white',
+                  marginBottom: '20px',
+                  outline: 'none'
                 }}
-                onFocus={(e) => e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
               />
-            </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowQuoteTweetModal(false)}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  color: '#fff',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleQuoteTweetSubmit()}
-                disabled={!quoteTweetUrl.trim()}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: quoteTweetUrl.trim() ? '#3b82f6' : 'rgba(59, 130, 246, 0.5)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: quoteTweetUrl.trim() ? 'pointer' : 'not-allowed',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  opacity: quoteTweetUrl.trim() ? 1 : 0.6,
-                }}
-              >
-                Verify
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  onClick={() => setShowQuoteTweetModal(false)}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: 'transparent',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    color: 'white',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleQuoteTweetSubmit(quoteTweetUrl)}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#3b82f6',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: 'white',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Verify
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {/* Edit Visuals Modal */}
+      {
+        showEditVisuals && quest && (
+          <EditQuestVisualsModal
+            quest={quest}
+            onClose={() => setShowEditVisuals(false)}
+            onUpdate={(updatedQuest) => {
+              setQuest(updatedQuest); // Update local state
+              queryClient.invalidateQueries({ queryKey: ['quest', questId] });
+            }}
+          />
+        )
+      }
+
       {/* Quiz Modal */}
-      {showQuizModal && activeModalStep && (
-        <QuizModal
-          isOpen={showQuizModal}
-          onClose={() => {
-            setShowQuizModal(false);
-            setActiveModalStep(null);
-          }}
-          onComplete={() => handleQuizCompletion(activeModalStep.id)}
-          title={activeModalStep.title}
-          questions={activeModalStep.quizConfig?.questions || []}
-        />
-      )}
+      {
+        showQuizModal && activeModalStep && (
+          <QuizModal
+            isOpen={showQuizModal}
+            onClose={() => {
+              setShowQuizModal(false);
+              setActiveModalStep(null);
+            }}
+            onComplete={() => handleQuizCompletion(activeModalStep.id)}
+            title={activeModalStep.title}
+            questions={activeModalStep.quizConfig?.questions || []}
+          />
+        )
+      }
 
       {/* Poll Modal */}
-      {showPollModal && activeModalStep && (
-        <PollModal
-          isOpen={showPollModal}
-          onClose={() => {
-            setShowPollModal(false);
-            setActiveModalStep(null);
-          }}
-          onComplete={() => handlePollCompletion(activeModalStep.id)}
-          title={activeModalStep.title}
-          questions={activeModalStep.pollConfig?.questions || []}
-        />
-      )}
-    </div>
+      {
+        showPollModal && activeModalStep && (
+          <PollModal
+            isOpen={showPollModal}
+            onClose={() => {
+              setShowPollModal(false);
+              setActiveModalStep(null);
+            }}
+            onComplete={() => handlePollCompletion(activeModalStep.id)}
+            title={activeModalStep.title}
+            questions={activeModalStep.pollConfig?.questions || []}
+          />
+        )
+      }
+    </div >
   );
 }

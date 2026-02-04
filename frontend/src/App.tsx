@@ -22,7 +22,7 @@ const Community = lazy(() => import('./components/Community').then(m => ({ defau
 const AllQuests = lazy(() => import('./components/AllQuests').then(m => ({ default: m.AllQuests })));
 const Rewards = lazy(() => import('./components/Rewards').then(m => ({ default: m.Rewards })));
 const QuestDetail = lazy(() => import('./components/QuestDetail').then(m => ({ default: m.QuestDetail })));
-const Bounties = lazy(() => import('./components/Bounties').then(m => ({ default: m.Bounties })));
+
 const Raids = lazy(() => import('./components/Raids').then(m => ({ default: m.Raids })));
 const SpaceBuilder = lazy(() => import('./components/SpaceBuilder').then(m => ({ default: m.SpaceBuilder })));
 const SpaceDetailView = lazy(() => import('./components/SpaceDetailView').then(m => ({ default: m.SpaceDetailView })));
@@ -1743,7 +1743,7 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                   />
                 )}
                 {activeTab === 'rewards' && <Rewards />}
-                {activeTab === 'bounties' && <Bounties />}
+
                 {activeTab === 'raids' && <Raids />}
                 {activeTab === 'full-leaderboard' && <Leaderboard />}
                 {activeTab === 'all-quests' && (

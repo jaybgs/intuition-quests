@@ -100,3 +100,18 @@ export interface Space {
   isPro?: boolean; // Whether the space owner has a Pro subscription
 }
 
+
+export interface WeeklyHighlight {
+  id: string;
+  title: string;
+  description: string;
+  image?: string; // Deprecated, use desktopImage
+  desktopImage?: string;
+  mobileImage?: string;
+  gradientColors: string[];
+  questCount?: number;
+  isHot?: boolean;
+  isTrending?: boolean;
+  questLink?: string;
+  displayOrder?: number;
+}

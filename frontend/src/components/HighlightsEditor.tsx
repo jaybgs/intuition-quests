@@ -1,22 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { showToast } from './Toast';
 import { highlightsServiceSupabase } from '../services/highlightsServiceSupabase';
+import type { WeeklyHighlight } from '../types';
 import './HighlightsEditor.css';
 
-interface Highlight {
-  id: string;
-  title: string;
-  description: string;
-  image?: string;
-  gradientColors: string[];
-  questCount?: number;
-  isHot?: boolean;
-  isTrending?: boolean;
-  questLink?: string;
-}
-
 // Default highlights
-const defaultHighlights: Highlight[] = [
+const defaultHighlights: WeeklyHighlight[] = [
   {
     id: '1',
     title: 'Project Alpha',
@@ -46,7 +35,7 @@ const defaultHighlights: Highlight[] = [
 ];
 
 // Load highlights from Supabase or use defaults
-const loadHighlights = async (): Promise<Highlight[]> => {
+const loadHighlights = async (): Promise<WeeklyHighlight[]> => {
   try {
     return await highlightsServiceSupabase.getAllHighlights();
   } catch (error) {
@@ -56,7 +45,7 @@ const loadHighlights = async (): Promise<Highlight[]> => {
 };
 
 // Save highlights to Supabase
-const saveHighlights = async (highlightsToSave: Highlight[]): Promise<boolean> => {
+const saveHighlights = async (highlightsToSave: WeeklyHighlight[]): Promise<boolean> => {
   try {
     return await highlightsServiceSupabase.saveAllHighlights(highlightsToSave);
   } catch (error) {
@@ -70,9 +59,16 @@ interface HighlightsEditorProps {
 }
 
 export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
-  const [highlights, setHighlights] = useState<Highlight[]>([]);
-  const [editingHighlight, setEditingHighlight] = useState<Highlight | null>(null);
+  const [highlights, setHighlights] = useState<WeeklyHighlight[]>([]);
+  const [editingHighlight, setEditingHighlight] = useState<WeeklyHighlight | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Separate previews for desktop and mobile images
+  const [desktopImagePreview, setDesktopImagePreview] = useState<string | null>(null);
+  const [mobileImagePreview, setMobileImagePreview] = useState<string | null>(null);
+
+  const desktopFileInputRef = useRef<HTMLInputElement>(null);
+  const mobileFileInputRef = useRef<HTMLInputElement>(null);
 
   // Load highlights on component mount
   useEffect(() => {
@@ -95,13 +91,13 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
     try {
       const success = await saveHighlights(highlights);
       if (success) {
-    console.log('Saving weekly highlights:', highlights);
-    showToast('Weekly highlights updated successfully!', 'success');
+        console.log('Saving weekly highlights:', highlights);
+        showToast('Weekly highlights updated successfully!', 'success');
 
         // Dispatch event to notify other components that highlights were updated
         window.dispatchEvent(new Event('highlightsUpdated'));
 
-    onBack();
+        onBack();
       } else {
         showToast('Failed to save highlights. Please try again.', 'error');
       }
@@ -112,7 +108,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
   };
 
   const handleAddHighlight = () => {
-    const newHighlight: Highlight = {
+    const newHighlight: WeeklyHighlight = {
       id: Date.now().toString(),
       title: 'New Highlight',
       description: 'Highlight description goes here...',
@@ -128,8 +124,81 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
     showToast('Highlight deleted', 'info');
   };
 
-  const handleEditHighlight = (highlight: Highlight) => {
+  const handleEditHighlight = (highlight: WeeklyHighlight) => {
     setEditingHighlight({ ...highlight });
+    setDesktopImagePreview(highlight.desktopImage || highlight.image || null);
+    setMobileImagePreview(highlight.mobileImage || null);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'desktop' | 'mobile') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file, type);
+    }
+  };
+
+  const processFile = (file: File, type: 'desktop' | 'mobile') => {
+    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      showToast(`${type === 'desktop' ? 'Desktop' : 'Mobile'} logo file size must be less than 2MB`, 'error');
+      return;
+    }
+    const validTypes = ['image/svg+xml', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      showToast('Please upload an SVG or JPEG/PNG file', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      if (type === 'desktop') {
+        setDesktopImagePreview(base64String);
+        if (editingHighlight) {
+          setEditingHighlight(prev => prev ? { ...prev, desktopImage: base64String, image: base64String } : null);
+        }
+      } else {
+        setMobileImagePreview(base64String);
+        if (editingHighlight) {
+          setEditingHighlight(prev => prev ? { ...prev, mobileImage: base64String } : null);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent, type: 'desktop' | 'mobile') => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      processFile(file, type);
+    }
+  };
+
+  const handleRemoveImage = (e: React.MouseEvent, type: 'desktop' | 'mobile') => {
+    e.stopPropagation();
+    if (type === 'desktop') {
+      setDesktopImagePreview(null);
+      if (editingHighlight) {
+        setEditingHighlight(prev => prev ? { ...prev, desktopImage: undefined, image: undefined } : null);
+      }
+      if (desktopFileInputRef.current) {
+        desktopFileInputRef.current.value = '';
+      }
+    } else {
+      setMobileImagePreview(null);
+      if (editingHighlight) {
+        setEditingHighlight(prev => prev ? { ...prev, mobileImage: undefined } : null);
+      }
+      if (mobileFileInputRef.current) {
+        mobileFileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSaveHighlight = () => {
@@ -148,7 +217,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
         <div className="highlights-editor-header">
           <button className="highlights-editor-back-btn" onClick={onBack}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 18l-6-6 6-6"/>
+              <path d="M15 18l-6-6 6-6" />
             </svg>
             Back
           </button>
@@ -173,11 +242,11 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
   }
 
   return (
-      <div className="highlights-editor">
+    <div className="highlights-editor">
       <div className="highlights-editor-header">
         <button className="highlights-editor-back-btn" onClick={onBack}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6"/>
+            <path d="M15 18l-6-6 6-6" />
           </svg>
           Back
         </button>
@@ -185,7 +254,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
         <div className="highlights-editor-actions">
           <button className="highlights-editor-add-btn" onClick={handleAddHighlight}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14"/>
+              <path d="M12 5v14M5 12h14" />
             </svg>
             Add Highlight
           </button>
@@ -208,8 +277,8 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                     title="Edit Highlight"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                   </button>
                   <button
@@ -218,7 +287,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                     title="Delete Highlight"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
                   </button>
                 </div>
@@ -231,44 +300,43 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                     background: `linear-gradient(135deg, ${highlight.gradientColors[0]}, ${highlight.gradientColors[1]})`
                   }}
                 >
-                  <div className="highlight-image-placeholder">
+                  <div className="highlight-image-placeholder" style={{ opacity: (highlight.desktopImage || highlight.image) ? 0 : 1 }}>
                     {highlight.title.charAt(0)}
                   </div>
-                  {/* Logo on the right side */}
-                  <div className="highlight-logo">
-                    {highlight.image ? (
-                      <img
-                        src={highlight.image}
-                        alt={`${highlight.title} logo`}
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          objectFit: 'contain',
-                          borderRadius: '4px'
-                        }}
-                        onError={(e) => {
-                          // If image fails to load, show default SVG
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.setAttribute('style', 'display: block;');
-                        }}
-                      />
-                    ) : null}
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="rgba(255,255,255,0.8)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ display: highlight.image ? 'none' : 'block' }}
-                    >
-                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                      <path d="M2 17l10 5 10-5"/>
-                      <path d="M2 12l10 5 10-5"/>
-                    </svg>
-                  </div>
+                  {/* Full cover image or default logo */}
+                  {(highlight.desktopImage || highlight.image) ? (
+                    <img
+                      src={highlight.desktopImage || highlight.image}
+                      alt={highlight.title}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        zIndex: 1,
+                        borderRadius: '12px'
+                      }}
+                    />
+                  ) : (
+                    <div className="highlight-logo">
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="rgba(255,255,255,0.8)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                        <path d="M2 17l10 5 10-5" />
+                        <path d="M2 12l10 5 10-5" />
+                      </svg>
+                    </div>
+                  )}
                   <div className="highlight-badges">
                     {highlight.isHot && <span className="badge badge-hot">HOT</span>}
                     {highlight.isTrending && <span className="badge badge-trending">TRENDING</span>}
@@ -280,7 +348,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                   <div className="highlight-stats">
                     <span className="quest-count">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
                       </svg>
                       {highlight.questCount} quests
                     </span>
@@ -312,7 +380,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                 <input
                   type="text"
                   value={editingHighlight.title}
-                  onChange={(e) => setEditingHighlight({...editingHighlight, title: e.target.value})}
+                  onChange={(e) => setEditingHighlight({ ...editingHighlight, title: e.target.value })}
                   placeholder="Enter project name"
                 />
               </div>
@@ -321,7 +389,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                 <label>Description</label>
                 <textarea
                   value={editingHighlight.description}
-                  onChange={(e) => setEditingHighlight({...editingHighlight, description: e.target.value})}
+                  onChange={(e) => setEditingHighlight({ ...editingHighlight, description: e.target.value })}
                   rows={3}
                   placeholder="Enter project description"
                 />
@@ -332,27 +400,174 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                 <input
                   type="number"
                   value={editingHighlight.questCount || 0}
-                  onChange={(e) => setEditingHighlight({...editingHighlight, questCount: parseInt(e.target.value) || 0})}
+                  onChange={(e) => setEditingHighlight({ ...editingHighlight, questCount: parseInt(e.target.value) || 0 })}
                   min="0"
                 />
               </div>
 
-              <div className="form-group">
-                <label>Logo URL (optional)</label>
-                <input
-                  type="url"
-                  value={editingHighlight.image || ''}
-                  onChange={(e) => setEditingHighlight({...editingHighlight, image: e.target.value || undefined})}
-                  placeholder="https://example.com/logo.png"
-                />
+              {/* Flex container for dual uploads */}
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Desktop Logo</label>
+                  <div
+                    className="logo-upload-area"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'desktop')}
+                    onClick={() => desktopFileInputRef.current?.click()}
+                    style={{
+                      border: '2px dashed rgba(255,255,255,0.2)',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: '120px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {desktopImagePreview ? (
+                      <div className="logo-preview-container" style={{ position: 'relative' }}>
+                        <img
+                          src={desktopImagePreview}
+                          alt="Desktop logo preview"
+                          style={{
+                            maxWidth: '100px',
+                            maxHeight: '100px',
+                            objectFit: 'contain'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveImage(e, 'desktop')}
+                          style={{
+                            position: 'absolute',
+                            top: '-10px',
+                            right: '-10px',
+                            background: 'rgba(239, 68, 68, 0.9)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" style={{ marginBottom: '8px' }}>
+                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                          <line x1="8" y1="21" x2="16" y2="21" />
+                          <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>Desktop Logo</span>
+                        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', marginTop: '4px' }}>Max 2MB</span>
+                      </>
+                    )}
+                    <input
+                      ref={desktopFileInputRef}
+                      type="file"
+                      accept=".svg,.jpg,.jpeg,.png"
+                      onChange={(e) => handleImageUpload(e, 'desktop')}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Mobile Logo</label>
+                  <div
+                    className="logo-upload-area"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'mobile')}
+                    onClick={() => mobileFileInputRef.current?.click()}
+                    style={{
+                      border: '2px dashed rgba(255,255,255,0.2)',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: '120px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {mobileImagePreview ? (
+                      <div className="logo-preview-container" style={{ position: 'relative' }}>
+                        <img
+                          src={mobileImagePreview}
+                          alt="Mobile logo preview"
+                          style={{
+                            maxWidth: '100px',
+                            maxHeight: '100px',
+                            objectFit: 'contain'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveImage(e, 'mobile')}
+                          style={{
+                            position: 'absolute',
+                            top: '-10px',
+                            right: '-10px',
+                            background: 'rgba(239, 68, 68, 0.9)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" style={{ marginBottom: '8px' }}>
+                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                          <line x1="12" y1="18" x2="12.01" y2="18" />
+                        </svg>
+                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>Mobile Logo</span>
+                        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', marginTop: '4px' }}>Max 2MB</span>
+                      </>
+                    )}
+                    <input
+                      ref={mobileFileInputRef}
+                      type="file"
+                      accept=".svg,.jpg,.jpeg,.png"
+                      onChange={(e) => handleImageUpload(e, 'mobile')}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                </div>
               </div>
+
 
               <div className="form-group">
                 <label>Quest Link</label>
                 <input
                   type="text"
                   value={editingHighlight.questLink || ''}
-                  onChange={(e) => setEditingHighlight({...editingHighlight, questLink: e.target.value || undefined})}
+                  onChange={(e) => setEditingHighlight({ ...editingHighlight, questLink: e.target.value || undefined })}
                   placeholder="#quests or https://example.com/quest"
                 />
               </div>
@@ -392,7 +607,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                   <input
                     type="checkbox"
                     checked={editingHighlight.isHot || false}
-                    onChange={(e) => setEditingHighlight({...editingHighlight, isHot: e.target.checked})}
+                    onChange={(e) => setEditingHighlight({ ...editingHighlight, isHot: e.target.checked })}
                   />
                   Mark as HOT
                 </label>
@@ -403,7 +618,7 @@ export function HighlightsEditor({ onBack }: HighlightsEditorProps) {
                   <input
                     type="checkbox"
                     checked={editingHighlight.isTrending || false}
-                    onChange={(e) => setEditingHighlight({...editingHighlight, isTrending: e.target.checked})}
+                    onChange={(e) => setEditingHighlight({ ...editingHighlight, isTrending: e.target.checked })}
                   />
                   Mark as TRENDING
                 </label>

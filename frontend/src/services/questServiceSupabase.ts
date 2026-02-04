@@ -77,7 +77,7 @@ export class QuestServiceSupabase {
 
         // If status is 'active', also check that it hasn't expired
         if (status.toLowerCase() === 'active') {
-          const now = new Date().toISOString();
+          const now = Date.now();
           // Filter quests that either don't have an expiry date OR inherit expiring in future
           query = query.or(`expires_at.is.null,expires_at.gt.${now}`);
         }

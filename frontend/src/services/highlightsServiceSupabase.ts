@@ -1,15 +1,4 @@
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  image?: string;
-  gradientColors: string[];
-  questCount?: number;
-  isHot?: boolean;
-  isTrending?: boolean;
-}
-
-import type { Project } from '../types';
+import type { WeeklyHighlight } from '../types';
 import { supabase } from '../config/supabase';
 import { isAdmin } from './adminAuthService';
 
@@ -21,7 +10,7 @@ export class HighlightsServiceSupabase {
   /**
    * Get all weekly highlights
    */
-  async getAllHighlights(): Promise<Project[]> {
+  async getAllHighlights(): Promise<WeeklyHighlight[]> {
     if (!supabase) {
       console.warn('Supabase not configured, returning default highlights');
       return this.getDefaultHighlights();
@@ -30,7 +19,7 @@ export class HighlightsServiceSupabase {
     try {
       const { data, error } = await supabase
         .from('weekly_highlights')
-        .select('*')
+        .select('id, title, description, image, desktop_image, mobile_image, gradient_colors, quest_count, is_hot, is_trending, quest_link, display_order')
         .order('display_order', { ascending: true });
 
       if (error) {
@@ -39,17 +28,25 @@ export class HighlightsServiceSupabase {
       }
 
       if (!data || data.length === 0) {
-        // If no highlights exist, return defaults for display
-        // Only admins can actually save highlights to the database
         return this.getDefaultHighlights();
       }
+
+      const debugData = { ...data[0] };
+      // Truncate long strings for logging
+      if (debugData.image && debugData.image.length > 50) debugData.image = debugData.image.substring(0, 50) + '...';
+      if (debugData.desktop_image && debugData.desktop_image.length > 50) debugData.desktop_image = debugData.desktop_image.substring(0, 50) + '...';
+      if (debugData.mobile_image && debugData.mobile_image.length > 50) debugData.mobile_image = debugData.mobile_image.substring(0, 50) + '...';
+
+      console.log('🔍 [Debug] First highlight structure:', JSON.stringify(debugData, null, 2));
 
       // Convert database format to component format
       return data.map(highlight => ({
         id: highlight.id,
         title: highlight.title,
         description: highlight.description,
-        image: highlight.image,
+        image: highlight.image, // Keep for backward compatibility if needed
+        desktopImage: highlight.desktop_image || highlight.image, // Fallback to old image column
+        mobileImage: highlight.mobile_image,
         gradientColors: highlight.gradient_colors || ['#2563eb', '#2563eb'],
         questCount: highlight.quest_count || 0,
         isHot: highlight.is_hot || false,
@@ -65,8 +62,7 @@ export class HighlightsServiceSupabase {
   /**
    * Create or update a highlight
    */
-  async saveHighlight(highlight: Project): Promise<boolean> {
-    // Check admin permissions
+  async saveHighlight(highlight: WeeklyHighlight): Promise<boolean> {
     if (!isAdmin()) {
       console.error('Unauthorized: Only admin users can modify highlights');
       return false;
@@ -82,7 +78,9 @@ export class HighlightsServiceSupabase {
         id: highlight.id,
         title: highlight.title,
         description: highlight.description,
-        image: highlight.image,
+        image: highlight.desktopImage || highlight.image, // Sync deprecated field
+        desktop_image: highlight.desktopImage,
+        mobile_image: highlight.mobileImage,
         gradient_colors: highlight.gradientColors,
         quest_count: highlight.questCount || 0,
         is_hot: highlight.isHot || false,
@@ -110,8 +108,7 @@ export class HighlightsServiceSupabase {
   /**
    * Save multiple highlights (replace all)
    */
-  async saveAllHighlights(highlights: Project[]): Promise<boolean> {
-    // Check admin permissions
+  async saveAllHighlights(highlights: WeeklyHighlight[]): Promise<boolean> {
     if (!isAdmin()) {
       console.error('Unauthorized: Only admin users can modify highlights');
       return false;
@@ -139,7 +136,9 @@ export class HighlightsServiceSupabase {
         id: highlight.id,
         title: highlight.title,
         description: highlight.description,
-        image: highlight.image,
+        image: highlight.desktopImage || highlight.image, // Sync deprecated field
+        desktop_image: highlight.desktopImage,
+        mobile_image: highlight.mobileImage,
         gradient_colors: highlight.gradientColors,
         quest_count: highlight.questCount || 0,
         is_hot: highlight.isHot || false,
@@ -152,7 +151,7 @@ export class HighlightsServiceSupabase {
 
       const { error: insertError } = await supabase
         .from('weekly_highlights')
-        .insert(dbHighlights);
+        .upsert(dbHighlights);
 
       if (insertError) {
         console.error('Error saving highlights:', insertError);
@@ -211,7 +210,9 @@ export class HighlightsServiceSupabase {
         id: highlight.id,
         title: highlight.title,
         description: highlight.description,
-        image: highlight.image,
+        image: highlight.desktopImage || highlight.image,
+        desktop_image: highlight.desktopImage,
+        mobile_image: highlight.mobileImage,
         gradient_colors: highlight.gradientColors,
         quest_count: highlight.questCount || 0,
         is_hot: highlight.isHot || false,
@@ -238,7 +239,7 @@ export class HighlightsServiceSupabase {
   /**
    * Get default highlights (fallback data)
    */
-  private getDefaultHighlights(): Project[] {
+  private getDefaultHighlights(): WeeklyHighlight[] {
     return [
       {
         id: '1',

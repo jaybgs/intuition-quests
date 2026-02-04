@@ -234,11 +234,11 @@
 
 .slideshow-title {
   color: var(--text-primary);
-  font-size: 20px;
-  /* Fixed font size */
+  font-size: 42px;
+  /* Further increased from 32px */
   font-weight: 700;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -267,13 +267,13 @@
 
 .slideshow-description {
   color: var(--text-secondary);
-  font-size: 13px;
-  /* Fixed font size */
-  line-height: 1.5;
+  font-size: 18px;
+  /* Further increased from 16px */
+  line-height: 1.6;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -523,15 +523,15 @@
 
 
   .slideshow-title {
-    font-size: 18px;
-    /* Fixed font size */
+    font-size: 28px;
+    /* Further increased from 24px */
   }
 
   .slideshow-description {
-    font-size: 12px;
-    /* Fixed font size */
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    font-size: 16px;
+    /* Further increased from 14px */
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
 
   .slideshow-start-button {

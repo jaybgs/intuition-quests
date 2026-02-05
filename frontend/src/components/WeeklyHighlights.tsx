@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, startTransition } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from './Toast';
@@ -334,15 +335,86 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
     }, []);
 
 
-    const handleStartQuest = (questLink?: string) => {
-        // Check primarily for address - more reliable than isConnected
-        if (!address) {
-            showToast('Please connect your wallet to start quests', 'warning');
+    const navigate = useNavigate();
+
+    // Helper to create slugs consistent with App.tsx
+    const createSlug = (name: string): string => {
+        return name.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    };
+
+    const handleStartQuest = (questLink?: string, questTitle?: string) => {
+        // Allow guests to view quests without connecting wallet
+
+        if (!questLink || questLink === '#quests') {
+            document.getElementById('quests-section')?.scrollIntoView({ behavior: 'smooth' });
             return;
         }
-        showToast('Redirecting to quests...', 'info');
-        // Navigate to quest link or default to quests page
-        window.location.hash = questLink || '#quests';
+
+        // Check if it's an external link
+        if (questLink.startsWith('http')) {
+            window.open(questLink, '_blank', 'noopener,noreferrer');
+        } else {
+            // It's an internal link
+            let targetPath = questLink;
+
+            // Remove leading slash for cleaner processing
+            const cleanLink = questLink.startsWith('/') ? questLink.substring(1) : questLink;
+
+            // detailed inspection of link format
+            if (cleanLink.startsWith('quest_')) {
+                // It's a quest ID (e.g. quest_123...)
+                // PREFER SLUG IF TITLE AVAILABLE
+                if (questTitle) {
+                    const slug = createSlug(questTitle);
+                    targetPath = `/quest/${slug}`;
+                } else {
+                    // Fallback to ID path
+                    targetPath = `/quest/${cleanLink}`;
+                }
+            } else if (!cleanLink.startsWith('quest/') && !cleanLink.startsWith('space/') && !cleanLink.startsWith('#')) {
+                // If it's not a known route prefix but likely a slug or ID
+                if (targetPath.startsWith('/')) {
+                    // e.g. /quest_123
+                    if (targetPath.startsWith('/quest_')) {
+                        if (questTitle) {
+                            const slug = createSlug(questTitle);
+                            targetPath = `/quest/${slug}`;
+                        } else {
+                            targetPath = `/quest${targetPath}`;
+                        }
+                    } else {
+                        // Assuming it's already a path like /onboarding-quests -> check if we should prefix
+                        // If it doesn't match known routes... assume quest? 
+                        // Actually, if it's just a slug, existing logic assumed it needed a slash.
+                        targetPath = `/quest${targetPath}`; // Safe assumption for slideshow?
+                    }
+                } else {
+                    // ID or slug without slash
+                    if (cleanLink.startsWith('quest_') && questTitle) {
+                        targetPath = `/quest/${createSlug(questTitle)}`;
+                    } else {
+                        targetPath = `/quest/${cleanLink}`; // Assume slug or ID
+                    }
+                }
+            } else {
+                // Ensure leading slash
+                targetPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
+            }
+
+            // More robust fix: explicitly check for the pattern seen in logs "/quest_..."
+            if (questLink.startsWith('/quest_')) {
+                if (questTitle) {
+                    targetPath = `/quest/${createSlug(questTitle)}`;
+                } else {
+                    targetPath = `/quest${questLink}`;
+                }
+            }
+
+            console.log('🔗 Navigating to resolved path:', targetPath);
+            navigate(targetPath);
+        }
     };
 
     // Check if user is following a space
@@ -492,7 +564,7 @@ export function WeeklyHighlights({ onQuestClick, onCreateSpace, onSpaceClick, on
                         <div
                             key={project.id}
                             className={`slideshow-slide ${index === currentIndex ? 'active' : ''}`}
-                            onClick={() => handleStartQuest(project.questLink)}
+                            onClick={() => handleStartQuest(project.questLink, project.title)}
                             style={{ cursor: project.questLink ? 'pointer' : 'default' }}
                         >
                             <div

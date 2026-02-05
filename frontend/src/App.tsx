@@ -408,52 +408,29 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
 
   // Sync activeTab with initialTab when it changes (e.g., from URL navigation)
-  // This ensures that when the URL changes, the tab switches accordingly
   useEffect(() => {
+    console.log('🔄 AppContent: initialTab changed:', initialTab, 'current activeTab:', activeTab);
+
     if (initialTab && initialTab !== activeTab) {
-      // If initialTab is quest-detail, always set it (even if selectedQuestId is not set yet)
-      // The quest will be loaded by the questName useEffect
-      if (initialTab === 'quest-detail') {
-        console.log('🔄 Setting activeTab to quest-detail from route');
-        setActiveTab('quest-detail');
+      console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current:', activeTab);
+
+      // Force update for critical navigation tabs
+      if (initialTab === 'quest-detail' || initialTab === 'space-detail') {
+        console.log('🔒 Forcing activeTab to:', initialTab);
+        setActiveTab(initialTab);
         return;
       }
-      // If initialTab is space-detail, always set it (even if selectedSpace is not set yet)
-      // The space will be loaded by the spaceName useEffect
-      if (initialTab === 'space-detail') {
-        console.log('🔄 Setting activeTab to space-detail from route');
-        setActiveTab('space-detail');
+
+      // Don't override manual navigation states that don't have dedicated routes
+      if (activeTab === 'edit-profile' || activeTab === 'edit-slideshow') {
+        console.log('🛑 Ignoring initialTab because activeTab is:', activeTab);
         return;
       }
-      // Don't override edit-profile (manual navigation, no dedicated route)
-      if (activeTab === 'edit-profile') {
-        console.log('🔄 Keeping edit-profile tab (manual navigation), ignoring initialTab:', initialTab);
-        return;
-      }
-      // Don't override edit-slideshow (manual navigation, no dedicated route)
-      if (activeTab === 'edit-slideshow') {
-        console.log('🔄 Keeping edit-slideshow tab (manual navigation), ignoring initialTab:', initialTab);
-        return;
-      }
-      // Don't override quest-detail if we have a selectedQuestId (manual navigation)
-      // This prevents React Router from resetting the tab when route doesn't match
-      // Also don't override if we're navigating from space-detail to quest-detail
-      if (activeTab === 'quest-detail' && (selectedQuestId || initialTab === 'space-detail')) {
-        console.log('🔄 Keeping quest-detail tab (manual navigation), ignoring initialTab:', initialTab);
-        return;
-      }
-      // Don't override space-detail if we have a selectedSpace (manual navigation)
-      // This prevents React Router from resetting the tab when route doesn't match
-      // But allow override if we're navigating to quest-detail
-      if (activeTab === 'space-detail' && selectedSpace && initialTab !== 'quest-detail') {
-        console.log('🔄 Keeping space-detail tab (manual navigation), ignoring initialTab:', initialTab);
-        return;
-      }
-      // For all other tabs, sync activeTab with initialTab
-      console.log('🔄 Syncing activeTab with initialTab:', initialTab, 'current activeTab:', activeTab);
+
+      console.log('🔄 Setting activeTab to:', initialTab);
       setActiveTab(initialTab as any);
     }
-  }, [initialTab, activeTab, selectedSpace, selectedQuestId]);
+  }, [initialTab, activeTab]);
 
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(() => {
     const stored = localStorage.getItem('selectedSpaceId');
@@ -926,24 +903,21 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
       // Store quest ID in localStorage for persistence
       localStorage.setItem('selectedQuestId', params.questId);
 
-      // Navigate immediately with questId to prevent route sync issues - use /quest/ format
-      navigate(`/quest/${params.questId}`);
-
-      // Set activeTab AFTER navigating to prevent route from resetting it
-      setActiveTab('quest-detail');
-
-      // Try to get quest name from Supabase and update URL if found
+      // Fetch quest details first to get the slug, reducing URL flash
       questServiceSupabase.getQuestById(params.questId).then((quest: any) => {
         if (quest && quest.title) {
           const questSlug = createSlug(quest.title);
-          // Only update URL if it's different from current
-          const currentPath = window.location.pathname;
-          if (!currentPath.includes(questSlug)) {
-            navigate(`/quest/${questSlug}`, { replace: true });
-          }
+          navigate(`/quest/${questSlug}`);
+        } else {
+          // Fallback if no title found
+          navigate(`/quest/${params.questId}`);
         }
+        // Set activeTab AFTER navigating
+        setActiveTab('quest-detail');
       }).catch(() => {
-        // Keep the questId-based URL if we can't fetch the quest
+        // Fallback on error
+        navigate(`/quest/${params.questId}`);
+        setActiveTab('quest-detail');
       });
     } else if (params?.spaceName) {
       // Set the space and navigate to space detail
@@ -1844,14 +1818,8 @@ function AppContent({ initialTab = 'discover', questName = null, spaceName = nul
                         }}
                         onQuestClick={(questId) => {
                           console.log('🎯 SpaceDetailView onQuestClick:', questId);
-                          // Store current space-detail as previous tab for back navigation
-                          localStorage.setItem('previousTab', 'space-detail');
-                          // Set quest ID first
-                          setSelectedQuestId(questId);
-                          localStorage.setItem('selectedQuestId', questId);
-                          // Then navigate - use /quest/ format for proper routing
-                          setActiveTab('quest-detail');
-                          navigate(`/quest/${questId}`);
+                          // Use unified navigation handler to ensure consistent URL behavior (slugs)
+                          navigateToTab('quest-detail', { questId });
                         }}
                         onBuilderAccess={(spaceId) => {
                           console.log('🔧 SpaceDetailView onBuilderAccess called with spaceId:', spaceId);

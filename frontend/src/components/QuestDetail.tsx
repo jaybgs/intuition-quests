@@ -90,6 +90,7 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
 
   // Mark quest as opened when component mounts (enables verifiers)
   useEffect(() => {
+    console.log('🔄 QuestDetail MOUNTED', { questId, address });
     setQuestOpened(true); // Enable all verifiers when quest detail opens
 
     // Optional: Persist to localStorage for analytics/debugging
@@ -97,6 +98,10 @@ export function QuestDetail({ questId, onBack, onNavigateToProfile, isFromBuilde
       const key = `quest_opened_${address}_${questId}`;
       localStorage.setItem(key, new Date().toISOString());
     }
+
+    return () => {
+      console.log('🔄 QuestDetail UNMOUNTED', { questId });
+    };
   }, [questId, address]);
 
 
